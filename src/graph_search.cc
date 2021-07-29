@@ -731,7 +731,16 @@ bool GraphSearch::ReCalculateVisibilitySetMC(NodePtr n, Idx v, NodePtr new_node,
                 // }
                 if (vis.bitset_[j] > 0.5)
                 {
-                    auto p = 1.0 * vis.bitset_[j] / MonteCarloNum;
+                    RealNum p = 0.0;
+                    if (MonteCarloNum>0.5)
+                    {
+                        p = 1.0 * vis.bitset_[j] / MonteCarloNum;
+                    }
+                    else
+                    {
+                        p=1;
+                    }
+                    
                     vis.bitset_[j] = 1 - (1 - p) * (1 - new_node->VisSet().bitset_[j]);
 
                     if (vis.bitset_[j] > 0.99)

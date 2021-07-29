@@ -34,7 +34,7 @@ namespace drone
         }
 
         InitializeTargets();
-        InitializeObstaclePointCloud();
+        //InitializeObstaclePointCloud();
 
         // io::WriteJSPtCloud("../data/test.js", obstacles_, 0.5, IdxPoint(255, 255, 255));
     }

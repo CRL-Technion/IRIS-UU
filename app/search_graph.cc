@@ -110,10 +110,10 @@ int main(int argc, char** argv) {
         search.PrintResult(std::cout);
         search.PrintResult(fout);
 
-        fout_result << graph_size << ": ";
+        fout_result << graph_size;// << ": ";
 
         for (auto& p : path) {
-            fout_result << p << " ";
+            fout_result <<" "<< p  ;
         }
 
         fout_result << std::endl;

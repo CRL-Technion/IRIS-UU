@@ -300,6 +300,71 @@ void Inspection::Graph::Save(const String file_name, const bool save_configs, co
     fout.close();
     std::cout << "Configurations saved!" << std::endl;
 }
+void Inspection::Graph::ReadFromSimulationFile(const String file_name) {
+
+	std::ifstream fin;
+
+	fin.open(file_name);
+	if (!fin.is_open()) {
+		std::cerr << "Configuration file cannot be opened!" << std::endl;
+		exit(1);
+	}
+  
+	String line;
+	Idx i = 0;
+    auto space = ob::StateSpacePtr(new DroneStateSpace());
+
+	//auto space = ob::StateSpacePtr(new DroneStateSpace());
+	const Idx dof = 5;
+	// std::vector<VPtr> vertices_;
+	// std::vector<EPtr> edges_;
+
+	vertices_.resize(0);
+	
+	while (getline(fin, line)) {
+		std::istringstream sin(line);
+        String field;
+        Idx index;
+
+		std::vector<RealNum> config(5, 0.0);
+		AddVertex(i);
+		//sin >> index;
+		// if (i != index) {
+		// 	std::cerr << "Incorrect vertex index!" << std::endl;
+		// 	exit(1);
+		// }
+
+		for (Idx j = 0; j < dof; ++j) {
+			sin >> config[j];
+		}
+
+		vertices_[i]->state = space->allocState();
+
+		vertices_[i]->state->as<DroneStateSpace::StateType>()->SetPosition(Vec3(config[0], config[1], config[2]));
+		vertices_[i]->state->as<DroneStateSpace::StateType>()->SetYaw(config[3]);
+		vertices_[i]->state->as<DroneStateSpace::StateType>()->SetCameraAngle(config[4]);
+		
+		i++;
+	}
+	fin.close();
+	std::cout << "Configurations read!" << std::endl;
+
+	for (size_t i = 0; i < vertices_.size()-1; i++)
+	{
+		Idx source = vertices_[i]->index;
+		Idx target = vertices_[i+1]->index;
+		EPtr edge(new Inspection::Edge(source, target));
+
+		// sin >> edge->checked
+		// >> edge->valid
+		// >> edge->time_forward_kinematics
+		// >> edge->time_collision_detection
+		// >> edge->cost;
+
+		AddEdge(edge);
+	}
+	
+}
 
 void Inspection::Graph::ReadFromFiles(const String file_name, const bool read_configs,
                                       const Idx dof)

@@ -7,3 +7,10 @@ endif()
 
 add_executable(search_graph search_graph.cc)
 target_link_libraries(search_graph search)
+
+add_executable(checkPOIandCollision checkPOIandCollision.cc)
+if (USE_C++17)
+    target_link_libraries(checkPOIandCollision crisp_robot planar_robot drone_robot)
+else (USE_C++17)
+    target_link_libraries(checkPOIandCollision crisp_robot planar_robot)
+endif()

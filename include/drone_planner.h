@@ -51,6 +51,7 @@ namespace drone
     void MarkEdgeRiskZone(Inspection::Graph *graph, const Vec3 &LowerBordersXYZ, const Vec3 &UpperBordersXYZ);
 
     //////////////////////
+    bool CheckEdge(const ob::State *source, const ob::State *target) const;
   private:
    
     RobotPtr robot_;
@@ -78,7 +79,7 @@ namespace drone
     std::vector<Vec2> StateToShape(const ob::State *state) const;
     void ComputeRobotVisibilitySet(VisibilitySet &vis_set) const;
 
-    bool CheckEdge(const ob::State *source, const ob::State *target) const;
+    
 
 #if REJECT_SAMPLING
     VisibilitySet global_vis_set_;
