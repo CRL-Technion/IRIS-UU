@@ -1,0 +1,36 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            // "program": "${workspaceFolder}/debug/app/checkPOIandCollision",
+            // "args": ["test1_conf","0"],
+            // "program": "${workspaceFolder}/debug/app/build_graph",
+            // "args": ["1","5","testIRIS"],
+            // "program": "${workspaceFolder}/debug/app/search_graph",
+            // "args": ["testIRIS","1","3","0","0","testIRIS","LocationErrorParameterFile"],
+            "program": "${workspaceFolder}/debug/app/search_graph",
+            "args": ["testIRIS","1","3","0","0","1","1","testIRIS"],
+            // "program": "${workspaceFolder}/debug/app/checkProbModel",
+            // "args": ["testIRIS_conf","2","4","1000","28","checkProbFile"],
+            "stopAtEntry": false,
+            "cwd": "/home/davidalpert/Projects/IRIS/debug",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                    
+                }
+            ]
+        }
+    ]
+}

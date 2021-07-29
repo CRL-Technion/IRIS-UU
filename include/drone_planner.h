@@ -24,21 +24,35 @@ namespace og = ompl::geometric;
 #define COVERAGE_MIN_EXTEND 0.00
 #endif
 
-namespace drone {
+namespace drone
+{
 
-class DronePlanner {
+  class DronePlanner
+  {
   public:
     using RobotPtr = std::shared_ptr<DroneRobot>;
     using EnvPtr = std::shared_ptr<BridgeEnvironment>;
 
-    DronePlanner(const RobotPtr& robot, const EnvPtr& env, const Idx seed=1);
+    DronePlanner(const RobotPtr &robot, const EnvPtr &env, const Idx seed = 1);
     ~DronePlanner() = default;
 
-    void SampleStartConfig(const Idx max_iter=1000, const Idx seed=1);
+    void SampleStartConfig(const Idx max_iter = 1000, const Idx seed = 1);
     void SetParams(const RealNum step_size, const bool if_k_nearest);
     void BuildAndSaveInspectionGraph(const String file_name, const Idx target_size);
+    void ComputeVisibilitySet(Inspection::VPtr vertex) const;
+ ///////////////////////
+    void InsertIntermediatePointsToGraph(Inspection::Graph *graph, const Vec3 &LowerBordersXYZ, const Vec3 &UpperBordersXYZ);
+    Inspection::EPtr InsertIntermediatePointToGraph(Inspection::Graph *graph,Inspection::EPtr edge,Vec3 InsertIntermediatePosition);
 
+    void InsertGraphPointToyProblem(Inspection::Graph *graph, const Vec3 &LowerBordersXYZ, const Vec3 &UpperBordersXYZ);
+    void InsertGraphPointOutSideToyProblem(Inspection::Graph *graph, const Vec3 &LowerBordersXYZ, const Vec3 &UpperBordersXYZ);
+
+    bool IsPointInsideBox(const Vec3 &point, const Vec3 &LowerBordersXYZ, const Vec3 &UpperBordersXYZ);
+    void MarkEdgeRiskZone(Inspection::Graph *graph, const Vec3 &LowerBordersXYZ, const Vec3 &UpperBordersXYZ);
+
+    //////////////////////
   private:
+   
     RobotPtr robot_;
     EnvPtr env_;
     Idx seed_;
@@ -55,16 +69,16 @@ class DronePlanner {
 
     ob::SpaceInformationPtr space_info_;
 
-    void BuildRRGIncrementally(Inspection::Graph* graph, ob::PlannerPtr& planner,
-                               ob::PlannerData& tree_data, ob::PlannerData& graph_data);
+    void BuildRRGIncrementally(Inspection::Graph *graph, ob::PlannerPtr &planner,
+                               ob::PlannerData &tree_data, ob::PlannerData &graph_data);
     RealNum RandomRealNumber(const RealNum lower_bound, const RealNum higher_bound);
-    bool StateValid(const ob::State* state);
+    bool StateValid(const ob::State *state);
     SizeType RelativeTime(const TimePoint start) const;
-    std::vector<RealNum> StateToConfig(const ob::State* state) const;
-    std::vector<Vec2> StateToShape(const ob::State* state) const;
-    void ComputeRobotVisibilitySet(VisibilitySet& vis_set) const;
-    void ComputeVisibilitySet(Inspection::VPtr vertex) const;
-    bool CheckEdge(const ob::State* source, const ob::State* target) const;
+    std::vector<RealNum> StateToConfig(const ob::State *state) const;
+    std::vector<Vec2> StateToShape(const ob::State *state) const;
+    void ComputeRobotVisibilitySet(VisibilitySet &vis_set) const;
+
+    bool CheckEdge(const ob::State *source, const ob::State *target) const;
 
 #if REJECT_SAMPLING
     VisibilitySet global_vis_set_;
@@ -72,9 +86,8 @@ class DronePlanner {
     RealNum reject_check_ratio_{MAX_REJECT_CHECK_RATIO};
     RealNum coverage_min_extend_{COVERAGE_MIN_EXTEND};
 #endif
-};
+  };
 
 }
-
 
 #endif // DRONE_PLANNER_H

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libct_anatomy.a  CMakeFiles/ct_anatomy.dir/ct_anatomy.cc.o
+/usr/bin/ranlib libct_anatomy.a

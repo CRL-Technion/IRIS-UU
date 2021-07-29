@@ -1,29 +1,34 @@
 #include "inspection_graph.h"
-
-Inspection::Graph::Graph() {
+#include <iomanip>
+Inspection::Graph::Graph()
+{
     Reset();
 }
 
-Inspection::Graph::~Graph() {
+Inspection::Graph::~Graph()
+{
     Reset();
 }
 
-void Inspection::Graph::Reset() {
+void Inspection::Graph::Reset()
+{
     vertices_.resize(0);
     edges_.resize(0);
     global_vis_set_.Clear();
 }
 
-Inspection::Vertex::Vertex(const Idx i) : index(i) {
-
+Inspection::Vertex::Vertex(const Idx i) : index(i)
+{
 }
 
-Inspection::Edge::Edge(const Idx s, const Idx t) : source(s), target(t) {
-
+Inspection::Edge::Edge(const Idx s, const Idx t) : source(s), target(t)
+{
 }
 
-void Inspection::Graph::AddVertex(const Idx i) {
-    if (i != vertices_.size()) {
+void Inspection::Graph::AddVertex(const Idx i)
+{
+    if (i != vertices_.size())
+    {
         std::cerr << "Incorrect index for new vertex to add!" << std::endl;
         exit(1);
     }
@@ -32,8 +37,10 @@ void Inspection::Graph::AddVertex(const Idx i) {
     vertices_.push_back(v);
 }
 
-void Inspection::Graph::AddVertex(VPtr vertex) {
-    if (vertex->index != vertices_.size()) {
+void Inspection::Graph::AddVertex(VPtr vertex)
+{
+    if (vertex->index != vertices_.size())
+    {
         std::cerr << "Incorrect index for new vertex to add!" << std::endl;
         exit(1);
     }
@@ -41,8 +48,10 @@ void Inspection::Graph::AddVertex(VPtr vertex) {
     vertices_.push_back(vertex);
 }
 
-void Inspection::Graph::AddEdge(const Idx s, const Idx t) {
-    if (FindEdge(s, t)) {
+void Inspection::Graph::AddEdge(const Idx s, const Idx t)
+{
+    if (FindEdge(s, t))
+    {
         std::cerr << "Edge should not duplicate!" << std::endl;
         exit(1);
     }
@@ -51,8 +60,10 @@ void Inspection::Graph::AddEdge(const Idx s, const Idx t) {
     edges_.push_back(e);
 }
 
-void Inspection::Graph::AddEdge(EPtr edge) {
-    if (FindEdge(edge->source, edge->target)) {
+void Inspection::Graph::AddEdge(EPtr edge)
+{
+    if (FindEdge(edge->source, edge->target))
+    {
         std::cerr << "Edge should not duplicate!" << std::endl;
         exit(1);
     }
@@ -60,13 +71,17 @@ void Inspection::Graph::AddEdge(EPtr edge) {
     edges_.push_back(edge);
 }
 
-Inspection::EPtr Inspection::Graph::FindEdge(const Idx s, const Idx t) const {
-    for (auto&& e : edges_) {
-        if (e->source == s && e->target == t) {
+Inspection::EPtr Inspection::Graph::FindEdge(const Idx s, const Idx t) const
+{
+    for (auto &&e : edges_)
+    {
+        if (e->source == s && e->target == t)
+        {
             return e;
         }
 
-        if (e->source == t && e->target == s) {
+        if (e->source == t && e->target == s)
+        {
             return e;
         }
     }
@@ -74,59 +89,73 @@ Inspection::EPtr Inspection::Graph::FindEdge(const Idx s, const Idx t) const {
     return nullptr;
 }
 
-void Inspection::Graph::UpdateGlobalVisibility(const VisibilitySet& set) {
+void Inspection::Graph::UpdateGlobalVisibility(const VisibilitySet &set)
+{
     global_vis_set_.Insert(set);
 }
 
-const VisibilitySet& Inspection::Graph::GlobalVisibility() const {
+const VisibilitySet &Inspection::Graph::GlobalVisibility() const
+{
     return global_vis_set_;
 }
 
-Idx Inspection::Graph::NumVertices() const {
+Idx Inspection::Graph::NumVertices() const
+{
     return vertices_.size();
 }
 
-Idx Inspection::Graph::NumEdges() const {
+Idx Inspection::Graph::NumEdges() const
+{
     return edges_.size();
 }
 
-Inspection::VPtr& Inspection::Graph::Vertex(const Idx index) {
-    if (index < NumVertices()) {
+Inspection::VPtr &Inspection::Graph::Vertex(const Idx index)
+{
+    if (index < NumVertices())
+    {
         return vertices_[index];
     }
 
     return null_vertex_;
 }
 
-Inspection::VPtr Inspection::Graph::Vertex(const Idx index) const {
-    if (index < NumVertices()) {
+Inspection::VPtr Inspection::Graph::Vertex(const Idx index) const
+{
+    if (index < NumVertices())
+    {
         return vertices_[index];
     }
 
     return null_vertex_;
 }
 
-Inspection::EPtr& Inspection::Graph::Edge(const Idx index) {
-    if (index < NumEdges()) {
+Inspection::EPtr &Inspection::Graph::Edge(const Idx index)
+{
+    if (index < NumEdges())
+    {
         return edges_[index];
     }
 
     return null_edge_;
 }
 
-Inspection::EPtr Inspection::Graph::Edge(const Idx index) const {
-    if (index < NumEdges()) {
+Inspection::EPtr Inspection::Graph::Edge(const Idx index) const
+{
+    if (index < NumEdges())
+    {
         return edges_[index];
     }
 
     return null_edge_;
 }
 
-SizeType Inspection::Graph::NumTargetsCovered() const {
+SizeType Inspection::Graph::NumTargetsCovered() const
+{
     return global_vis_set_.Size();
 }
 
-void Inspection::Graph::Save(const String file_name, const bool save_configs, const Idx dof) const {
+void Inspection::Graph::Save(const String file_name, const bool save_configs, const Idx dof) const
+{
     // write in a common format for all robots
     String vertex_file = file_name + "_vertex";
     String edge_file = file_name + "_edge";
@@ -135,18 +164,22 @@ void Inspection::Graph::Save(const String file_name, const bool save_configs, co
 
     fout.open(vertex_file);
 
-    if (!fout.is_open()) {
+    if (!fout.is_open())
+    {
         std::cerr << "Vertex file cannot be opened!" << std::endl;
         exit(1);
     }
 
-    for (auto&& v : vertices_) {
+    for (auto &&v : vertices_)
+    {
         fout << v->index << " "
              << v->time_vis << " "
              << v->time_build << " ";
 
-        for (Idx t = 0; t < MAX_COVERAGE_SIZE; ++t) {
-            if (v->vis[t]) {
+        for (Idx t = 0; t < MAX_COVERAGE_SIZE; ++t)
+        {
+            if (v->vis[t])
+            {
                 fout << t << " ";
             }
         }
@@ -159,12 +192,14 @@ void Inspection::Graph::Save(const String file_name, const bool save_configs, co
 
     fout.open(edge_file);
 
-    if (!fout.is_open()) {
+    if (!fout.is_open())
+    {
         std::cerr << "Edge file cannot be opened!" << std::endl;
         exit(1);
     }
 
-    for (auto&& e : edges_) {
+    for (auto &&e : edges_)
+    {
         fout << e->source << " "
              << e->target << " "
              << e->checked << " "
@@ -172,27 +207,31 @@ void Inspection::Graph::Save(const String file_name, const bool save_configs, co
              << e->time_forward_kinematics << " "
              << e->time_collision_detection << " "
              << e->cost << " "
+             <<e->IsEdgeBelongToRiskZone <<" "
              << std::endl;
     }
 
     fout.close();
     std::cout << "Egdes saved!" << std::endl;
 
-    if (!save_configs) {
+    if (!save_configs)
+    {
         return;
     }
 
     fout.open(config_file);
 
-    if (!fout.is_open()) {
+    if (!fout.is_open())
+    {
         std::cerr << "Configuration file cannot be opened!" << std::endl;
         exit(1);
     }
 
 #if USE_CRISP
 
-    for (auto&& v : vertices_) {
-        const CrispStateSpace::StateType* s = v->state->as<CrispStateSpace::StateType>();
+    for (auto &&v : vertices_)
+    {
+        const CrispStateSpace::StateType *s = v->state->as<CrispStateSpace::StateType>();
 
         fout << v->index << " "
              << s->Insertion(0) << " "
@@ -214,7 +253,8 @@ void Inspection::Graph::Save(const String file_name, const bool save_configs, co
 
         auto vec = s->KinStateVector();
 
-        for (Idx i = 0; i < AUGMENTED_DIMENSION; ++i) {
+        for (Idx i = 0; i < AUGMENTED_DIMENSION; ++i)
+        {
             fout << vec(i) << " ";
         }
 
@@ -227,12 +267,14 @@ void Inspection::Graph::Save(const String file_name, const bool save_configs, co
 #if USE_PLANAR
 
     // Planar robot.
-    for (auto&& v : vertices_) {
+    for (auto &&v : vertices_)
+    {
         const auto s = v->state->as<ob::RealVectorStateSpace::StateType>();
 
         fout << v->index << " ";
 
-        for (Idx i = 0; i < dof; ++i) {
+        for (Idx i = 0; i < dof; ++i)
+        {
             fout << s->values[i] << " ";
         }
 
@@ -242,8 +284,10 @@ void Inspection::Graph::Save(const String file_name, const bool save_configs, co
 #else
 
     // Drone robot.
-    for (auto&& v : vertices_) {
+    for (auto &&v : vertices_)
+    {
         const auto s = v->state->as<DroneStateSpace::StateType>();
+		fout << std::setprecision(9);
 
         fout << s->Position().transpose() << " "
              << s->Yaw() << " "
@@ -255,11 +299,11 @@ void Inspection::Graph::Save(const String file_name, const bool save_configs, co
 #endif
     fout.close();
     std::cout << "Configurations saved!" << std::endl;
-
 }
 
 void Inspection::Graph::ReadFromFiles(const String file_name, const bool read_configs,
-                                      const Idx dof) {
+                                      const Idx dof)
+{
     String vertex_file = file_name + "_vertex";
     String edge_file = file_name + "_edge";
     String config_file = file_name + "_conf";
@@ -268,7 +312,8 @@ void Inspection::Graph::ReadFromFiles(const String file_name, const bool read_co
 
     fin.open(vertex_file);
 
-    if (!fin.is_open()) {
+    if (!fin.is_open())
+    {
         std::cerr << "Vertex file cannot be opened!" << std::endl;
         exit(1);
     }
@@ -276,27 +321,34 @@ void Inspection::Graph::ReadFromFiles(const String file_name, const bool read_co
     String line;
     Idx i = 0;
 
-    while (getline(fin, line)) {
+    while (getline(fin, line))
+    {
         std::istringstream sin(line);
         String field;
         Idx j = 0;
 
-        while(getline(sin, field, ' ')) {
-            if (j == 0) {
-                if (i != std::stoi(field)) {
+        while (getline(sin, field, ' '))
+        {
+            if (j == 0)
+            {
+                if (i != std::stoi(field))
+                {
                     std::cerr << "Incorrect vertex index!" << std::endl;
                     exit(1);
                 }
 
                 AddVertex(i);
             }
-            else if (j == 1) {
+            else if (j == 1)
+            {
                 vertices_[i]->time_vis = std::stoi(field);
             }
-            else if (j == 2) {
+            else if (j == 2)
+            {
                 vertices_[i]->time_build = std::stoi(field);
             }
-            else {
+            else
+            {
                 vertices_[i]->vis.Insert(std::stoi(field));
             }
 
@@ -312,23 +364,21 @@ void Inspection::Graph::ReadFromFiles(const String file_name, const bool read_co
 
     fin.open(edge_file);
 
-    if (!fin.is_open()) {
+    if (!fin.is_open())
+    {
         std::cerr << "Edge file cannot be opened!" << std::endl;
         exit(1);
     }
 
-    while (getline(fin, line)) {
+    while (getline(fin, line))
+    {
         std::istringstream sin(line);
 
         Idx source, target;
         sin >> source >> target;
         EPtr edge(new Inspection::Edge(source, target));
 
-        sin >> edge->checked
-            >> edge->valid
-            >> edge->time_forward_kinematics
-            >> edge->time_collision_detection
-            >> edge->cost;
+        sin >> edge->checked >> edge->valid >> edge->time_forward_kinematics >> edge->time_collision_detection >> edge->cost>> edge->IsEdgeBelongToRiskZone;
 
         AddEdge(edge);
     }
@@ -336,13 +386,15 @@ void Inspection::Graph::ReadFromFiles(const String file_name, const bool read_co
     fin.close();
     std::cout << "Edges read!" << std::endl;
 
-    if (!read_configs) {
+    if (!read_configs)
+    {
         return;
     }
 
     fin.open(config_file);
 
-    if (!fin.is_open()) {
+    if (!fin.is_open())
+    {
         std::cerr << "Configuration file cannot be opened!" << std::endl;
         exit(1);
     }
@@ -351,7 +403,8 @@ void Inspection::Graph::ReadFromFiles(const String file_name, const bool read_co
     i = 0;
     auto space = std::make_shared<CrispStateSpace>(2);
 
-    while (getline(fin, line)) {
+    while (getline(fin, line))
+    {
         std::istringstream sin(line);
         String field;
         Idx index;
@@ -362,25 +415,23 @@ void Inspection::Graph::ReadFromFiles(const String file_name, const bool read_co
 
         sin >> index;
 
-        if (i != index) {
+        if (i != index)
+        {
             std::cerr << "Incorrect vertex index!" << std::endl;
             exit(1);
         }
 
-        sin >> ins0 >> ins1
-            >> q0.w() >> q0.x() >> q0.y() >> q0.z()
-            >> q1.w() >> q1.x() >> q1.y() >> q1.z()
-            >> trans[0] >> trans[1] >> trans[2]
-            >> tang[0] >> tang[1] >> tang[2];
+        sin >> ins0 >> ins1 >> q0.w() >> q0.x() >> q0.y() >> q0.z() >> q1.w() >> q1.x() >> q1.y() >> q1.z() >> trans[0] >> trans[1] >> trans[2] >> tang[0] >> tang[1] >> tang[2];
 
-        for (Idx j = 0; j < AUGMENTED_DIMENSION; ++j) {
+        for (Idx j = 0; j < AUGMENTED_DIMENSION; ++j)
+        {
             sin >> vec(j);
         }
 
         sin >> stability;
 
         vertices_[i]->state = space->allocState();
-        CrispStateSpace::StateType* s = vertices_[i]->state->as<CrispStateSpace::StateType>();
+        CrispStateSpace::StateType *s = vertices_[i]->state->as<CrispStateSpace::StateType>();
         s->SetInsertion(0, ins0);
         s->SetInsertion(1, ins1);
         s->SetQuaternion(0, q0);
@@ -399,7 +450,8 @@ void Inspection::Graph::ReadFromFiles(const String file_name, const bool read_co
     i = 0;
     auto space = ob::StateSpacePtr(new ob::RealVectorStateSpace(dof));
 
-    while (getline(fin, line)) {
+    while (getline(fin, line))
+    {
         std::istringstream sin(line);
         String field;
         Idx index;
@@ -407,20 +459,23 @@ void Inspection::Graph::ReadFromFiles(const String file_name, const bool read_co
 
         sin >> index;
 
-        if (i != index) {
+        if (i != index)
+        {
             std::cerr << "Incorrect vertex index!" << std::endl;
             exit(1);
         }
 
-        for (Idx i = 0; i < dof; ++i) {
+        for (Idx i = 0; i < dof; ++i)
+        {
             sin >> config[i];
         }
 
         vertices_[i]->state = space->allocState();
-        ob::RealVectorStateSpace::StateType* s =
+        ob::RealVectorStateSpace::StateType *s =
             vertices_[i]->state->as<ob::RealVectorStateSpace::StateType>();
 
-        for (Idx i = 0; i < dof; ++i) {
+        for (Idx i = 0; i < dof; ++i)
+        {
             s->values[i] = config[i];
         }
 
@@ -432,27 +487,28 @@ void Inspection::Graph::ReadFromFiles(const String file_name, const bool read_co
     i = 0;
     auto space = ob::StateSpacePtr(new DroneStateSpace());
 
-    while (getline(fin, line)) {
+    while (getline(fin, line))
+    {
         std::istringstream sin(line);
         String field;
         Idx index;
         std::vector<RealNum> config(5, 0.0);
 
-        sin >> index;
+        // sin >> index;
 
-        if (i != index) {
-            std::cerr << "Incorrect vertex index!" << std::endl;
-            exit(1);
-        }
+        // if (i != index) {
+        //     std::cerr << "Incorrect vertex index!" << std::endl;
+        //     exit(1);
+        // }
 
-        for (Idx i = 0; i < dof; ++i) {
+        for (Idx i = 0; i < dof; ++i)
+        {
             sin >> config[i];
         }
 
         vertices_[i]->state = space->allocState();
 
-        vertices_[i]->state->as<DroneStateSpace::StateType>()->SetPosition(Vec3(config[0], config[1],
-                config[2]));
+        vertices_[i]->state->as<DroneStateSpace::StateType>()->SetPosition(Vec3(config[0], config[1], config[2]));
         vertices_[i]->state->as<DroneStateSpace::StateType>()->SetYaw(config[3]);
         vertices_[i]->state->as<DroneStateSpace::StateType>()->SetCameraAngle(config[4]);
 
@@ -464,8 +520,4 @@ void Inspection::Graph::ReadFromFiles(const String file_name, const bool read_co
 #endif
     fin.close();
     std::cout << "Configurations read!" << std::endl;
-
-
 }
-
-

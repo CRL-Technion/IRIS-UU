@@ -12,14 +12,14 @@
 #include <Eigen/Dense>
 
 #define DEBUG_MODE 0
-
+#define UAV_NAVIGATION_ERROR 1
 #define REJECT_SAMPLING 1
 
 #define USE_NODE_REUSE 1
 #define KEEP_SUBSUMING_HISTORY 1
 #define SAVE_PREDECESSOR 1
 
-#define USE_CRISP 1
+#define USE_CRISP 0
 #define USE_PLANAR 0
 
 #define USE_GHOST_DATA 1
@@ -38,7 +38,7 @@
 #if USE_PLANAR
 #define MAX_COVERAGE_SIZE 400
 #else
-#define MAX_COVERAGE_SIZE 3817 // 14021 // 27384 // 3346
+#define MAX_COVERAGE_SIZE 200//3817 // 14021 // 27384 // 3346
 #endif // USE_PLANAR
 
 #endif // USE_CRISP

@@ -10,8 +10,12 @@ TracebackMap::~TracebackMap() {
     cost_array_.resize(0);
     edge_cost_array_.resize(0);
     neighbors_.resize(0);
+    is_edge_in_risk_zone_array_.resize(0);
 }
-
+bool TracebackMap::IsTargetEdgeInRiskZone(const Idx i, const Idx j) const
+{
+	return is_edge_in_risk_zone_array_[FlatIndex(i,j)];
+}
 void TracebackMap::Reset() {
     if (map_locked_) {
         std::cout << "Map is locked!" << std::endl;
@@ -22,6 +26,7 @@ void TracebackMap::Reset() {
     map_.resize(boost::extents[n_][n_]);
     cost_array_.resize( (n_*(n_-1))/2, R_INF );
     edge_cost_array_.resize( (n_*(n_-1))/2, R_INF );
+    is_edge_in_risk_zone_array_.resize( (n_*(n_-1))/2, R_INF);
     neighbors_.resize(n_);
 
     for (Idx i = 0; i < n_; ++i) {
@@ -103,7 +108,7 @@ void TracebackMap::AddCost(const Idx i, const Idx j, const RealNum cost) {
     cost_array_[FlatIndex(i,j)] = cost;
 }
 
-void TracebackMap::AddEdgeCost(const Idx i, const Idx j, const RealNum cost) {
+void TracebackMap::AddEdgeCost(const Idx i, const Idx j, const RealNum cost, bool is_edge_in_risk_zone) {
     if (map_locked_) {
         std::cout << "Map is locked!" << std::endl;
         std::cout << __func__ << " is called!" << std::endl;
@@ -111,6 +116,7 @@ void TracebackMap::AddEdgeCost(const Idx i, const Idx j, const RealNum cost) {
     }
 
     edge_cost_array_[FlatIndex(i,j)] = cost;
+    is_edge_in_risk_zone_array_[FlatIndex(i,j)] = is_edge_in_risk_zone;
 }
 
 void TracebackMap::AddNeighbor(const Idx i, const Idx j) {
@@ -124,7 +130,7 @@ void TracebackMap::AddNeighbor(const Idx i, const Idx j) {
     neighbors_[j].insert(i);
 }
 
-void TracebackMap::AddDirectEdge(const Idx i, const Idx j, const RealNum cost) {
+void TracebackMap::AddDirectEdge(const Idx i, const Idx j, const RealNum cost,bool is_edge_in_risk_zone) {
     if (map_locked_) {
         std::cout << "Map is locked!" << std::endl;
         std::cout << __func__ << " is called!" << std::endl;
@@ -133,7 +139,7 @@ void TracebackMap::AddDirectEdge(const Idx i, const Idx j, const RealNum cost) {
 
     AddTrace(i, j, j);
     AddTrace(j, i, i);
-    AddEdgeCost(i, j, cost);
+    AddEdgeCost(i, j, cost,is_edge_in_risk_zone);
     AddNeighbor(i, j);
 }
 
@@ -149,6 +155,8 @@ void TracebackMap::RemoveDirectEdge(const Idx i, const Idx j) {
     neighbors_[i].erase(j);
     neighbors_[j].erase(i);
     edge_cost_array_[FlatIndex(i,j)] = R_INF;
+    is_edge_in_risk_zone_array_[FlatIndex(i,j)] = R_INF;
+
 }
 
 Idx TracebackMap::Trace(const Idx i, const Idx j) const {

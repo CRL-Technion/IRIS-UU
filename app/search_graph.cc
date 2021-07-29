@@ -28,11 +28,18 @@ int main(int argc, char** argv) {
     String file_to_write = argv[8];
 
     Inspection::GPtr graph(new Inspection::Graph);
-    graph->ReadFromFiles(file_to_read, true, false);
+    // graph->ReadFromFiles(file_to_read, true, false);
     // graph->ReadFromFiles(file_to_read);
+    graph->ReadFromFiles(file_to_read, true, 5);
+
 
     GraphSearch search(graph);
-
+  #if UAV_NAVIGATION_ERROR
+    {
+    String Location_Error_file_name = argv[9];
+    search.ReadLocationErrorParameters(Location_Error_file_name); 
+    }
+    #endif
     RealNum p = initial_p;
     RealNum eps = initial_eps;
     SizeType step = 1;
@@ -73,6 +80,7 @@ int main(int argc, char** argv) {
     std::vector<Idx> path;
 
     for (SizeType graph_size = step; graph_size <= graph->NumVertices(); graph_size += step) {
+        graph_size = graph->NumVertices();
         search.ExpandVirtualGraph(graph_size);
         addtional += step;
 

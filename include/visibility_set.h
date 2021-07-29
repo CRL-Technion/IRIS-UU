@@ -2,37 +2,49 @@
 #define VISIBILITY_SET_H_
 
 #include <bitset>
-
+#include <numeric>
 #include "global_common.h"
 
-class VisibilitySet {
-    using Bitset = std::bitset<MAX_COVERAGE_SIZE>;
+#define useBitSet 0
 
-  public:
-    VisibilitySet();
-    VisibilitySet(const VisibilitySet& other);
+class VisibilitySet
+{
+#if useBitSet
+  using Bitset = std::bitset<MAX_COVERAGE_SIZE>;
+#else
+  using Bitset = std::array<RealNum, MAX_COVERAGE_SIZE>;
 
-    VisibilitySet& operator=(const VisibilitySet& other);
-    bool operator[](Idx i) const;
-    bool operator==(const VisibilitySet& other) const;
-    bool operator<(const VisibilitySet& other) const;
-    bool operator>(const VisibilitySet& other) const;
+#endif
+public:
+  VisibilitySet();
+  VisibilitySet(const VisibilitySet &other);
 
-    void Clear();
-    void SetAll();
+  VisibilitySet &operator=(const VisibilitySet &other);
+  bool operator[](Idx i) const;
+  bool operator==(const VisibilitySet &other) const;
+  bool operator<(const VisibilitySet &other) const;
+  bool operator>(const VisibilitySet &other) const;
 
-    bool At(Idx i) const;
-    void Insert(Idx i);
-    void Insert(const VisibilitySet& other);
-    void Remove(const VisibilitySet& other);
-    bool IsExpending(const VisibilitySet& other) const;
-    bool Contains(const VisibilitySet& other) const;
-    bool IsContainedIn(const VisibilitySet& other) const;
-    SizeType Size() const;
-    const Bitset& bitset() const;
+  void Clear();
+  void SetAll();
 
-  private:
-    Bitset bitset_;
+  bool At(Idx i) const;
+  void Insert(Idx i);
+  void Insert(const VisibilitySet &other);
+  void Remove(const VisibilitySet &other);
+  bool IsExpending(const VisibilitySet &other) const;
+  bool Contains(const VisibilitySet &other) const;
+  bool IsContainedIn(const VisibilitySet &other) const;
+#if useBitSet
+  SizeType Size() const;
+#else
+  RealNum Size() const;
+#endif
+  const Bitset &bitset() const;
+
+
+// private:
+  Bitset bitset_;
 
 };
 

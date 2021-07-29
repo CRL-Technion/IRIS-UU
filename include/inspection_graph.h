@@ -25,6 +25,7 @@ class Vertex {
 
 class Edge {
   public:
+  
     Edge(const Idx s, const Idx t);
 
     const Idx source;
@@ -34,7 +35,7 @@ class Edge {
     SizeType time_forward_kinematics{0};
     SizeType time_collision_detection{0};
     RealNum cost;
-
+    bool IsEdgeBelongToRiskZone{false};
     bool in_virtual_graph{false};
     bool virtual_checked{false};
 };

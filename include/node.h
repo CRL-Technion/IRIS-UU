@@ -26,8 +26,10 @@ class Node {
     void SetCostToCome(const RealNum cost);
     void IncreaseCostToComeBy(const RealNum addon_cost);
     RealNum CostToCome() const;
-
-
+    RealNum CostToComeRiskZone() const;
+	void SetCostToComeRiskZone(const RealNum cost_risk_zone);	
+	void SetTotalLocationError(const std::vector<Vec3> otherTotalLocationError);
+	std::vector<Vec3> GetTotalLocationError();
     void SetParent(NodePtr parent);
     void RemoveParent();
     NodePtr Parent() const;
@@ -109,8 +111,10 @@ class Node {
     Idx search_id_{0};
     SizeType num_subsumed_{0};
     RealNum cost_to_come_{0};
+    RealNum cost_to_come_risk_zone{0};
     RealNum local_path_cost_{0};
     VisibilitySet vis_set_;
+    std::vector<Vec3> totalLocationError;
     NodePtr parent_{nullptr};
     std::vector<Idx> local_path_;
     std::vector<NodePtr> subsumed_nodes_;

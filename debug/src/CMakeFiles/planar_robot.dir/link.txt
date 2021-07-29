@@ -1,0 +1,2 @@
+/usr/bin/ar qc libplanar_robot.a  CMakeFiles/planar_robot.dir/planar_robot.cc.o CMakeFiles/planar_robot.dir/planar_planner.cc.o
+/usr/bin/ranlib libplanar_robot.a

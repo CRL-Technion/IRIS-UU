@@ -1,0 +1,2 @@
+/usr/bin/ar qc libdrone.a  CMakeFiles/drone.dir/drone_state_space.cc.o
+/usr/bin/ranlib libdrone.a

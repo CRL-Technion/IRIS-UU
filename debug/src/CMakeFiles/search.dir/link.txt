@@ -1,0 +1,2 @@
+/usr/bin/ar qc libsearch.a  CMakeFiles/search.dir/graph_search.cc.o CMakeFiles/search.dir/traceback_map.cc.o CMakeFiles/search.dir/node.cc.o
+/usr/bin/ranlib libsearch.a

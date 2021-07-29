@@ -33,14 +33,17 @@ class TracebackMap {
   public:
     TracebackMap(const SizeType num_vertices);
     ~TracebackMap();
-
+    /////////////
+	bool IsTargetEdgeInRiskZone(const Idx i, const Idx j) const;
+    std::vector<bool> is_edge_in_risk_zone_array_;
+    /////////////
     void Print() const;
 
     void AddTrace(const Idx i, const Idx j, const Idx i_to_j);
     void AddCost(const Idx i, const Idx j, const RealNum cost);
-    void AddEdgeCost(const Idx i, const Idx j, const RealNum cost);
+    void AddEdgeCost(const Idx i, const Idx j, const RealNum cost, bool is_edge_in_risk_zone = false);
     void AddNeighbor(const Idx i, const Idx j);
-    void AddDirectEdge(const Idx i, const Idx j, const RealNum cost);
+    void AddDirectEdge(const Idx i, const Idx j, const RealNum cost, bool is_edge_in_risk_zone = false);
     void RemoveDirectEdge(const Idx i, const Idx j);
 
     Idx Trace(const Idx i, const Idx j) const;

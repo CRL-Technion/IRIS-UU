@@ -40,7 +40,8 @@ void Node::DeepCopy(const NodePtr other) {
 #if USE_HEURISTIC
     h_ = other->Heuristic();
 #endif
-
+cost_to_come_risk_zone = other->CostToComeRiskZone();
+	SetTotalLocationError(other->GetTotalLocationError());
 }
 
 void Node::CopyAsChild(const NodePtr other) {
@@ -57,9 +58,37 @@ void Node::CopyAsChild(const NodePtr other) {
 #if USE_HEURISTIC
     h_ = other->Heuristic();
 #endif
-
+cost_to_come_risk_zone = other->CostToComeRiskZone();
+	SetTotalLocationError(other->GetTotalLocationError());
 }
+void Node::SetTotalLocationError(const std::vector<Vec3> otherTotalLocationError)
+{
+	
+	//totalLocationError.clear();
+	// memcpy(&totalLocationError,otherTotalLocationError,sizeof(totalLocationError));
+	auto MonteCarloNumber = otherTotalLocationError.size();
+	if (MonteCarloNumber>totalLocationError.size())
+	{
+	for (size_t i = 0; i < MonteCarloNumber; i++)
+	{
 
+		totalLocationError.push_back(otherTotalLocationError[i]);
+	}
+	}
+	else
+	{
+		for (size_t i = 0; i < MonteCarloNumber; i++)
+	{
+
+		totalLocationError[i] =(otherTotalLocationError[i]);
+	}
+	}
+	
+}
+std::vector<Vec3> Node::GetTotalLocationError()
+{
+	return totalLocationError;
+}
 void Node::Print(std::ostream& out, const SizeType time) const {
     out << time << "\t\t"
         << std::setiosflags(std::ios::fixed)
@@ -93,6 +122,14 @@ void Node::IncreaseCostToComeBy(const RealNum addon_cost) {
 
 RealNum Node::CostToCome() const {
     return cost_to_come_;
+}
+RealNum Node::CostToComeRiskZone() const
+{
+	return cost_to_come_risk_zone;
+}
+void Node::SetCostToComeRiskZone(const RealNum cost_risk_zone)
+{
+	cost_to_come_risk_zone = cost_risk_zone;
 }
 
 void Node::SetParent(NodePtr parent) {

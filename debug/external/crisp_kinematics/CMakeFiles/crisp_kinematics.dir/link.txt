@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcrisp_kinematics.a  CMakeFiles/crisp_kinematics.dir/CosseratRod.cpp.o
+/usr/bin/ranlib libcrisp_kinematics.a

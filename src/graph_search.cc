@@ -1,13 +1,108 @@
 #include "graph_search.h"
 
-GraphSearch::GraphSearch(const Inspection::GPtr graph) : graph_(graph) {
+Inspection::VPtr vertex(new Inspection::Vertex(0));
+
+GraphSearch::GraphSearch(const Inspection::GPtr graph) : graph_(graph)
+{
     virtual_graph_coverage_.Clear();
     open_sets_.clear();
     closed_sets_.clear();
+
+    auto robot = std::make_shared<drone::DroneRobot>(0.196, 0.2895, -0.049);
+    robot->SetCameraParameters(94.0 / 180 * M_PI, 0.2, 10.0);
+    robot->Initialize();
+
+    // Environment setup.
+    auto env = std::make_shared<drone::BridgeEnvironment>();
+
+    // Planner
+    planner = std::make_shared<drone::DronePlanner>(robot, env, 1);
+
+    auto space = ob::StateSpacePtr(new DroneStateSpace());
+    // VPtr v(new Inspection::Vertex(0));
+    // Inspection::VPtr vertex(new Inspection::Vertex(0));
+    // vertex(new Inspection::Vertex(0));
+    vertex->state = space->allocState();
 }
 
-void GraphSearch::SetLazinessMode(const Idx mode_id) {
-    if (mode_id >= kLazinessMap.size()) {
+void GraphSearch::ReadLocationErrorParameters(const String Location_Error_file_name)
+{
+    std::ifstream fin;
+    //String fileLocationError ="LocationErrorParameterFile";
+    fin.open(Location_Error_file_name);
+    if (!fin.is_open())
+    {
+        std::cerr << "LocationErrorParameters file cannot be opened!" << std::endl;
+        exit(1);
+    }
+
+    String line;
+    Idx i = 0;
+    Idx MonteCarloNumber = 5;
+    while (getline(fin, line))
+    {
+        std::istringstream sin(line);
+        String field;
+
+        while (getline(sin, field, ' '))
+        {
+            sin >> b_a_milli_g;
+            sin >> b_g_degPerHr;
+            sin >> avarageVelocity;
+            sin >> minTimeAllowInRistZone;
+            sin >> maxTimeAllowInRistZone;
+            sin >> multipleCostFunction;
+            sin >> MonteCarloNumber;
+            // = std::stoi(field);
+            // b_g_degPerHr = std::stoi(field);
+            // avarageVelocity = std::stoi(field);
+            // minTimeAllowInRistZone = std::stoi(field);
+            // multipleCostFunction = std::stoi(field);
+
+            break;
+        }
+    }
+    fin.close();
+    std::cout << "LocationErrorParameters read!" << std::endl;
+
+    //rund monteCarloParameter
+    Rand rng;
+    rng.seed(1);
+    //Idx MonteCarloNumber = 5;
+    auto milli_g2mpss = 9.81 / 1000.0;                 //   Conversion from [mili g ] to [m/s^2]
+    auto degPerHr2radPerSec = (3.14 / 180.0) / 3600.0; //  Conversion from [deg/hr] to [rad/s]
+    auto b_a = b_a_milli_g * milli_g2mpss;
+    auto b_g = b_g_degPerHr * degPerHr2radPerSec;
+    std::cout << "b_a_milli_g" << b_a_milli_g << std::endl;
+    RealNormalDist Norm1(0, b_a / 10.0);
+
+    for (size_t i = 0; i < MonteCarloNumber; i++)
+    {
+        RealNormalDist Norm1(0, b_a / 10.0);
+        ba_x.push_back(Norm1(rng));
+        ba_y.push_back(Norm1(rng));
+        ba_z.push_back(Norm1(rng));
+    }
+     for (size_t i = 0; i < MonteCarloNumber; i++)
+    {
+        RealNormalDist Norm2(0, b_g / 5.0);
+
+        bg_x.push_back(Norm2(rng));
+        bg_y.push_back(Norm2(rng));
+        bg_z.push_back(Norm2(rng));
+    }
+
+      for (size_t i = 0; i < MonteCarloNumber; i++)
+    {
+        Vec3 temp{0.0, 0.0, 0.0};
+        totalLocationErrorDefault.push_back(temp);
+    }
+}
+
+void GraphSearch::SetLazinessMode(const Idx mode_id)
+{
+    if (mode_id >= kLazinessMap.size())
+    {
         std::cerr << "Invalid laziness mode! Keep using old mode "
                   << kLazinessMap.at(laziness_mode_)
                   << std::endl;
@@ -16,7 +111,8 @@ void GraphSearch::SetLazinessMode(const Idx mode_id) {
 
 #if KEEP_SUBSUMING_HISTORY == 0
 
-    if (kLazinessMap.at(laziness_mode_) == "LazyA*") {
+    if (kLazinessMap.at(laziness_mode_) == "LazyA*")
+    {
         std::cerr << "LazyA* cannot work without subsuming history"
                   << ", keep using "
                   << kSuccessorMap.at(successor_mode_)
@@ -32,8 +128,10 @@ void GraphSearch::SetLazinessMode(const Idx mode_id) {
               << std::endl;
 }
 
-void GraphSearch::SetSuccessorMode(const Idx mode_id) {
-    if (mode_id >= kSuccessorMap.size()) {
+void GraphSearch::SetSuccessorMode(const Idx mode_id)
+{
+    if (mode_id >= kSuccessorMap.size())
+    {
         std::cerr << "Invalid successor mode! Keep using old mode "
                   << kSuccessorMap.at(successor_mode_)
                   << std::endl;
@@ -42,7 +140,8 @@ void GraphSearch::SetSuccessorMode(const Idx mode_id) {
 
 #if USE_NODE_REUSE
 
-    if (kSuccessorMap.at(mode_id) != "direct") {
+    if (kSuccessorMap.at(mode_id) != "direct")
+    {
         std::cerr << "Node reusing does not support successor mode "
                   << kSuccessorMap.at(mode_id)
                   << ", keep using "
@@ -54,7 +153,8 @@ void GraphSearch::SetSuccessorMode(const Idx mode_id) {
 
 #endif
 
-    if (mode_id > 0 && laziness_mode_ > 1) {
+    if (mode_id > 0 && laziness_mode_ > 1)
+    {
         std::cerr << kLazinessMap.at(laziness_mode_)
                   << " does not support successor mode "
                   << kSuccessorMap.at(mode_id)
@@ -71,47 +171,56 @@ void GraphSearch::SetSuccessorMode(const Idx mode_id) {
               << std::endl;
 }
 
-void GraphSearch::SetSourceIndex(const Idx source) {
+void GraphSearch::SetSourceIndex(const Idx source)
+{
     source_idx_ = source;
 }
 
-void GraphSearch::UpdateApproximationParameters(const RealNum eps, const RealNum p) {
+void GraphSearch::UpdateApproximationParameters(const RealNum eps, const RealNum p)
+{
 #if USE_GHOST_DATA
     eps_ = eps < 0.0 ? 0.0 : eps;
     p_ = p > 1.0 ? 1.0 : p;
 #endif
 }
 
-SizeType GraphSearch::ExpandVirtualGraph(SizeType new_size) {
-    if (virtual_graph_size_ == graph_->NumVertices()) {
-        std::cout << "Pre-computed graph with size " << virtual_graph_size_ << " is exhausted!" <<
-                  std::endl;
+SizeType GraphSearch::ExpandVirtualGraph(SizeType new_size)
+{
+    if (virtual_graph_size_ == graph_->NumVertices())
+    {
+        std::cout << "Pre-computed graph with size " << virtual_graph_size_ << " is exhausted!" << std::endl;
         return virtual_graph_size_;
     }
 
-    if (new_size > graph_->NumVertices()) {
+    if (new_size > graph_->NumVertices())
+    {
         new_size = graph_->NumVertices();
     }
 
-    for (SizeType i = virtual_graph_size_; i < new_size; ++i) {
+    for (SizeType i = virtual_graph_size_; i < new_size; ++i)
+    {
         Inspection::VPtr v = graph_->Vertex(i);
         time_vis_ += v->time_vis;
         time_build_ += v->time_build;
         virtual_graph_coverage_.Insert(v->vis);
     }
 
-    for (SizeType i = 0; i < graph_->NumEdges(); ++i) {
+    for (SizeType i = 0; i < graph_->NumEdges(); ++i)
+    {
         Inspection::EPtr e = graph_->Edge(i);
 
-        if (e->source >= new_size) {
+        if (e->source >= new_size)
+        {
             break;
         }
 
-        if ( (!e->in_virtual_graph) && e->target < new_size ) {
+        if ((!e->in_virtual_graph) && e->target < new_size)
+        {
             e->in_virtual_graph = true;
             virtual_graph_num_edges_++;
 
-            if (kLazinessMap.at(laziness_mode_) == "no lazy" || e->checked) {
+            if (kLazinessMap.at(laziness_mode_) == "no lazy" || e->checked)
+            {
                 time_valid_ += e->time_forward_kinematics;
                 time_valid_ += e->time_collision_detection;
                 num_validated_++;
@@ -124,7 +233,8 @@ SizeType GraphSearch::ExpandVirtualGraph(SizeType new_size) {
     return virtual_graph_size_;
 }
 
-std::vector<Idx> GraphSearch::SearchVirtualGraph() {
+std::vector<Idx> GraphSearch::SearchVirtualGraph()
+{
     const TimePoint start = Clock::now();
 
     NodePtr result_node = nullptr;
@@ -134,7 +244,8 @@ std::vector<Idx> GraphSearch::SearchVirtualGraph() {
     num_nodes_generated_ = 0;
     num_nodes_remained_ = 0;
 
-    while(!valid_result_found) {
+    while (!valid_result_found)
+    {
         // Reset result node.
         result_node = nullptr;
 
@@ -143,21 +254,25 @@ std::vector<Idx> GraphSearch::SearchVirtualGraph() {
         // Search starts.
         bool found = false;
 
-        while(!queue_->empty()) {
+        while (!queue_->empty())
+        {
             NodePtr n = PopFromPriorityQueue();
 
             // Not a valid node.
-            if (n == nullptr) {
+            if (n == nullptr)
+            {
                 continue;
             }
 
             // Updage result.
-            if (result_node == nullptr || n->BetterThan(result_node)) {
+            if (result_node == nullptr || n->BetterThan(result_node))
+            {
                 result_node = n;
             }
 
             // Check for termination.
-            if (InGoalSet(n)) {
+            if (InGoalSet(n))
+            {
                 found = true;
                 break;
             }
@@ -170,7 +285,8 @@ std::vector<Idx> GraphSearch::SearchVirtualGraph() {
 
 #if USE_NODE_REUSE
 
-            if (n->ReusedFromClosedSet()) {
+            if (n->ReusedFromClosedSet())
+            {
                 // Node is already in closed set.
                 continue;
             }
@@ -180,21 +296,25 @@ std::vector<Idx> GraphSearch::SearchVirtualGraph() {
             closed_sets_[n->Index()].insert(n);
         }
 
-        if (!found) {
+        if (!found)
+        {
             std::cerr << "[ERROR] Search terminated without finding a valid result!" << std::endl;
             exit(1);
         }
 
         valid_result_found = true;
 
-        if (kLazinessMap.at(laziness_mode_) == "LazySP") {
+        if (kLazinessMap.at(laziness_mode_) == "LazySP")
+        {
             // If using completely lazy, should check result plan.
             NodePtr tag = result_node;
 
-            while (tag != nullptr) {
+            while (tag != nullptr)
+            {
                 bool local_path_valid = ValidPath(tag->LocalPath());
 
-                if (!local_path_valid) {
+                if (!local_path_valid)
+                {
                     valid_result_found = false;
                     break;
                 }
@@ -202,10 +322,12 @@ std::vector<Idx> GraphSearch::SearchVirtualGraph() {
                 tag = tag->Parent();
             }
 
-            if (!valid_result_found) {
+            if (!valid_result_found)
+            {
                 std::cout << "\rReplan: " << ++num_replan << std::flush;
             }
-            else {
+            else
+            {
                 std::cout << std::endl;
             }
         }
@@ -215,10 +337,12 @@ std::vector<Idx> GraphSearch::SearchVirtualGraph() {
     search_id_++;
 
     // Update global result.
-    if (result_ == nullptr) {
+    if (result_ == nullptr)
+    {
         result_.reset(new Node(result_node));
     }
-    else if(result_node->BetterThan(result_)) {
+    else if (result_node->BetterThan(result_))
+    {
         result_->DeepCopy(result_node);
     }
 
@@ -227,10 +351,12 @@ std::vector<Idx> GraphSearch::SearchVirtualGraph() {
     auto tag = result_node;
     path.push_back(tag->Index());
 
-    while (tag) {
+    while (tag)
+    {
         auto super_edge = tag->LocalPath();
 
-        for (auto i = 1; i < super_edge.size(); ++i) {
+        for (auto i = 1; i < super_edge.size(); ++i)
+        {
             path.push_back(super_edge[i]);
         }
 
@@ -244,16 +370,19 @@ std::vector<Idx> GraphSearch::SearchVirtualGraph() {
     return path;
 }
 
-void GraphSearch::InitDataStructures() {
+void GraphSearch::InitDataStructures()
+{
     // Prepare traceback map.
     map_.reset(new TracebackMap(virtual_graph_size_));
 
-    for (SizeType i = 0; i < graph_->NumEdges(); ++i) {
+    for (SizeType i = 0; i < graph_->NumEdges(); ++i)
+    {
         Inspection::EPtr e = graph_->Edge(i);
 
         // An edge should be in virtual graph and it should not be checked as invalid.
-        if (e->in_virtual_graph && !(e->virtual_checked && !e->valid) ) {
-            map_->AddDirectEdge(e->source, e->target, e->cost);
+        if (e->in_virtual_graph && !(e->virtual_checked && !e->valid))
+        {
+            map_->AddDirectEdge(e->source, e->target, e->cost, e->IsEdgeBelongToRiskZone);
         }
     }
 
@@ -266,14 +395,16 @@ void GraphSearch::InitDataStructures() {
     this->UpdateUnboundedNodes();
 #else
 
-    for (SizeType i = 0; i < virtual_graph_size_; ++i) {
+    for (SizeType i = 0; i < virtual_graph_size_; ++i)
+    {
         open_sets_[i].clear();
         closed_sets_[i].clear();
     }
 
 #endif
 
-    if (queue_->empty()) {
+    if (queue_->empty())
+    {
         // Prepare source node.
         NodePtr source_node(new Node(graph_->Vertex(source_idx_)->index));
         source_node->SetVisSet(graph_->Vertex(source_idx_)->vis);
@@ -281,70 +412,84 @@ void GraphSearch::InitDataStructures() {
 #if USE_GHOST_DATA
         source_node->SetGhostVisSet(graph_->Vertex(source_idx_)->vis);
 #endif
+        source_node->SetTotalLocationError(totalLocationErrorDefault);
+
         queue_->push(source_node);
         open_sets_[source_idx_].insert(source_node);
     }
 }
 
-NodePtr GraphSearch::PopFromPriorityQueue() {
+NodePtr GraphSearch::PopFromPriorityQueue()
+{
     // Pop from priority queue;
     auto node_to_pop = queue_->top();
     queue_->pop();
 
 #if USE_NODE_REUSE
 
-    if (node_to_pop->ReusedFromClosedSet()) {
+    if (node_to_pop->ReusedFromClosedSet())
+    {
         // A reused node must be latest and not subsumed.
         return node_to_pop;
     }
 
 #endif
 
-    if (!node_to_pop->Latest()) {
+    if (!node_to_pop->Latest())
+    {
         // This is not the latest version of the node.
         return nullptr;
     }
 
-    if (node_to_pop->IsSubsumed()) {
+    if (node_to_pop->IsSubsumed())
+    {
         // This node is subsumed by another node.
         return nullptr;
     }
 
-    if (kLazinessMap.at(laziness_mode_) == "LazyA* modified") {
-        if (kSuccessorMap.at(successor_mode_) == "direct") {
-            if (!node_to_pop->IsChecked()) {
-                if (!Valid(node_to_pop)) {
+    if (kLazinessMap.at(laziness_mode_) == "LazyA* modified")
+    {
+        if (kSuccessorMap.at(successor_mode_) == "direct")
+        {
+            if (!node_to_pop->IsChecked())
+            {
+                if (!Valid(node_to_pop))
+                {
                     // Invalid node is discarded.
                     open_sets_[node_to_pop->Index()].erase(node_to_pop);
                     return nullptr;
                 }
             }
         }
-        else {
+        else
+        {
             std::cerr << "[ERROR] Not implemented!" << std::endl;
             exit(1);
         }
     }
-    else if (kLazinessMap.at(laziness_mode_) == "LazyA*") {
-        if (!Valid(node_to_pop)) {
+    else if (kLazinessMap.at(laziness_mode_) == "LazyA*")
+    {
+        if (!Valid(node_to_pop))
+        {
             // Invalid node is discarded.
             open_sets_[node_to_pop->Index()].erase(node_to_pop);
 #if SAVE_PREDECESSOR
             Idx index = node_to_pop->Index();
 #endif
 
-            for (auto n : node_to_pop->SubsumedNodes()) {
+            for (auto n : node_to_pop->SubsumedNodes())
+            {
 #if SAVE_PREDECESSOR
 
-                if (!map_->EdgeExists(index, n->Index())
-                        || n->SearchID() < search_id_) {
+                if (!map_->EdgeExists(index, n->Index()) || n->SearchID() < search_id_)
+                {
                     continue;
                 }
 
                 NodePtr new_node(new Node());
                 new_node->CopyAsChild(n);
                 new_node->Extend(index, map_->EdgeCost(index, n->Index()), graph_->Vertex(index)->vis);
-                new_node->SetLocalPath(std::vector<Idx> {index, n->Index()});
+                new_node->SetLocalPath(std::vector<Idx>{index, n->Index()});
 
                 AddNode(new_node);
 #else
@@ -361,23 +506,29 @@ NodePtr GraphSearch::PopFromPriorityQueue() {
     return node_to_pop;
 }
 
-void GraphSearch::Extend(NodePtr n) {
+void GraphSearch::Extend(NodePtr n)
+{
     std::vector<std::vector<Idx>> successors;
 
-    if (kSuccessorMap.at(successor_mode_) == "direct") {
+    if (kSuccessorMap.at(successor_mode_) == "direct")
+    {
         successors = map_->NeighboringSuccessors(n->Index());
     }
-    else if (kSuccessorMap.at(successor_mode_) == "expanded") {
+    else if (kSuccessorMap.at(successor_mode_) == "expanded")
+    {
         successors = map_->Successors(n->Index(), n->VisSet(), graph_);
     }
-    else if (kSuccessorMap.at(successor_mode_) == "first-meet") {
+    else if (kSuccessorMap.at(successor_mode_) == "first-meet")
+    {
         successors = map_->FirstMeetSuccessors(n->Index(), n->VisSet(), graph_);
     }
 
-    for (const auto& s : successors) {
+    for (const auto &s : successors)
+    {
 #if USE_NODE_REUSE
 
-        if (n->ReusedFromClosedSet() && !NewNodesInvolved(n, s)) {
+        if (n->ReusedFromClosedSet() && !NewNodesInvolved(n, s))
+        {
             continue;
         }
 
@@ -386,77 +537,300 @@ void GraphSearch::Extend(NodePtr n) {
         Idx v = s[0];
         NodePtr new_node(new Node());
         new_node->CopyAsChild(n);
-        new_node->Extend(v, map_->Cost(v, n->Index()), graph_->Vertex(v)->vis);
+        auto cost = map_->Cost(v, n->Index());
+#if UAV_NAVIGATION_ERROR
+        bool IsInRiskZone = map_->IsTargetEdgeInRiskZone(n->Index(), v);
+        if (IsInRiskZone)
+        {
+
+            if (!ReCalculateVisibilitySetMC(graph_->Vertex(v), n, v, new_node, cost)) //larger than max time in risk zone
+            {
+                continue;
+            }
+        }
+        else
+        {
+            vis.Insert(graph_->Vertex(v)->vis);
+            new_node->SetCostToComeRiskZone(0.0);
+            new_node->SetTotalLocationError(totalLocationErrorDefault);
+        }
+#endif
+        // std::cout << "v: " << graph_->Vertex(v)->vis.Size() << std::endl;
+        // new_node->Extend(v, cost, graph_->Vertex(v)->vis);
+        new_node->Extend(v, cost, vis);
+
         new_node->SetLocalPath(s);
         num_nodes_generated_++;
 
 #if USE_HEURISTIC
         new_node->SetHeuristic(map_->ComputeHeuristic(v, new_node->VisSet(), graph_,
-                               virtual_graph_coverage_));
+                                                      virtual_graph_coverage_));
 #endif
 
-        if (AddNode(new_node)) {
+        if (AddNode(new_node))
+        {
             num_nodes_remained_++;
         }
     }
 
     n->SetExtendedGraphSize(virtual_graph_size_);
 
-//     if (kLazinessMap.at(laziness_mode_) == "LazyA* modified") {
-// #if KEEP_SUBSUMING_HISTORY
-//                 ComputeAndAddSuccessorsCompleteLazy(n);
-// #else
-//                 ComputeAndAddSuccessors(n);
-// #endif
-//             }
-//             else {
-//                 ComputeAndAddSuccessorsCompleteLazy(n);
-//             }
+    //     if (kLazinessMap.at(laziness_mode_) == "LazyA* modified") {
+    // #if KEEP_SUBSUMING_HISTORY
+    //                 ComputeAndAddSuccessorsCompleteLazy(n);
+    // #else
+    //                 ComputeAndAddSuccessors(n);
+    // #endif
+    //             }
+    //             else {
+    //                 ComputeAndAddSuccessorsCompleteLazy(n);
+    //             }
 }
+bool GraphSearch::ReCalculateVisibilitySetMC(Inspection::VPtr vertex, NodePtr parent, Idx m, NodePtr new_node, RealNum cost)
+{
+    //planner->ComputeVisibilitySet(graph_->Vertex(v));
 
-bool GraphSearch::AddNode(NodePtr n, const bool skip_queue_operations) {
-    if (DominatedByClosedState(n)) {
+    auto parentPosition = graph_->Vertex(parent->Index())->state->as<DroneStateSpace::StateType>()->Position();
+
+    vis.Clear();
+    auto candidateVertexPos = graph_->Vertex(m)->state->as<DroneStateSpace::StateType>()->Position();
+    Vec3 direction = (candidateVertexPos - parentPosition);
+    auto normVec = direction.norm();
+    direction.normalize();
+    Vec3 temp_originalPos;
+    RealNum epsilon = 0.1;
+    temp_originalPos[0] = candidateVertexPos[0] + direction[0] * epsilon;
+    temp_originalPos[1] = candidateVertexPos[1] + direction[1] * epsilon;
+    temp_originalPos[2] = candidateVertexPos[2] + direction[2] * epsilon;
+    //todo change the name to this func
+    auto currentTimeRiskZone = cost; //map_->CostRiskZone(m, parent->Index());
+    auto perviousTimeRiskZone = parent->CostToComeRiskZone();
+    // if (!IsInRiskZone || !planner->IsPointInsideBox(temp_originalPos, LowerBordersXYZ, UpperBordersXYZ))
+    if (!planner->IsPointInsideBox(temp_originalPos, LowerBordersXYZ, UpperBordersXYZ))
+
+    {
+        vis.Insert(graph_->Vertex(m)->vis);
+        new_node->SetCostToComeRiskZone(0.0);
+        new_node->SetTotalLocationError(totalLocationErrorDefault);
+    }
+    else
+    {
+        new_node->SetCostToComeRiskZone(currentTimeRiskZone + perviousTimeRiskZone);
+
+        Idx MonteCarloNum = ba_x.size();
+        if (new_node->CostToComeRiskZone() > minTimeAllowInRistZone)
+        {
+            auto x = candidateVertexPos[0] - parentPosition[0];
+            auto y = candidateVertexPos[1] - parentPosition[1];
+            auto z = candidateVertexPos[1] - parentPosition[1];
+            //todo psi and theta
+            RealNum psi = atan2(y, x);
+            RealNum theta = atan2(z, sqrt(x * x + y * y));
+            vertex->state->as<DroneStateSpace::StateType>()->SetYaw(graph_->Vertex(m)->state->as<DroneStateSpace::StateType>()->Yaw());
+            vertex->state->as<DroneStateSpace::StateType>()->SetCameraAngle(graph_->Vertex(m)->state->as<DroneStateSpace::StateType>()->CameraAngle());
+            // RealNum theta = graph_->Vertex(m)->state->as<DroneStateSpace::StateType>()->CameraAngle();
+            // RealNum psi = graph_->Vertex(m)->state->as<DroneStateSpace::StateType>()->Yaw();
+            RealNum x_error = 0, y_error = 0, z_error = 0;
+
+            auto previousTotalLocationError = new_node->GetTotalLocationError();
+            Vec3 pos;
+            if (MonteCarloNum < 0.5)
+            {
+                pos[0] = candidateVertexPos[0];
+                pos[1] = candidateVertexPos[1];
+                pos[2] = candidateVertexPos[2];
+                vertex->state->as<DroneStateSpace::StateType>()->SetPosition(pos);
+                planner->ComputeVisibilitySet(vertex);
+
+                for (size_t j = 0; j < MAX_COVERAGE_SIZE; j++)
+                {
+                    //todo make bitset_ private
+                    if (virtual_graph_coverage_.bitset_[j] > 0.5 && vertex->vis.bitset_[j] > 0.5)
+                    {
+                        vis.bitset_[j] = 1;
+                    }
+                }
+            }
+            for (size_t i = 0; i < ba_x.size(); i++)
+            {
+
+                auto temp_x_error = ba_x[i] * (1.0 / 2.0) * (currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone);
+                temp_x_error += (1.0 / 6.0) * (currentTimeRiskZone * currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone * perviousTimeRiskZone) * (-bg_z[i] + bg_y[i]);
+
+                auto temp_y_error = ba_y[i] * (1.0 / 2.0) * (currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone);
+                temp_y_error += (1.0 / 6.0) * (currentTimeRiskZone * currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone * perviousTimeRiskZone) * (bg_z[i] - bg_x[i]);
+
+                auto temp_z_error = ba_z[i] * (1.0 / 2.0) * (currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone);
+                temp_z_error += (1.0 / 6.0) * (currentTimeRiskZone * currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone * perviousTimeRiskZone) * (-bg_y[i] + bg_x[i]);
+
+                // x_error = cos(theta) * temp_x_error - sin(theta) * temp_z_error;
+                // y_error = sin(psi) * sin(theta) * temp_x_error + cos(psi) * temp_y_error + sin(psi) * cos(theta) * temp_z_error;
+                // z_error = cos(psi) * sin(theta) * temp_x_error - sin(psi) * temp_y_error + cos(psi) * cos(theta) * temp_z_error;
+
+                previousTotalLocationError[i][0] += cos(theta) * cos(psi) * temp_x_error - sin(psi) * temp_y_error + sin(theta) * cos(psi) * temp_z_error;
+                previousTotalLocationError[i][1] += cos(theta) * sin(psi) * temp_x_error + cos(psi) * temp_y_error + sin(theta) * sin(psi) * temp_z_error;
+                previousTotalLocationError[i][2] += -sin(theta) * temp_x_error + cos(theta) * temp_z_error;
+                x_error += previousTotalLocationError[i][0];
+                y_error += previousTotalLocationError[i][1];
+                z_error += previousTotalLocationError[i][2];
+
+                pos[0] = candidateVertexPos[0] + previousTotalLocationError[i][0];
+                pos[1] = candidateVertexPos[1] + previousTotalLocationError[i][1];
+                pos[2] = candidateVertexPos[2] + previousTotalLocationError[i][2];
+
+                if (!planner->IsPointInsideBox(pos, LowerBordersXYZ, UpperBordersXYZ))
+                {
+
+                    // pos[0] = candidateVertexPos[0];
+                    // pos[1] = candidateVertexPos[1];
+                    // pos[2] = candidateVertexPos[2];
+                    previousTotalLocationError[i][0] = 0.0;
+                    previousTotalLocationError[i][1] = 0.0;
+                    previousTotalLocationError[i][2] = 0.0;
+                    // x_error /= (i+1);
+                    // y_error /= (i+1);
+                    // z_error /= (i+1);
+                    // auto TotalError = sqrt(x_error * x_error + y_error * y_error + z_error * z_error);
+                    // std::cout << "candidateVertexPos = " <<  candidateVertexPos[0] << "," <<  candidateVertexPos[1] << "," <<  candidateVertexPos[2] << std::endl;
+                    // std::cout << "pos = " <<  pos[0] << "," <<  pos[1] << "," <<  pos[2] << std::endl;
+
+                    // std::cout << "TotalError = " << x_error << "," << y_error << "," << z_error << std::endl;
+                }
+
+                vertex->state->as<DroneStateSpace::StateType>()->SetPosition(pos);
+                planner->ComputeVisibilitySet(vertex);
+
+                for (size_t j = 0; j < MAX_COVERAGE_SIZE; j++)
+                {
+
+                    //todo make bitset_ private
+                    if (virtual_graph_coverage_.bitset_[j] > 0.5 && vertex->vis.bitset_[j] > 0.5)
+                    {
+                        vis.bitset_[j] += 1;
+                    }
+                }
+            }
+            new_node->SetTotalLocationError(previousTotalLocationError);
+
+            for (size_t j = 0; j < MAX_COVERAGE_SIZE; j++)
+            {
+                // if (virtual_graph_coverage_.visPOI[j] > 0.5 && graph_->Vertex(m)->vis.visPOI[j] > 0.5)
+                // {
+                //     x_error /= MonteCarloNum;
+                //     y_error /= MonteCarloNum;
+                //     z_error /= MonteCarloNum;
+                //     auto TotalError = sqrt(x_error * x_error + y_error * y_error + z_error * z_error);
+                //     auto p = 1 - TotalError * 0.1;
+                //     vis.visPOI[j] = 1 - (1 - p) * (1 - new_node->VisSet().visPOI[j]);
+
+                //     if (vis.visPOI[j] > 0.99)
+                //     {
+                //         vis.visPOI[j] = 1;
+                //     }
+                //     if (vis.visPOI[j] < 0)
+                //     {
+                //         vis.visPOI[j] = 0;
+                //     }
+                // }
+                if (vis.bitset_[j] > 0.5)
+                {
+                    auto p = 1.0 * vis.bitset_[j] / MonteCarloNum;
+                    vis.bitset_[j] = 1 - (1 - p) * (1 - new_node->VisSet().bitset_[j]);
+
+                    if (vis.bitset_[j] > 0.99)
+                    {
+                        vis.bitset_[j] = 1;
+                    }
+                    if (vis.bitset_[j] < 0)
+                    {
+                        vis.bitset_[j] = 0;
+                    }
+                }
+            }
+        }
+        else
+        {
+            vis.Insert(graph_->Vertex(m)->vis);
+        }
+    }
+
+    if ((currentTimeRiskZone + perviousTimeRiskZone) > maxTimeAllowInRistZone)
+    {
+        // std::cout << "accumulatedCostRiskZone " << CostRiskZone+accumulatedCostRiskZone;
+        // std::cout << ","<< new_node->CostToComeRiskZone()  << std::endl;
+
         return false;
     }
 
-    if (SubsumedByOpenState(n, skip_queue_operations)) {
+    // if ((currentTimeRiskZone + perviousTimeRiskZone) > minTimeAllowInRistZone)
+    // {
+    //     auto milli_g2mpss = 9.81 / 1e3;                //   Conversion from [mili g ] to [m/s^2]
+    //     auto degPerHr2radPerSec = (3.14 / 180) / 3600; //  Conversion from [deg/hr] to [rad/s]
+    //     auto b_a = b_a_milli_g * milli_g2mpss;
+    //     auto b_g = b_g_degPerHr * degPerHr2radPerSec;
+    //     auto costRiskZone = map_->LocationErrorFunc(b_a, b_g, new_node->CostToComeRiskZone());
+    //     auto MinTimeCostRiskZone = map_->LocationErrorFunc(b_a, b_g, minTimeAllowInRistZone);
+    //     if (costRiskZone > MinTimeCostRiskZone)
+    //     {
+    //         cost = cost + multipleCostFunction * (costRiskZone - MinTimeCostRiskZone); // 1000000;
+    //     }
+    // }
+    return true;
+}
+bool GraphSearch::AddNode(NodePtr n, const bool skip_queue_operations)
+{
+    if (DominatedByClosedState(n))
+    {
+        return false;
+    }
+
+    if (SubsumedByOpenState(n, skip_queue_operations))
+    {
         return false;
     }
 
     open_sets_[n->Index()].insert(n);
 
-    if (!skip_queue_operations) {
+    if (!skip_queue_operations)
+    {
         queue_->push(n);
     }
 
     return true;
 }
 
-void GraphSearch::RecursivelyAddNode(NodePtr n, const bool skip_queue_operations) {
-    if (!map_->EdgeExists(n->Parent()->Index(), n->Index())
-            || n->Parent()->SearchID() < search_id_) {
-        for (auto s : n->SubsumedNodes()) {
+void GraphSearch::RecursivelyAddNode(NodePtr n, const bool skip_queue_operations)
+{
+    if (!map_->EdgeExists(n->Parent()->Index(), n->Index()) || n->Parent()->SearchID() < search_id_)
+    {
+        for (auto s : n->SubsumedNodes())
+        {
             s->SetSubsumed(false);
             RecursivelyAddNode(s, skip_queue_operations);
         }
     }
-    else {
+    else
+    {
         AddNode(n, skip_queue_operations);
     }
 }
 
-bool GraphSearch::SubsumedByOpenState(NodePtr node, const bool skip_queue_operations) {
+bool GraphSearch::SubsumedByOpenState(NodePtr node, const bool skip_queue_operations)
+{
     auto index = node->Index();
 
-    for (auto it = open_sets_[index].begin(); it != open_sets_[index].end();) {
+    for (auto it = open_sets_[index].begin(); it != open_sets_[index].end();)
+    {
         NodePtr s = *it;
 
 #if USE_GHOST_DATA
 
-        if (kLazinessMap.at(laziness_mode_) == "LazyA* modified"
-                && this->StronglyDominates(s->CostToCome(), s->VisSet(), node->GhostCost(), node->GhostVisSet())) {
-            if (!s->IsChecked()) {
-                if (!Valid(s)) {
+        if (kLazinessMap.at(laziness_mode_) == "LazyA* modified" && this->StronglyDominates(s->CostToCome(), s->VisSet(), node->GhostCost(), node->GhostVisSet()))
+        {
+            if (!s->IsChecked())
+            {
+                if (!Valid(s))
+                {
                     open_sets_[index].erase(it++);
                     continue;
                 }
@@ -467,9 +841,12 @@ bool GraphSearch::SubsumedByOpenState(NodePtr node, const bool skip_queue_operat
 
 #endif
 
-        if (Dominates(s, node)) {
-            if (kLazinessMap.at(laziness_mode_) == "LazyA* modified" && !s->IsChecked()) {
-                if (!Valid(s)) {
+        if (Dominates(s, node))
+        {
+            if (kLazinessMap.at(laziness_mode_) == "LazyA* modified" && !s->IsChecked())
+            {
+                if (!Valid(s))
+                {
                     open_sets_[index].erase(it++);
                     continue;
                 }
@@ -477,18 +854,21 @@ bool GraphSearch::SubsumedByOpenState(NodePtr node, const bool skip_queue_operat
 
             bool need_update_queue = false;
 
-            if (!skip_queue_operations) {
+            if (!skip_queue_operations)
+            {
 #if USE_GHOST_DATA
 
 #if USE_GHOST_COST_AS_KEY
 
-                if (node->GhostCost() < s->GhostCost() || !s->GhostVisSet().Contains(node->GhostVisSet())) {
+                if (node->GhostCost() < s->GhostCost() || !s->GhostVisSet().Contains(node->GhostVisSet()))
+                {
                     need_update_queue = true;
                 }
 
 #else
 
-                if (!s->GhostVisSet().Contains(node->GhostVisSet())) {
+                if (!s->GhostVisSet().Contains(node->GhostVisSet()))
+                {
                     need_update_queue = true;
                 }
 
@@ -497,7 +877,8 @@ bool GraphSearch::SubsumedByOpenState(NodePtr node, const bool skip_queue_operat
 #endif
             }
 
-            if (need_update_queue) {
+            if (need_update_queue)
+            {
                 NodePtr updated(new Node(s));
                 s->SetLatest(false);
                 updated->Subsume(node);
@@ -505,7 +886,8 @@ bool GraphSearch::SubsumedByOpenState(NodePtr node, const bool skip_queue_operat
                 open_sets_[index].insert(updated);
                 queue_->push(updated);
             }
-            else {
+            else
+            {
                 s->Subsume(node);
             }
 
@@ -514,10 +896,12 @@ bool GraphSearch::SubsumedByOpenState(NodePtr node, const bool skip_queue_operat
 
 #if USE_GHOST_DATA
 
-        if (kLazinessMap.at(laziness_mode_) == "LazyA* modified"
-                && this->StronglyDominates(node->CostToCome(), node->VisSet(), s->GhostCost(), s->GhostVisSet())) {
-            if (!node->IsChecked()) {
-                if (!Valid(node)) {
+        if (kLazinessMap.at(laziness_mode_) == "LazyA* modified" && this->StronglyDominates(node->CostToCome(), node->VisSet(), s->GhostCost(), s->GhostVisSet()))
+        {
+            if (!node->IsChecked())
+            {
+                if (!Valid(node))
+                {
                     return true;
                 }
             }
@@ -529,9 +913,12 @@ bool GraphSearch::SubsumedByOpenState(NodePtr node, const bool skip_queue_operat
 
 #endif
 
-        if (Dominates(node, s)) {
-            if (kLazinessMap.at(laziness_mode_) == "LazyA* modified" && !node->IsChecked()) {
-                if (!Valid(node)) {
+        if (Dominates(node, s))
+        {
+            if (kLazinessMap.at(laziness_mode_) == "LazyA* modified" && !node->IsChecked())
+            {
+                if (!Valid(node))
+                {
                     return true;
                 }
             }
@@ -547,7 +934,8 @@ bool GraphSearch::SubsumedByOpenState(NodePtr node, const bool skip_queue_operat
     return false;
 }
 
-bool GraphSearch::Valid(NodePtr n) {
+bool GraphSearch::Valid(NodePtr n)
+{
     bool local_path_valid = ValidPath(n->LocalPath());
     n->SetChecked(true);
     n->SetValid(local_path_valid);
@@ -555,7 +943,8 @@ bool GraphSearch::Valid(NodePtr n) {
     return local_path_valid;
 }
 
-NodePtr GraphSearch::PopFromQueue() {
+NodePtr GraphSearch::PopFromQueue()
+{
     // pop a parent node
     auto node_to_pop = queue_->top();
     queue_->pop();
@@ -567,20 +956,25 @@ NodePtr GraphSearch::PopFromQueue() {
     getchar();
 #endif
 
-    if (!node_to_pop->Latest()) {
+    if (!node_to_pop->Latest())
+    {
         // This node has been updated to a separate node.
         return nullptr;
     }
 
     // if this node is not subsumed by other nodes
-    if (!node_to_pop->IsSubsumed()) {
-        if (IsUpToDate(node_to_pop)) {
-            if (!node_to_pop->IsChecked()) {
+    if (!node_to_pop->IsSubsumed())
+    {
+        if (IsUpToDate(node_to_pop))
+        {
+            if (!node_to_pop->IsChecked())
+            {
                 bool local_path_valid = ValidPath(node_to_pop->LocalPath());
                 node_to_pop->SetChecked(true);
                 node_to_pop->SetValid(local_path_valid);
 
-                if (!local_path_valid) {
+                if (!local_path_valid)
+                {
                     ComputeAndAddSuccessors(node_to_pop->Parent());
                     return nullptr;
                 }
@@ -595,7 +989,8 @@ NodePtr GraphSearch::PopFromQueue() {
     return nullptr;
 }
 
-NodePtr GraphSearch::PopFromQueueCompleteLazy() {
+NodePtr GraphSearch::PopFromQueueCompleteLazy()
+{
     // pop a parent node
     auto node_to_pop = queue_->top();
     queue_->pop();
@@ -609,31 +1004,37 @@ NodePtr GraphSearch::PopFromQueueCompleteLazy() {
 
 #if USE_NODE_REUSE
 
-    if (node_to_pop->ReusedFromClosedSet()) {
+    if (node_to_pop->ReusedFromClosedSet())
+    {
         return node_to_pop;
     }
 
 #endif
 
-    if (!node_to_pop->Latest()) {
+    if (!node_to_pop->Latest())
+    {
         // This node has been updated to a separate node.
         return nullptr;
     }
 
     // if this node is not subsumed by other nodes
-    if (!node_to_pop->IsSubsumed()) {
+    if (!node_to_pop->IsSubsumed())
+    {
         return node_to_pop;
     }
 
     return nullptr;
 }
 
-bool GraphSearch::IsUpToDate(const NodePtr p) const {
-    if (p->Parent() == nullptr) {
+bool GraphSearch::IsUpToDate(const NodePtr p) const
+{
+    if (p->Parent() == nullptr)
+    {
         return true;
     }
 
-    if (p->IsChecked() && p->IsValid()) {
+    if (p->IsChecked() && p->IsValid())
+    {
         return true;
     }
 
@@ -643,13 +1044,15 @@ bool GraphSearch::IsUpToDate(const NodePtr p) const {
     return (self_id == parent_id);
 }
 
-void GraphSearch::ComputeAndAddSuccessors(const NodePtr parent) {
+void GraphSearch::ComputeAndAddSuccessors(const NodePtr parent)
+{
 #if DEBUG_MODE
     std::cout << "Pre: ";
     PrintOpenSets();
     Idx i = CheckOpenSets();
 
-    if (i > 0) {
+    if (i > 0)
+    {
         std::cout << "Pre: Open set is invalid at " << i << std::endl;
         getchar();
     }
@@ -660,20 +1063,23 @@ void GraphSearch::ComputeAndAddSuccessors(const NodePtr parent) {
     parent->IncreaseSuccessorStatusID();
     Idx id = parent->SuccessorStatusID();
 
-
     std::vector<std::vector<Idx>> successors;
 
-    if (kSuccessorMap.at(successor_mode_) == "expanded") {
+    if (kSuccessorMap.at(successor_mode_) == "expanded")
+    {
         successors = map_->Successors(parent->Index(), parent->VisSet(), graph_);
     }
-    else if (kSuccessorMap.at(successor_mode_) == "first-meet") {
+    else if (kSuccessorMap.at(successor_mode_) == "first-meet")
+    {
         successors = map_->FirstMeetSuccessors(parent->Index(), parent->VisSet(), graph_);
     }
-    else if (kSuccessorMap.at(successor_mode_) == "direct") {
+    else if (kSuccessorMap.at(successor_mode_) == "direct")
+    {
         successors = map_->NeighboringSuccessors(parent->Index());
     }
 
-    for (const auto& s : successors) {
+    for (const auto &s : successors)
+    {
         Idx m = s[0];
         NodePtr new_node(new Node());
         new_node->CopyAsChild(parent);
@@ -682,33 +1088,40 @@ void GraphSearch::ComputeAndAddSuccessors(const NodePtr parent) {
         new_node->SetSuccessorStaturID(id);
         num_nodes_generated_++;
 
-        if (DominatedByClosedState(new_node)) {
+        if (DominatedByClosedState(new_node))
+        {
             continue;
         }
 
-        if (kSuccessorMap.at(successor_mode_) != "direct") {
-            if (DominatedByOpenState(new_node)) {
-                if (parent->SuccessorStatusID() != id) {
+        if (kSuccessorMap.at(successor_mode_) != "direct")
+        {
+            if (DominatedByOpenState(new_node))
+            {
+                if (parent->SuccessorStatusID() != id)
+                {
                     break;
                 }
 
                 continue;
             }
 
-            if (parent->SuccessorStatusID() != id) {
+            if (parent->SuccessorStatusID() != id)
+            {
                 break;
             }
         }
-        else {
+        else
+        {
             // Do not need to recompute successors.
-            if (DominatedByOpenState2(new_node)) {
+            if (DominatedByOpenState2(new_node))
+            {
                 continue;
             }
         }
 
 #if USE_HEURISTIC
         new_node->SetHeuristic(map_->ComputeHeuristic(m, new_node->VisSet(), graph_,
-                               virtual_graph_coverage_));
+                                                      virtual_graph_coverage_));
 #endif
 
         open_sets_[new_node->Index()].insert(new_node);
@@ -721,7 +1134,8 @@ void GraphSearch::ComputeAndAddSuccessors(const NodePtr parent) {
     PrintOpenSets();
     i = CheckOpenSets();
 
-    if (i > 0) {
+    if (i > 0)
+    {
         std::cout << "Post: Open set is invalid at " << i << std::endl;
         getchar();
     }
@@ -730,9 +1144,12 @@ void GraphSearch::ComputeAndAddSuccessors(const NodePtr parent) {
 #endif
 }
 
-bool GraphSearch::NewNodesInvolved(const NodePtr parent, const std::vector<Idx>& successor) const {
-    for (const auto& i : successor) {
-        if (i >= parent->ExtendedGraphSize()) {
+bool GraphSearch::NewNodesInvolved(const NodePtr parent, const std::vector<Idx> &successor) const
+{
+    for (const auto &i : successor)
+    {
+        if (i >= parent->ExtendedGraphSize())
+        {
             return true;
         }
     }
@@ -740,7 +1157,8 @@ bool GraphSearch::NewNodesInvolved(const NodePtr parent, const std::vector<Idx>&
     return false;
 }
 
-void GraphSearch::ComputeAndAddSuccessorsCompleteLazy(const NodePtr parent) {
+void GraphSearch::ComputeAndAddSuccessorsCompleteLazy(const NodePtr parent)
+{
 #if DEBUG_MODE
     std::cout << "Pre: ";
     PrintOpenSets();
@@ -749,13 +1167,16 @@ void GraphSearch::ComputeAndAddSuccessorsCompleteLazy(const NodePtr parent) {
 
     std::vector<std::vector<Idx>> successors;
 
-    if (kSuccessorMap.at(successor_mode_) == "expanded") {
+    if (kSuccessorMap.at(successor_mode_) == "expanded")
+    {
         successors = map_->Successors(parent->Index(), parent->VisSet(), graph_);
     }
-    else if (kSuccessorMap.at(successor_mode_) == "first-meet") {
+    else if (kSuccessorMap.at(successor_mode_) == "first-meet")
+    {
         successors = map_->FirstMeetSuccessors(parent->Index(), parent->VisSet(), graph_);
     }
-    else if (kSuccessorMap.at(successor_mode_) == "direct") {
+    else if (kSuccessorMap.at(successor_mode_) == "direct")
+    {
         successors = map_->NeighboringSuccessors(parent->Index());
     }
 
@@ -771,13 +1192,15 @@ void GraphSearch::ComputeAndAddSuccessorsCompleteLazy(const NodePtr parent) {
     // getchar();
 
 #if USE_NODE_REUSE
-    const bool& add_only_new_successors = parent->ReusedFromClosedSet();
+    const bool &add_only_new_successors = parent->ReusedFromClosedSet();
 #endif
 
-    for (const auto& s : successors) {
+    for (const auto &s : successors)
+    {
 #if USE_NODE_REUSE
 
-        if (add_only_new_successors && !NewNodesInvolved(parent, s)) {
+        if (add_only_new_successors && !NewNodesInvolved(parent, s))
+        {
             continue;
         }
 
@@ -790,19 +1213,21 @@ void GraphSearch::ComputeAndAddSuccessorsCompleteLazy(const NodePtr parent) {
         new_node->SetLocalPath(s);
         num_nodes_generated_++;
 
-        if (DominatedByClosedState(new_node)) {
+        if (DominatedByClosedState(new_node))
+        {
             // std::cout << "Dominated by closed states" << std::endl;
             continue;
         }
 
-        if (DominatedByOpenStateCompleteLazy(new_node)) {
+        if (DominatedByOpenStateCompleteLazy(new_node))
+        {
             // std::cout << "Dominated by open states" << std::endl;
             continue;
         }
 
 #if USE_HEURISTIC
         new_node->SetHeuristic(map_->ComputeHeuristic(m, new_node->VisSet(), graph_,
-                               virtual_graph_coverage_));
+                                                      virtual_graph_coverage_));
 #endif
         // std::cout << "Added to open set" << std::endl;
 
@@ -820,7 +1245,8 @@ void GraphSearch::ComputeAndAddSuccessorsCompleteLazy(const NodePtr parent) {
 #endif
 }
 
-NodePtr GraphSearch::ComputeNearestSuccessor(const NodePtr parent) {
+NodePtr GraphSearch::ComputeNearestSuccessor(const NodePtr parent)
+{
     auto successor = map_->NearestSuccessor(parent->Index(), parent->VisSet(), graph_);
 
     Idx m = successor[0];
@@ -832,12 +1258,15 @@ NodePtr GraphSearch::ComputeNearestSuccessor(const NodePtr parent) {
     return new_node;
 }
 
-void GraphSearch::PrintClosedSets() const {
-    for (auto i = 0; i < closed_sets_.size(); ++i) {
+void GraphSearch::PrintClosedSets() const
+{
+    for (auto i = 0; i < closed_sets_.size(); ++i)
+    {
         std::cout << "Closed set " << i << " :" << std::endl;
-        ClosedSet closed_set = *(closed_sets_.begin()+i);
+        ClosedSet closed_set = *(closed_sets_.begin() + i);
 
-        for (auto node : closed_set) {
+        for (auto node : closed_set)
+        {
             PrintNodeStatus(node);
         }
 
@@ -845,13 +1274,16 @@ void GraphSearch::PrintClosedSets() const {
     }
 }
 
-void GraphSearch::PrintOpenSets() const {
+void GraphSearch::PrintOpenSets() const
+{
     unsigned i = 0;
 
-    for (auto open_set : open_sets_) {
+    for (auto open_set : open_sets_)
+    {
         std::cout << "Open set " << i << " :" << std::endl;
 
-        for (auto node : open_set) {
+        for (auto node : open_set)
+        {
             PrintNodeStatus(node);
         }
 
@@ -860,18 +1292,22 @@ void GraphSearch::PrintOpenSets() const {
     }
 }
 
-void GraphSearch::PrintNodeStatus(const NodePtr node, std::ostream& out) const {
-    if (node == nullptr) {
+void GraphSearch::PrintNodeStatus(const NodePtr node, std::ostream &out) const
+{
+    if (node == nullptr)
+    {
         out << "Node is null.\t";
         return;
     }
 
     out << node->Index() << ", ";
 
-    if (node->Parent()) {
+    if (node->Parent())
+    {
         out << node->Parent()->Index() << ", ";
     }
-    else {
+    else
+    {
         out << "nullptr, ";
     }
 
@@ -889,27 +1325,35 @@ void GraphSearch::PrintNodeStatus(const NodePtr node, std::ostream& out) const {
         << node->NumberOfSubsumed() << "; \t";
 }
 
-Idx GraphSearch::CheckOpenSets() const {
-    for (Idx it = 0; it < open_sets_.size(); ++it) {
+Idx GraphSearch::CheckOpenSets() const
+{
+    for (Idx it = 0; it < open_sets_.size(); ++it)
+    {
         OpenSet set = *(open_sets_.begin() + it);
 
-        for (auto i = set.begin(); i != set.end(); ++i) {
-            for (auto j = i; j != set.end(); ++j) {
-                if (i != j && Dominates(*i, *j)) {
+        for (auto i = set.begin(); i != set.end(); ++i)
+        {
+            for (auto j = i; j != set.end(); ++j)
+            {
+                if (i != j && Dominates(*i, *j))
+                {
                     return it;
                 }
             }
 
             NodePtr n = *i;
 
-            if (n->NumberOfSubsumed() > 0) {
-                if (!n->IsChecked()) {
+            if (n->NumberOfSubsumed() > 0)
+            {
+                if (!n->IsChecked())
+                {
                     std::cout << "not checked" << std::endl;
                     getchar();
                     return it;
                 }
 
-                if (!n->IsValid()) {
+                if (!n->IsValid())
+                {
                     std::cout << "not valid" << std::endl;
                     getchar();
                     return it;
@@ -921,7 +1365,8 @@ Idx GraphSearch::CheckOpenSets() const {
     return 0;
 }
 
-bool GraphSearch::InGoalSet(const NodePtr n) const {
+bool GraphSearch::InGoalSet(const NodePtr n) const
+{
 #if USE_GHOST_DATA
     // return (n->VisSet().Size() >= p_*virtual_graph_coverage_.Size());
     return (n->GhostVisSet() == virtual_graph_coverage_);
@@ -930,39 +1375,47 @@ bool GraphSearch::InGoalSet(const NodePtr n) const {
     return (n->VisSet() == virtual_graph_coverage_);
 }
 
-bool GraphSearch::StronglyDominates(const RealNum& l1, const VisibilitySet& s1, const RealNum& l2,
-                                    const VisibilitySet& s2) const {
-    if (l1 > l2) {
+bool GraphSearch::StronglyDominates(const RealNum &l1, const VisibilitySet &s1, const RealNum &l2,
+                                    const VisibilitySet &s2) const
+{
+    if (l1 > l2)
+    {
         return false;
     }
 
-    if (!s1.Contains(s2)) {
+    if (!s1.Contains(s2))
+    {
         return false;
     }
 
     return true;
 }
 
-bool GraphSearch::DominatedByClosedState(const NodePtr node) const {
+bool GraphSearch::DominatedByClosedState(const NodePtr node) const
+{
     auto states = closed_sets_[node->Index()];
 
-    for (const auto s : states) {
+    for (const auto s : states)
+    {
 #if USE_GHOST_DATA
 
-        if (this->StronglyDominates(s->CostToCome(), s->VisSet(), node->GhostCost(), node->GhostVisSet())) {
+        if (this->StronglyDominates(s->CostToCome(), s->VisSet(), node->GhostCost(), node->GhostVisSet()))
+        {
             // New state is completely dominated.
             return true;
         }
 
         if (this->StronglyDominates(s->GhostCost(), s->GhostVisSet(), node->GhostCost(),
-                                    node->GhostVisSet())) {
+                                    node->GhostVisSet()))
+        {
             s->Subsume(node, true);
             return true;
         }
 
 #else
 
-        if (this->StronglyDominates(s->CostToCome(), s->VisSet(), node->CostToCome(), node->VisSet())) {
+        if (this->StronglyDominates(s->CostToCome(), s->VisSet(), node->CostToCome(), node->VisSet()))
+        {
             return true;
         }
 
@@ -972,34 +1425,41 @@ bool GraphSearch::DominatedByClosedState(const NodePtr node) const {
     return false;
 }
 
-bool GraphSearch::DominatedByOpenState(const NodePtr node) {
+bool GraphSearch::DominatedByOpenState(const NodePtr node)
+{
     // this is a copy
     Idx index = node->Index();
     auto states = open_sets_[index];
 
     // for (auto s : states) {
-    for (auto it = states.begin(); it != states.end();) {
+    for (auto it = states.begin(); it != states.end();)
+    {
         NodePtr s = *it;
 
         // early return for duplicates
-        if (node->Parent() == s->Parent() && fabs(node->CostToCome() - s->CostToCome()) < EPS) {
+        if (node->Parent() == s->Parent() && fabs(node->CostToCome() - s->CostToCome()) < EPS)
+        {
             s->SetSuccessorStaturID(node->SuccessorStatusID());
             return true;
         }
 
         // remove out of date nodes
-        if (!IsUpToDate(s)) {
+        if (!IsUpToDate(s))
+        {
             open_sets_[index].erase(it++);
             continue;
         }
 
-        if (Dominates(s, node)) {
-            if (!s->IsChecked()) {
+        if (Dominates(s, node))
+        {
+            if (!s->IsChecked())
+            {
                 bool local_path_valid = ValidPath(s->LocalPath());
                 s->SetChecked(true);
                 s->SetValid(local_path_valid);
 
-                if (!local_path_valid) {
+                if (!local_path_valid)
+                {
                     open_sets_[index].erase(it++);
 
                     ComputeAndAddSuccessors(s->Parent());
@@ -1013,13 +1473,15 @@ bool GraphSearch::DominatedByOpenState(const NodePtr node) {
 
 #if USE_GHOST_COST_AS_KEY
 
-            if (node->GhostCost() < s->GhostCost() || !s->GhostVisSet().Contains(node->GhostVisSet())) {
+            if (node->GhostCost() < s->GhostCost() || !s->GhostVisSet().Contains(node->GhostVisSet()))
+            {
                 need_update_queue = true;
             }
 
 #else
 
-            if (!s->GhostVisSet().Contains(node->GhostVisSet())) {
+            if (!s->GhostVisSet().Contains(node->GhostVisSet()))
+            {
                 need_update_queue = true;
             }
 
@@ -1027,7 +1489,8 @@ bool GraphSearch::DominatedByOpenState(const NodePtr node) {
 
 #endif
 
-            if (need_update_queue) {
+            if (need_update_queue)
+            {
                 NodePtr updated(new Node(s));
                 s->SetLatest(false);
                 updated->Subsume(node);
@@ -1035,20 +1498,24 @@ bool GraphSearch::DominatedByOpenState(const NodePtr node) {
                 open_sets_[index].insert(updated);
                 queue_->push(updated);
             }
-            else {
+            else
+            {
                 s->Subsume(node);
             }
 
             return true;
         }
 
-        if (Dominates(node, s)) {
-            if (!node->IsChecked()) {
+        if (Dominates(node, s))
+        {
+            if (!node->IsChecked())
+            {
                 bool local_path_valid = ValidPath(node->LocalPath());
                 node->SetChecked(true);
                 node->SetValid(local_path_valid);
 
-                if (!local_path_valid) {
+                if (!local_path_valid)
+                {
                     ComputeAndAddSuccessors(node->Parent());
                     return true;
                 }
@@ -1065,22 +1532,27 @@ bool GraphSearch::DominatedByOpenState(const NodePtr node) {
     return false;
 }
 
-bool GraphSearch::DominatedByOpenState2(const NodePtr node) {
+bool GraphSearch::DominatedByOpenState2(const NodePtr node)
+{
     // this is a copy
     auto index = node->Index();
 
-    for (auto it = open_sets_[index].begin(); it != open_sets_[index].end();) {
+    for (auto it = open_sets_[index].begin(); it != open_sets_[index].end();)
+    {
         NodePtr s = *it;
 
 #if USE_GHOST_DATA
 
-        if (this->StronglyDominates(s->CostToCome(), s->VisSet(), node->GhostCost(), node->GhostVisSet())) {
-            if (!s->IsChecked()) {
+        if (this->StronglyDominates(s->CostToCome(), s->VisSet(), node->GhostCost(), node->GhostVisSet()))
+        {
+            if (!s->IsChecked())
+            {
                 bool local_path_valid = ValidPath(s->LocalPath());
                 s->SetChecked(true);
                 s->SetValid(local_path_valid);
 
-                if (!local_path_valid) {
+                if (!local_path_valid)
+                {
                     open_sets_[index].erase(it++);
                     continue;
                 }
@@ -1091,13 +1563,16 @@ bool GraphSearch::DominatedByOpenState2(const NodePtr node) {
 
 #endif
 
-        if (Dominates(s, node)) {
-            if (!s->IsChecked()) {
+        if (Dominates(s, node))
+        {
+            if (!s->IsChecked())
+            {
                 bool local_path_valid = ValidPath(s->LocalPath());
                 s->SetChecked(true);
                 s->SetValid(local_path_valid);
 
-                if (!local_path_valid) {
+                if (!local_path_valid)
+                {
                     open_sets_[index].erase(it++);
                     continue;
                 }
@@ -1109,13 +1584,15 @@ bool GraphSearch::DominatedByOpenState2(const NodePtr node) {
 
 #if USE_GHOST_COST_AS_KEY
 
-            if (node->GhostCost() < s->GhostCost() || !s->GhostVisSet().Contains(node->GhostVisSet())) {
+            if (node->GhostCost() < s->GhostCost() || !s->GhostVisSet().Contains(node->GhostVisSet()))
+            {
                 need_update_queue = true;
             }
 
 #else
 
-            if (!s->GhostVisSet().Contains(node->GhostVisSet())) {
+            if (!s->GhostVisSet().Contains(node->GhostVisSet()))
+            {
                 need_update_queue = true;
             }
 
@@ -1123,7 +1600,8 @@ bool GraphSearch::DominatedByOpenState2(const NodePtr node) {
 
 #endif
 
-            if (need_update_queue) {
+            if (need_update_queue)
+            {
                 NodePtr updated(new Node(s));
                 s->SetLatest(false);
                 updated->Subsume(node);
@@ -1131,7 +1609,8 @@ bool GraphSearch::DominatedByOpenState2(const NodePtr node) {
                 open_sets_[index].insert(updated);
                 queue_->push(updated);
             }
-            else {
+            else
+            {
                 s->Subsume(node);
             }
 
@@ -1140,13 +1619,16 @@ bool GraphSearch::DominatedByOpenState2(const NodePtr node) {
 
 #if USE_GHOST_DATA
 
-        if (this->StronglyDominates(node->CostToCome(), node->VisSet(), s->GhostCost(), s->GhostVisSet())) {
-            if (!node->IsChecked()) {
+        if (this->StronglyDominates(node->CostToCome(), node->VisSet(), s->GhostCost(), s->GhostVisSet()))
+        {
+            if (!node->IsChecked())
+            {
                 bool local_path_valid = ValidPath(node->LocalPath());
                 node->SetChecked(true);
                 node->SetValid(local_path_valid);
 
-                if (!local_path_valid) {
+                if (!local_path_valid)
+                {
                     return true;
                 }
             }
@@ -1158,13 +1640,16 @@ bool GraphSearch::DominatedByOpenState2(const NodePtr node) {
 
 #endif
 
-        if (Dominates(node, s)) {
-            if (!node->IsChecked()) {
+        if (Dominates(node, s))
+        {
+            if (!node->IsChecked())
+            {
                 bool local_path_valid = ValidPath(node->LocalPath());
                 node->SetChecked(true);
                 node->SetValid(local_path_valid);
 
-                if (!local_path_valid) {
+                if (!local_path_valid)
+                {
                     return true;
                 }
             }
@@ -1181,36 +1666,43 @@ bool GraphSearch::DominatedByOpenState2(const NodePtr node) {
 }
 
 bool GraphSearch::DominatedByOpenStateCompleteLazy(const NodePtr node,
-        const bool skip_queue_operations) {
+                                                   const bool skip_queue_operations)
+{
     // this is a copy
     auto index = node->Index();
 
-    for (auto it = open_sets_[index].begin(); it != open_sets_[index].end();) {
+    for (auto it = open_sets_[index].begin(); it != open_sets_[index].end();)
+    {
         NodePtr s = *it;
 
 #if USE_GHOST_DATA
 
-        if (this->StronglyDominates(s->CostToCome(), s->VisSet(), node->GhostCost(), node->GhostVisSet())) {
+        if (this->StronglyDominates(s->CostToCome(), s->VisSet(), node->GhostCost(), node->GhostVisSet()))
+        {
             return true;
         }
 
 #endif
 
-        if (Dominates(s, node)) {
+        if (Dominates(s, node))
+        {
             bool need_update_queue = false;
 
-            if (!skip_queue_operations) {
+            if (!skip_queue_operations)
+            {
 #if USE_GHOST_DATA
 
 #if USE_GHOST_COST_AS_KEY
 
-                if (node->GhostCost() < s->GhostCost() || !s->GhostVisSet().Contains(node->GhostVisSet())) {
+                if (node->GhostCost() < s->GhostCost() || !s->GhostVisSet().Contains(node->GhostVisSet()))
+                {
                     need_update_queue = true;
                 }
 
 #else
 
-                if (!s->GhostVisSet().Contains(node->GhostVisSet())) {
+                if (!s->GhostVisSet().Contains(node->GhostVisSet()))
+                {
                     need_update_queue = true;
                 }
 
@@ -1219,7 +1711,8 @@ bool GraphSearch::DominatedByOpenStateCompleteLazy(const NodePtr node,
 #endif
             }
 
-            if (need_update_queue) {
+            if (need_update_queue)
+            {
                 NodePtr updated(new Node(s));
                 s->SetLatest(false);
                 updated->Subsume(node);
@@ -1227,7 +1720,8 @@ bool GraphSearch::DominatedByOpenStateCompleteLazy(const NodePtr node,
                 open_sets_[index].insert(updated);
                 queue_->push(updated);
             }
-            else {
+            else
+            {
                 s->Subsume(node);
             }
 
@@ -1236,7 +1730,8 @@ bool GraphSearch::DominatedByOpenStateCompleteLazy(const NodePtr node,
 
 #if USE_GHOST_DATA
 
-        if (this->StronglyDominates(node->CostToCome(), node->VisSet(), s->GhostCost(), s->GhostVisSet())) {
+        if (this->StronglyDominates(node->CostToCome(), node->VisSet(), s->GhostCost(), s->GhostVisSet()))
+        {
             s->SetSubsumed(true);
             open_sets_[index].erase(it++);
             continue;
@@ -1244,7 +1739,8 @@ bool GraphSearch::DominatedByOpenStateCompleteLazy(const NodePtr node,
 
 #endif
 
-        if (Dominates(node, s)) {
+        if (Dominates(node, s))
+        {
             node->Subsume(s);
             open_sets_[index].erase(it++);
             continue;
@@ -1256,16 +1752,19 @@ bool GraphSearch::DominatedByOpenStateCompleteLazy(const NodePtr node,
     return false;
 }
 
-bool GraphSearch::Dominates(const NodePtr n1, const NodePtr n2) const {
+bool GraphSearch::Dominates(const NodePtr n1, const NodePtr n2) const
+{
 #if USE_GHOST_DATA
     VisibilitySet union_set = n2->GhostVisSet();
     union_set.Insert(n1->GhostVisSet());
 
-    if ((1 + eps_)*(n2->GhostCost()) < n1->CostToCome()) {
+    if ((1 + eps_) * (n2->GhostCost()) < n1->CostToCome())
+    {
         return false;
     }
 
-    if (union_set.Size()*p_ > n1->CoverageSize()) {
+    if (union_set.Size() * p_ > n1->CoverageSize())
+    {
         return false;
     }
 
@@ -1275,21 +1774,26 @@ bool GraphSearch::Dominates(const NodePtr n1, const NodePtr n2) const {
 #endif
 }
 
-bool GraphSearch::ValidPath(const std::vector<Idx>& path) {
+bool GraphSearch::ValidPath(const std::vector<Idx> &path)
+{
     SizeType len = path.size();
 
-    if (len > 0) {
-        for (auto i = len-1; i > 0; --i) {
-            Inspection::EPtr edge = graph_->FindEdge(path[i-1], path[i]);
+    if (len > 0)
+    {
+        for (auto i = len - 1; i > 0; --i)
+        {
+            Inspection::EPtr edge = graph_->FindEdge(path[i - 1], path[i]);
 
             // for an up to date successor, there is no invalid but checked edge
-            if (!edge->virtual_checked) {
+            if (!edge->virtual_checked)
+            {
                 time_valid_ += edge->time_forward_kinematics;
                 time_valid_ += edge->time_collision_detection;
                 num_validated_++;
                 edge->virtual_checked = true;
 
-                if (!edge->valid) {
+                if (!edge->valid)
+                {
                     map_->RemoveDirectEdge(edge->source, edge->target);
                     return false;
                 }
@@ -1300,28 +1804,33 @@ bool GraphSearch::ValidPath(const std::vector<Idx>& path) {
     return true;
 }
 
-SizeType GraphSearch::VirtualGraphCoverageSize() const {
+SizeType GraphSearch::VirtualGraphCoverageSize() const
+{
     return virtual_graph_coverage_.Size();
 }
 
-const VisibilitySet& GraphSearch::VirtualGraphCoverage() const {
+const VisibilitySet &GraphSearch::VirtualGraphCoverage() const
+{
     return virtual_graph_coverage_;
 }
 
-
-SizeType GraphSearch::ResultCoverageSize() const {
-    if (result_ == nullptr) {
+SizeType GraphSearch::ResultCoverageSize() const
+{
+    if (result_ == nullptr)
+    {
         return 0;
     }
 
     return result_->VisSet().Size();
 }
 
-RealNum GraphSearch::ResultCost() const {
+RealNum GraphSearch::ResultCost() const
+{
     return result_->CostToCome();
 }
 
-void GraphSearch::PrintTitle(std::ostream& out) const {
+void GraphSearch::PrintTitle(std::ostream &out) const
+{
     out << "GraphSize "
         << "GraphCoverage "
         << "P "
@@ -1342,19 +1851,20 @@ void GraphSearch::PrintTitle(std::ostream& out) const {
         << std::endl;
 }
 
-void GraphSearch::PrintResult(std::ostream& out) const {
+void GraphSearch::PrintResult(std::ostream &out) const
+{
     out << virtual_graph_size_ << " "
         << virtual_graph_coverage_.Size() << " "
         << p_ << " "
         << eps_ << " "
         << ResultCoverageSize() << " "
         << ResultCost() << " "
-        << ResultCoverageSize()/(RealNum)MAX_COVERAGE_SIZE << " "
+        << ResultCoverageSize() / (RealNum)MAX_COVERAGE_SIZE << " "
         << time_vis_ << " "
         << time_build_ << " "
         << time_valid_ << " "
         << time_search_ << " "
-        << time_vis_+time_build_+time_valid_+time_search_ << " "
+        << time_vis_ + time_build_ + time_valid_ + time_search_ << " "
         << num_validated_ << " "
         << virtual_graph_num_edges_ << " "
         << num_nodes_extended_ << " "
@@ -1363,20 +1873,25 @@ void GraphSearch::PrintResult(std::ostream& out) const {
         << std::endl;
 }
 
-SizeType GraphSearch::RelativeTime(const TimePoint start) const {
+SizeType GraphSearch::RelativeTime(const TimePoint start) const
+{
     return std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - start).count();
 }
 
-SizeType GraphSearch::TotalTime() const {
-    return time_vis_+time_build_+time_valid_+time_search_;
+SizeType GraphSearch::TotalTime() const
+{
+    return time_vis_ + time_build_ + time_valid_ + time_search_;
 }
 
-void GraphSearch::SetMaxTimeAllowed(const SizeType& time) {
+void GraphSearch::SetMaxTimeAllowed(const SizeType &time)
+{
     max_time_allowed_ = time;
 }
 
-bool GraphSearch::CheckTermination() const {
-    if (TotalTime() > max_time_allowed_) {
+bool GraphSearch::CheckTermination() const
+{
+    if (TotalTime() > max_time_allowed_)
+    {
         std::cout << "Exceeding maximum time allowed!" << std::endl;
         PrintResult(std::cout);
         return true;
@@ -1385,54 +1900,65 @@ bool GraphSearch::CheckTermination() const {
     return false;
 }
 
-SizeType GraphSearch::VirtualGraphNumEdges() const {
+SizeType GraphSearch::VirtualGraphNumEdges() const
+{
     return virtual_graph_num_edges_;
 }
 
-void GraphSearch::ReconstructNode(const NodePtr node) const {
+void GraphSearch::ReconstructNode(const NodePtr node) const
+{
     auto idx = node->Index();
     node->CopyAsChild(node->Parent());
     node->Extend(idx, node->LocalPathCost(), graph_->Vertex(idx)->vis);
 }
 
-void GraphSearch::TraceFirstUnboundedNode(const NodePtr node, std::queue<NodePtr>& recycle_bin) {
+void GraphSearch::TraceFirstUnboundedNode(const NodePtr node, std::queue<NodePtr> &recycle_bin)
+{
     NodePtr tag = node;
     std::stack<NodePtr> stack;
 
-    while(tag != nullptr && tag->SearchID() < search_id_) {
+    while (tag != nullptr && tag->SearchID() < search_id_)
+    {
         stack.push(tag);
         tag = tag->Parent();
     }
 
     bool found_first_unbounded = true;
 
-    if (tag == nullptr || tag->ReusedFromClosedSet()) {
+    if (tag == nullptr || tag->ReusedFromClosedSet())
+    {
         found_first_unbounded = false;
     }
 
-    while(!stack.empty()) {
+    while (!stack.empty())
+    {
         tag = stack.top();
         stack.pop();
 
         tag->SetSearchID(search_id_);
 
-        if (!found_first_unbounded) {
-            if (!tag->IsBounded(p_, eps_)) {
+        if (!found_first_unbounded)
+        {
+            if (!tag->IsBounded(p_, eps_))
+            {
                 found_first_unbounded = true;
             }
         }
 
-        if (found_first_unbounded) {
+        if (found_first_unbounded)
+        {
             tag->SetReuseFromClosedSet(false);
         }
-        else {
+        else
+        {
             tag->SetReuseFromClosedSet(true);
         }
     }
 }
 
-void GraphSearch::RecycleSubsumedNodes(NodePtr node, std::queue<NodePtr>& recycle_bin,
-                                       const bool force_recycle_all) {
+void GraphSearch::RecycleSubsumedNodes(NodePtr node, std::queue<NodePtr> &recycle_bin,
+                                       const bool force_recycle_all)
+{
     auto tmp_history = node->SubsumedNodes();
     node->ClearSubsumeHistory();
 
@@ -1440,38 +1966,38 @@ void GraphSearch::RecycleSubsumedNodes(NodePtr node, std::queue<NodePtr>& recycl
     Idx index = node->Index();
 #endif
 
-    for (auto n : tmp_history) {
+    for (auto n : tmp_history)
+    {
 #if SAVE_PREDECESSOR
 
-        if (!map_->EdgeExists(index, n->Index())
-                || n->SearchID() < search_id_
-                || !n->ReusedFromClosedSet()) {
+        if (!map_->EdgeExists(index, n->Index()) || n->SearchID() < search_id_ || !n->ReusedFromClosedSet())
+        {
             continue;
         }
 
         NodePtr new_node(new Node());
         new_node->CopyAsChild(n);
         new_node->Extend(index, map_->EdgeCost(index, n->Index()), graph_->Vertex(index)->vis);
-        new_node->SetLocalPath(std::vector<Idx> {index, n->Index()});
+        new_node->SetLocalPath(std::vector<Idx>{index, n->Index()});
 
-        if (!force_recycle_all && Dominates(node, new_node)) {
+        if (!force_recycle_all && Dominates(node, new_node))
+        {
             node->Subsume(new_node);
         }
-        else {
+        else
+        {
             new_node->SetSubsumed(false);
             recycle_bin.push(new_node);
         }
 
 #else
 
-        if (!force_recycle_all
-                && n->Parent()->SearchID() == search_id_
-                && n->Parent()->ReusedFromClosedSet()
-                && map_->EdgeExists(n->Parent()->Index(), n->Index())
-                && Dominates(node, n)) {
+        if (!force_recycle_all && n->Parent()->SearchID() == search_id_ && n->Parent()->ReusedFromClosedSet() && map_->EdgeExists(n->Parent()->Index(), n->Index()) && Dominates(node, n))
+        {
             node->Subsume(n);
         }
-        else {
+        else
+        {
             n->SetSubsumed(false);
             recycle_bin.push(n);
         }
@@ -1480,14 +2006,17 @@ void GraphSearch::RecycleSubsumedNodes(NodePtr node, std::queue<NodePtr>& recycl
     }
 }
 
-void GraphSearch::UpdateUnboundedNodes() {
+void GraphSearch::UpdateUnboundedNodes()
+{
     std::queue<NodePtr> recycle_bin;
 
     // Parse closed set.
-    for (SizeType i = 0; i < virtual_graph_size_; ++i) {
-        auto& closed_set = closed_sets_[i];
+    for (SizeType i = 0; i < virtual_graph_size_; ++i)
+    {
+        auto &closed_set = closed_sets_[i];
 
-        for (auto it = closed_set.begin(); it != closed_set.end(); ++it) {
+        for (auto it = closed_set.begin(); it != closed_set.end(); ++it)
+        {
             auto node = *it;
             this->TraceFirstUnboundedNode(node, recycle_bin);
         }
@@ -1496,26 +2025,31 @@ void GraphSearch::UpdateUnboundedNodes() {
     std::cout << "Parsed closed set" << std::flush;
 
     // Find boundary nodes.
-    std::unordered_set<NodePtr> reopened_nodes;
+    // std::unordered_set<NodePtr> reopened_nodes;
+    std::set<NodePtr, CoverageCmp> reopened_nodes;
+    for (SizeType i = 0; i < virtual_graph_size_; ++i)
+    {
+        auto &closed_set = closed_sets_[i];
 
-    for (SizeType i = 0; i < virtual_graph_size_; ++i) {
-        auto& closed_set = closed_sets_[i];
-
-        for (auto it = closed_set.begin(); it != closed_set.end();) {
+        for (auto it = closed_set.begin(); it != closed_set.end();)
+        {
             auto node = *it;
 
-            if (node->ReusedFromClosedSet()) {
+            if (node->ReusedFromClosedSet())
+            {
                 ++it;
                 continue;
             }
 
-            if (node->Parent() && node->Parent()->ReusedFromClosedSet()) {
+            if (node->Parent() && node->Parent()->ReusedFromClosedSet())
+            {
                 // Boundary node.
                 this->ReconstructNode(node);
                 this->RecycleSubsumedNodes(node, recycle_bin, true);
                 reopened_nodes.insert(node);
             }
-            else {
+            else
+            {
                 // Non-reusable node.
                 this->RecycleSubsumedNodes(node, recycle_bin, true);
             }
@@ -1527,20 +2061,24 @@ void GraphSearch::UpdateUnboundedNodes() {
     std::cout << "\rFound boundary nodes" << std::flush;
 
     // Update open sets.
-    for (SizeType i = 0; i < virtual_graph_size_; ++i) {
-        auto& open_set = open_sets_[i];
+    for (SizeType i = 0; i < virtual_graph_size_; ++i)
+    {
+        auto &open_set = open_sets_[i];
 
-        for (auto it = open_set.begin(); it != open_set.end();) {
+        for (auto it = open_set.begin(); it != open_set.end();)
+        {
             auto node = *it;
 
-            if (node->Parent() == nullptr) {
+            if (node->Parent() == nullptr)
+            {
                 ++it;
                 continue;
             }
 
-            if (node->Parent()->ReusedFromClosedSet()
-                    && map_->EdgeExists(node->Parent()->Index(), node->Index())) {
-                if (!node->IsBounded(p_, eps_)) {
+            if (node->Parent()->ReusedFromClosedSet() && map_->EdgeExists(node->Parent()->Index(), node->Index()))
+            {
+                if (!node->IsBounded(p_, eps_))
+                {
                     // Boundary node.
                     this->ReconstructNode(node);
                     this->RecycleSubsumedNodes(node, recycle_bin);
@@ -1558,7 +2096,8 @@ void GraphSearch::UpdateUnboundedNodes() {
 
     std::cout << "\rUpdated open set" << std::flush;
 
-    for (auto node : reopened_nodes) {
+    for (auto node : reopened_nodes)
+    {
         open_sets_[node->Index()].insert(node);
     }
 
@@ -1566,13 +2105,15 @@ void GraphSearch::UpdateUnboundedNodes() {
 
     std::vector<NodePtr> nodes_to_add;
 
-    while (!recycle_bin.empty()) {
+    while (!recycle_bin.empty())
+    {
         auto node = recycle_bin.front();
         recycle_bin.pop();
 
-        if (node->Parent()->ReusedFromClosedSet()
-                && node->Parent()->SearchID() == search_id_) {
-            if (!node->IsBounded(p_, eps_)) {
+        if (node->Parent()->ReusedFromClosedSet() && node->Parent()->SearchID() == search_id_)
+        {
+            if (!node->IsBounded(p_, eps_))
+            {
                 // Boundary node.
                 this->ReconstructNode(node);
                 this->RecycleSubsumedNodes(node, recycle_bin, true);
@@ -1586,22 +2127,26 @@ void GraphSearch::UpdateUnboundedNodes() {
         this->RecycleSubsumedNodes(node, recycle_bin, true);
     }
 
-    for (auto node : nodes_to_add) {
+    for (auto node : nodes_to_add)
+    {
         AddNode(node, true);
     }
 
     std::cout << "\rInserted recycle bin" << std::flush;
 
-    for (SizeType i = 0; i < virtual_graph_size_; ++i) {
-        auto& closed_set = closed_sets_[i];
+    for (SizeType i = 0; i < virtual_graph_size_; ++i)
+    {
+        auto &closed_set = closed_sets_[i];
 
-        for (auto node : closed_set) {
+        for (auto node : closed_set)
+        {
             queue_->push(node);
         }
 
-        auto& open_set = open_sets_[i];
+        auto &open_set = open_sets_[i];
 
-        for (auto node : open_set) {
+        for (auto node : open_set)
+        {
             queue_->push(node);
         }
     }
