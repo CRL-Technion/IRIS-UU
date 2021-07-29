@@ -5,8 +5,72 @@ src/CMakeFiles/search.dir/graph_search.cc.o
  ../external/crisp_kinematics/Quaternion.h
  ../external/crisp_kinematics/RodProperties.h
  ../external/crisp_kinematics/Tools.h
+ ../external/nigh/src/nigh/impl/atom.hpp
+ ../external/nigh/src/nigh/impl/atomic_bs.hpp
+ ../external/nigh/src/nigh/impl/box_distance.hpp
+ ../external/nigh/src/nigh/impl/cartesian_get.hpp
+ ../external/nigh/src/nigh/impl/constants.hpp
+ ../external/nigh/src/nigh/impl/eigen_space.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/branch.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/clear.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/leaf.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/lp_branch.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/nearest.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/nearest_traversal.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/nearest_traversal_cartesian.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/nearest_traversal_scaled.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/nearest_traversal_so2.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/nearest_traversal_so3.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/nearest_traversals.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/node.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/so3_branch.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/so3_root.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/strategy.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/traversal.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/traversal_cartesian.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/traversal_lp.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/traversal_scaled.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/traversal_so2.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/traversal_so3.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/traversals.hpp
+ ../external/nigh/src/nigh/impl/kdtree_batch/types.hpp
+ ../external/nigh/src/nigh/impl/kdtree_median/accum.hpp
+ ../external/nigh/src/nigh/impl/kdtree_median/accum_cartesian.hpp
+ ../external/nigh/src/nigh/impl/kdtree_median/accum_lp.hpp
+ ../external/nigh/src/nigh/impl/kdtree_median/accum_scaled.hpp
+ ../external/nigh/src/nigh/impl/kdtree_median/accum_so2.hpp
+ ../external/nigh/src/nigh/impl/kdtree_median/accum_so3.hpp
+ ../external/nigh/src/nigh/impl/kdtree_median/accums.hpp
+ ../external/nigh/src/nigh/impl/kdtree_median/traversals.hpp
+ ../external/nigh/src/nigh/impl/lp_sum.hpp
+ ../external/nigh/src/nigh/impl/metric_specializations.hpp
+ ../external/nigh/src/nigh/impl/near_set.hpp
+ ../external/nigh/src/nigh/impl/nearest_base.hpp
+ ../external/nigh/src/nigh/impl/non_atomic.hpp
+ ../external/nigh/src/nigh/impl/region.hpp
+ ../external/nigh/src/nigh/impl/region_cartesian.hpp
+ ../external/nigh/src/nigh/impl/region_lp.hpp
+ ../external/nigh/src/nigh/impl/region_scaled.hpp
+ ../external/nigh/src/nigh/impl/region_so2.hpp
+ ../external/nigh/src/nigh/impl/region_so3.hpp
+ ../external/nigh/src/nigh/impl/regions.hpp
+ ../external/nigh/src/nigh/impl/root_get.hpp
+ ../external/nigh/src/nigh/impl/so2.hpp
+ ../external/nigh/src/nigh/impl/so3.hpp
+ ../external/nigh/src/nigh/impl/so3_region.hpp
+ ../external/nigh/src/nigh/impl/space_base.hpp
+ ../external/nigh/src/nigh/kdtree_batch.hpp
+ ../external/nigh/src/nigh/lp_space.hpp
+ ../external/nigh/src/nigh/metric/cartesian_state_element.hpp
+ ../external/nigh/src/nigh/metric/lp.hpp
+ ../external/nigh/src/nigh/metric/metric.hpp
+ ../external/nigh/src/nigh/metric/space.hpp
+ ../external/nigh/src/nigh/metric/space_lp_eigen.hpp
+ ../external/nigh/src/nigh/nigh_forward.hpp
+ ../include/bridge_environment.h
  ../include/crisp_robot.h
  ../include/ct_anatomy.h
+ ../include/drone_planner.h
  ../include/drone_robot.h
  ../include/geo_shapes.h
  ../include/global_common.h
@@ -15,6 +79,8 @@ src/CMakeFiles/search.dir/graph_search.cc.o
  ../include/node.h
  ../include/ompl/crisp_state_space.h
  ../include/ompl/drone_state_space.h
+ ../include/ompl/infinite_goal.h
+ ../include/ompl/rrg.h
  ../include/robot.h
  ../include/traceback_map.h
  ../include/visibility_set.h
@@ -226,22 +292,47 @@ src/CMakeFiles/search.dir/graph_search.cc.o
  /usr/include/eigen3/Eigen/src/plugins/CommonCwiseUnaryOps.h
  /usr/include/eigen3/Eigen/src/plugins/MatrixCwiseBinaryOps.h
  /usr/include/eigen3/Eigen/src/plugins/MatrixCwiseUnaryOps.h
+ /usr/local/include/ompl-1.5/ompl/base/Cost.h
  /usr/local/include/ompl-1.5/ompl/base/GenericParam.h
+ /usr/local/include/ompl-1.5/ompl/base/Goal.h
+ /usr/local/include/ompl-1.5/ompl/base/GoalTypes.h
+ /usr/local/include/ompl-1.5/ompl/base/MotionValidator.h
+ /usr/local/include/ompl-1.5/ompl/base/OptimizationObjective.h
+ /usr/local/include/ompl-1.5/ompl/base/Path.h
+ /usr/local/include/ompl-1.5/ompl/base/Planner.h
+ /usr/local/include/ompl-1.5/ompl/base/PlannerData.h
+ /usr/local/include/ompl-1.5/ompl/base/PlannerStatus.h
+ /usr/local/include/ompl-1.5/ompl/base/PlannerTerminationCondition.h
+ /usr/local/include/ompl-1.5/ompl/base/ProblemDefinition.h
  /usr/local/include/ompl-1.5/ompl/base/ProjectionEvaluator.h
+ /usr/local/include/ompl-1.5/ompl/base/ScopedState.h
+ /usr/local/include/ompl-1.5/ompl/base/SolutionNonExistenceProof.h
+ /usr/local/include/ompl-1.5/ompl/base/SpaceInformation.h
  /usr/local/include/ompl-1.5/ompl/base/State.h
  /usr/local/include/ompl-1.5/ompl/base/StateSampler.h
  /usr/local/include/ompl-1.5/ompl/base/StateSpace.h
  /usr/local/include/ompl-1.5/ompl/base/StateSpaceTypes.h
+ /usr/local/include/ompl-1.5/ompl/base/StateValidityChecker.h
+ /usr/local/include/ompl-1.5/ompl/base/ValidStateSampler.h
+ /usr/local/include/ompl-1.5/ompl/base/goals/GoalRegion.h
+ /usr/local/include/ompl-1.5/ompl/base/objectives/PathLengthOptimizationObjective.h
+ /usr/local/include/ompl-1.5/ompl/base/samplers/InformedStateSampler.h
  /usr/local/include/ompl-1.5/ompl/base/spaces/DiscreteStateSpace.h
  /usr/local/include/ompl-1.5/ompl/base/spaces/RealVectorBounds.h
  /usr/local/include/ompl-1.5/ompl/base/spaces/RealVectorStateSpace.h
  /usr/local/include/ompl-1.5/ompl/base/spaces/SO3StateSpace.h
+ /usr/local/include/ompl-1.5/ompl/base/terminationconditions/IterationTerminationCondition.h
  /usr/local/include/ompl-1.5/ompl/config.h
+ /usr/local/include/ompl-1.5/ompl/datastructures/NearestNeighbors.h
+ /usr/local/include/ompl-1.5/ompl/geometric/PathGeometric.h
+ /usr/local/include/ompl-1.5/ompl/geometric/planners/PlannerIncludes.h
  /usr/local/include/ompl-1.5/ompl/util/ClassForward.h
  /usr/local/include/ompl-1.5/ompl/util/Console.h
+ /usr/local/include/ompl-1.5/ompl/util/Exception.h
  /usr/local/include/ompl-1.5/ompl/util/ProlateHyperspheroid.h
  /usr/local/include/ompl-1.5/ompl/util/RandomNumbers.h
  /usr/local/include/ompl-1.5/ompl/util/String.h
+ /usr/local/include/ompl-1.5/ompl/util/Time.h
 src/CMakeFiles/search.dir/node.cc.o
  ../include/global_common.h
  ../include/node.h

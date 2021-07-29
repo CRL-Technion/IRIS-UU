@@ -121,7 +121,7 @@ class GraphSearch {
     std::vector<RealNum> bg_y;
     std::vector<RealNum> bg_z;
     std::vector<Vec3> totalLocationErrorDefault;
-    bool ReCalculateVisibilitySetMC(Inspection::VPtr vertex,NodePtr parent,Idx m,NodePtr new_node,RealNum cost);
+    bool ReCalculateVisibilitySetMC(NodePtr parent,Idx m,NodePtr new_node,RealNum cost);
     VisibilitySet vis;
     Vec3 LowerBordersXYZ = Vec3{-100-0.5,-22-0.5,-20-0.5};
     Vec3 UpperBordersXYZ = Vec3{100+0.5,2+0.5,0+0.5};
