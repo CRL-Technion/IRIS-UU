@@ -123,8 +123,8 @@ class GraphSearch {
     std::vector<Vec3> totalLocationErrorDefault;
     bool ReCalculateVisibilitySetMC(NodePtr parent,Idx m,NodePtr new_node,RealNum cost);
     VisibilitySet vis;
-    Vec3 LowerBordersXYZ = Vec3{-100-0.5,-22-0.5,-20-0.5};
-    Vec3 UpperBordersXYZ = Vec3{100+0.5,2+0.5,0+0.5};
+    Vec3 LowerBordersXYZ = Vec3{-100-2,-22-2,-20-2};
+    Vec3 UpperBordersXYZ = Vec3{100+2,2+2,0+2};
     /////
 
   private:

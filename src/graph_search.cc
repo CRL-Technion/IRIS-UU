@@ -592,7 +592,21 @@ void GraphSearch::Extend(NodePtr n)
 bool GraphSearch::ReCalculateVisibilitySetMC(NodePtr n, Idx v, NodePtr new_node, RealNum cost)
 {
     //planner->ComputeVisibilitySet(graph_->Vertex(v));
+    Idx MonteCarloNum = ba_x.size();
 
+    if (MonteCarloNum < 0.5)
+    {
+        vis.Insert(graph_->Vertex(v)->vis);
+        new_node->SetCostToComeRiskZone(0.0);
+        new_node->SetTotalLocationError(totalLocationErrorDefault);
+        return true;
+    }
+    if (v > 100) ///todo to not see POI outside of risk zone
+    {
+        new_node->SetCostToComeRiskZone(0.0);
+        new_node->SetTotalLocationError(totalLocationErrorDefault);
+        return true;
+    }
     auto parentPosition = graph_->Vertex(n->Index())->state->as<DroneStateSpace::StateType>()->Position();
 
     auto candidateVertexPos = graph_->Vertex(v)->state->as<DroneStateSpace::StateType>()->Position();
@@ -613,12 +627,12 @@ bool GraphSearch::ReCalculateVisibilitySetMC(NodePtr n, Idx v, NodePtr new_node,
         vis.Insert(graph_->Vertex(v)->vis);
         new_node->SetCostToComeRiskZone(0.0);
         new_node->SetTotalLocationError(totalLocationErrorDefault);
+        return true;
     }
     else
     {
         new_node->SetCostToComeRiskZone(currentTimeRiskZone + perviousTimeRiskZone);
 
-        Idx MonteCarloNum = ba_x.size();
         if (new_node->CostToComeRiskZone() > minTimeAllowInRistZone)
         {
             auto x = candidateVertexPos[0] - parentPosition[0];
@@ -635,23 +649,7 @@ bool GraphSearch::ReCalculateVisibilitySetMC(NodePtr n, Idx v, NodePtr new_node,
 
             auto previousTotalLocationError = new_node->GetTotalLocationError();
             Vec3 pos;
-            if (MonteCarloNum < 0.5)
-            {
-                pos[0] = candidateVertexPos[0];
-                pos[1] = candidateVertexPos[1];
-                pos[2] = candidateVertexPos[2];
-                vertex->state->as<DroneStateSpace::StateType>()->SetPosition(pos);
-                planner->ComputeVisibilitySet(vertex);
 
-                for (size_t j = 0; j < MAX_COVERAGE_SIZE; j++)
-                {
-                    //todo make bitset_ private
-                    if (virtual_graph_coverage_.bitset_[j] > 0.5 && vertex->vis.bitset_[j] > 0.5)
-                    {
-                        vis.bitset_[j] = 1;
-                    }
-                }
-            }
             for (size_t i = 0; i < ba_x.size(); i++)
             {
 
@@ -732,15 +730,15 @@ bool GraphSearch::ReCalculateVisibilitySetMC(NodePtr n, Idx v, NodePtr new_node,
                 if (vis.bitset_[j] > 0.5)
                 {
                     RealNum p = 0.0;
-                    if (MonteCarloNum>0.5)
+                    if (MonteCarloNum > 0.5)
                     {
                         p = 1.0 * vis.bitset_[j] / MonteCarloNum;
                     }
                     else
                     {
-                        p=1;
+                        p = 1;
                     }
-                    
+
                     vis.bitset_[j] = 1 - (1 - p) * (1 - new_node->VisSet().bitset_[j]);
 
                     if (vis.bitset_[j] > 0.99)

@@ -41,10 +41,10 @@ namespace drone
             camera_angle = uni(rng) * (kMaxCameraAngle - kMinCameraAngle) + kMinCameraAngle;
 
 #if UAV_NAVIGATION_ERROR
-            // pos[0] = -100;
-            // pos[1] = -11;
-            // yaw = 0.0;
-            // camera_angle = 0;
+            pos[0] = -102;
+            pos[1] = -11;
+            yaw = 0.0;
+            camera_angle = 0;
 #endif
 
             robot_->SetConfig(pos, yaw, camera_angle);
@@ -133,9 +133,9 @@ namespace drone
 
         ob::PlannerData tree_data(space_info_);
         ob::PlannerData graph_data(space_info_);
-        auto ToleranceBorder = 0.5;
-        const Vec3 &LowerBordersXYZ = Vec3{-100 - ToleranceBorder, -22 - ToleranceBorder, -20 - ToleranceBorder};
-        const Vec3 &UpperBordersXYZ = Vec3{100 + ToleranceBorder, 2 + ToleranceBorder, 0 + ToleranceBorder};
+        auto ToleranceBorder = 2;
+        Vec3 LowerBordersXYZ{-100 - ToleranceBorder, -22 - ToleranceBorder, -20 - ToleranceBorder};
+        Vec3 UpperBordersXYZ{100 + ToleranceBorder, 2 + ToleranceBorder, 0 + ToleranceBorder};
 #if UAV_NAVIGATION_ERROR
         InsertGraphPointToyProblem(graph, LowerBordersXYZ, UpperBordersXYZ);
         InsertGraphPointOutSideToyProblem(graph, LowerBordersXYZ, UpperBordersXYZ);
@@ -158,7 +158,7 @@ namespace drone
 
         delete graph;
     }
-    void DronePlanner::InsertGraphPointToyProblem(Inspection::Graph *graph, const Vec3 &LowerBordersXYZ, const Vec3 &UpperBordersXYZ)
+    void DronePlanner::InsertGraphPointToyProblem(Inspection::Graph *graph, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ)
     {
         Vec3 pos;
         pos[0] = -100; //robot_->Config()->Position()[0];
@@ -285,7 +285,7 @@ namespace drone
         return edge2;
     }
 
-    void DronePlanner::InsertIntermediatePointsToGraph(Inspection::Graph *graph, const Vec3 &LowerBordersXYZ, const Vec3 &UpperBordersXYZ)
+    void DronePlanner::InsertIntermediatePointsToGraph(Inspection::Graph *graph, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ)
     {
         Idx indexWhile = 0;
         Inspection::Graph *tempgraph = new Inspection::Graph();
@@ -392,7 +392,7 @@ namespace drone
         std::cout << "Add Intermediate Edges : " << counterAddEdges << "\n";
     }
 
-    void DronePlanner::MarkEdgeRiskZone(Inspection::Graph *graph, const Vec3 &LowerBordersXYZ, const Vec3 &UpperBordersXYZ)
+    void DronePlanner::MarkEdgeRiskZone(Inspection::Graph *graph, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ)
     {
         RealNum eps = 1E-3;
 
@@ -435,7 +435,7 @@ namespace drone
         }
     }
 
-    bool DronePlanner::IsPointInsideBox(const Vec3 &point, const Vec3 &LowerBordersXYZ, const Vec3 &UpperBordersXYZ)
+    bool DronePlanner::IsPointInsideBox(const Vec3 &point, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ)
     {
         if ((point[0] > LowerBordersXYZ[0]) && (point[0] < UpperBordersXYZ[0]) && (point[1] > LowerBordersXYZ[1]) && (point[1] < UpperBordersXYZ[1]) && (point[2] > LowerBordersXYZ[2]) && (point[2] < UpperBordersXYZ[2]))
         {
@@ -446,7 +446,7 @@ namespace drone
         return false;
     }
 
-    void DronePlanner::InsertGraphPointOutSideToyProblem(Inspection::Graph *graph, const Vec3 &LowerBordersXYZ, const Vec3 &UpperBordersXYZ)
+    void DronePlanner::InsertGraphPointOutSideToyProblem(Inspection::Graph *graph, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ)
     {
         auto NumVerticesOutside_1 = graph->NumVertices();
         auto NumVerticesOutside_2 = 0;

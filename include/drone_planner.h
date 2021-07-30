@@ -41,14 +41,14 @@ namespace drone
     void BuildAndSaveInspectionGraph(const String file_name, const Idx target_size);
     void ComputeVisibilitySet(Inspection::VPtr vertex) const;
  ///////////////////////
-    void InsertIntermediatePointsToGraph(Inspection::Graph *graph, const Vec3 &LowerBordersXYZ, const Vec3 &UpperBordersXYZ);
+    void InsertIntermediatePointsToGraph(Inspection::Graph *graph, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ);
     Inspection::EPtr InsertIntermediatePointToGraph(Inspection::Graph *graph,Inspection::EPtr edge,Vec3 InsertIntermediatePosition);
 
-    void InsertGraphPointToyProblem(Inspection::Graph *graph, const Vec3 &LowerBordersXYZ, const Vec3 &UpperBordersXYZ);
-    void InsertGraphPointOutSideToyProblem(Inspection::Graph *graph, const Vec3 &LowerBordersXYZ, const Vec3 &UpperBordersXYZ);
+    void InsertGraphPointToyProblem(Inspection::Graph *graph, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ);
+    void InsertGraphPointOutSideToyProblem(Inspection::Graph *graph, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ);
 
-    bool IsPointInsideBox(const Vec3 &point, const Vec3 &LowerBordersXYZ, const Vec3 &UpperBordersXYZ);
-    void MarkEdgeRiskZone(Inspection::Graph *graph, const Vec3 &LowerBordersXYZ, const Vec3 &UpperBordersXYZ);
+    bool IsPointInsideBox(const Vec3 &point, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ);
+    void MarkEdgeRiskZone(Inspection::Graph *graph, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ);
 
     //////////////////////
     bool CheckEdge(const ob::State *source, const ob::State *target) const;
