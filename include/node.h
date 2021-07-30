@@ -37,7 +37,7 @@ class Node {
     void SetVisSet(const VisibilitySet& set);
     void ExtendVisSet(const VisibilitySet& set);
     const VisibilitySet& VisSet() const;
-    Idx CoverageSize() const;
+    RealNum CoverageSize() const;
 
     void SetSubsumed(const bool subsmued);
     bool IsSubsumed() const;

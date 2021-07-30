@@ -156,7 +156,7 @@ const VisibilitySet& Node::VisSet() const {
     return vis_set_;
 }
 
-Idx Node::CoverageSize() const {
+RealNum Node::CoverageSize() const {
     return vis_set_.Size();
 }
 
@@ -190,6 +190,8 @@ bool Node::BetterThan(const NodePtr other) const {
     }
 
     if (this->CoverageSize() > other->CoverageSize()) {
+        std::cout << "this->CoverageSize(): " << this->CoverageSize() <<std::endl;
+
         return true;
     }
 

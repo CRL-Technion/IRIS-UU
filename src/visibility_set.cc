@@ -301,11 +301,12 @@ RealNum VisibilitySet::Size() const
         // if (std::abs(visPOI[i]-1) <eps)
         if (bitset_[i]>0.5)
         {
-            initial_sum +=1;
+            
         }
         // initial_sum +=1;
+        initial_sum +=bitset_[i];
     }
-    return (SizeType)(initial_sum+0.1);
+    return initial_sum;//(SizeType)(initial_sum+0.1);
 }
 
 const VisibilitySet::Bitset &VisibilitySet::bitset() const

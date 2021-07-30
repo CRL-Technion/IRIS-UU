@@ -740,8 +740,7 @@ bool GraphSearch::ReCalculateVisibilitySetMC(NodePtr n, Idx v, NodePtr new_node,
                     }
 
                     vis.bitset_[j] = 1 - (1 - p) * (1 - new_node->VisSet().bitset_[j]);
-
-                    if (vis.bitset_[j] > 0.99)
+                    if (vis.bitset_[j] > 0.9)
                     {
                         vis.bitset_[j] = 1;
                     }
