@@ -10,8 +10,10 @@
 #include "node.h"
 #include "traceback_map.h"
 #include "drone_planner.h"
-class GraphSearch {
-    static RealNum KeyBase(const NodePtr n) {
+class GraphSearch
+{
+    static RealNum KeyBase(const NodePtr n)
+    {
 #if USE_GHOST_DATA
 #if USE_GHOST_COST_AS_KEY
         return n->GhostCost();
@@ -20,32 +22,37 @@ class GraphSearch {
         return n->CostToCome();
     }
 
-    static RealNum Key(const NodePtr n) {
+    static RealNum Key(const NodePtr n)
+    {
 #if USE_HEURISTIC
-        return KeyBase(n) + HEUR_BIAS*n->Heuristic();
+        return KeyBase(n) + HEUR_BIAS * n->Heuristic();
 #endif
         return KeyBase(n);
     }
 
-    struct QueueCmp {
+    struct QueueCmp
+    {
         // This is greater operator.
         // If false is returned, n1 comes before n2; if true is returned, n2 comes before n1.
-        bool operator() (const NodePtr n1, const NodePtr n2) const {
+        bool operator()(const NodePtr n1, const NodePtr n2) const
+        {
             return Key(n1) > Key(n2);
 
             // smaller key comes first
-            const auto& key_1 = Key(n1);
-            const auto& key_2 = Key(n2);
+            const auto &key_1 = Key(n1);
+            const auto &key_2 = Key(n2);
 
-            if (std::fabs(key_1 - key_2) > EPS) {
+            if (std::fabs(key_1 - key_2) > EPS)
+            {
                 return key_1 > key_2;
             }
 
 #if USE_GHOST_DATA
-            const auto& size_1 = n1->GhostCoverageSize();
-            const auto& size_2 = n2->GhostCoverageSize();
+            const auto &size_1 = n1->GhostCoverageSize();
+            const auto &size_2 = n2->GhostCoverageSize();
 
-            if (size_1 != size_2) {
+            if (size_1 != size_2)
+            {
                 return size_1 < size_2;
             }
 
@@ -54,9 +61,12 @@ class GraphSearch {
         }
     };
 
-    struct CoverageCmp {
-        bool operator() (const NodePtr n1, const NodePtr n2) const {
+    struct CoverageCmp
+    {
+        bool operator()(const NodePtr n1, const NodePtr n2) const
+        {
             // larger coverage comes first
+            //todo smaller with epsilon
             return n1->CoverageSize() < n2->CoverageSize();
         }
     };
@@ -67,19 +77,16 @@ class GraphSearch {
     using ClosedSet = std::set<NodePtr, CoverageCmp>;
     // using ClosedSet = std::unordered_set<NodePtr>;
 
-
     inline static const std::map<Idx, String> kLazinessMap = {{0, "no lazy"},
-        {1, "LazySP"},
-        {2, "LazyA* modified"},
-        {3, "LazyA*"}
-    };
+                                                              {1, "LazySP"},
+                                                              {2, "LazyA* modified"},
+                                                              {3, "LazyA*"}};
 
     inline static const std::map<Idx, String> kSuccessorMap = {{0, "direct"},
-        {1, "expanded"},
-        {2, "first-meet"}
-    };
+                                                               {1, "expanded"},
+                                                               {2, "first-meet"}};
 
-  public:
+public:
     GraphSearch(const Inspection::GPtr graph);
 
     void SetLazinessMode(const Idx mode_id);
@@ -92,28 +99,28 @@ class GraphSearch {
     void InitDataStructures();
     NodePtr PopFromPriorityQueue();
     void Extend(NodePtr n);
-    bool AddNode(NodePtr n, const bool skip_queue_operations=false);
-    void RecursivelyAddNode(NodePtr n, const bool skip_queue_operations=false);
+    bool AddNode(NodePtr n, const bool skip_queue_operations = false);
+    void RecursivelyAddNode(NodePtr n, const bool skip_queue_operations = false);
     bool SubsumedByOpenState(NodePtr node, const bool skip_queue_operations);
     bool Valid(NodePtr n);
     SizeType VirtualGraphCoverageSize() const;
-    const VisibilitySet& VirtualGraphCoverage() const;
+    const VisibilitySet &VirtualGraphCoverage() const;
     SizeType ResultCoverageSize() const;
     RealNum ResultCost() const;
-    void PrintResult(std::ostream& out) const;
-    void PrintTitle(std::ostream& out) const;
+    void PrintResult(std::ostream &out) const;
+    void PrintTitle(std::ostream &out) const;
     SizeType TotalTime() const;
-    void SetMaxTimeAllowed(const SizeType& time);
+    void SetMaxTimeAllowed(const SizeType &time);
     SizeType VirtualGraphNumEdges() const;
 
     //////
     void ReadLocationErrorParameters(const String Location_Error_file_name);
     RealNum b_a_milli_g = 0.0;
-	RealNum b_g_degPerHr= 0.0;
-	RealNum avarageVelocity= 0.0;
-	RealNum minTimeAllowInRistZone= 0.0;
+    RealNum b_g_degPerHr = 0.0;
+    RealNum avarageVelocity = 0.0;
+    RealNum minTimeAllowInRistZone = 0.0;
     RealNum maxTimeAllowInRistZone = 0.0;
-	RealNum multipleCostFunction =1.0;
+    RealNum multipleCostFunction = 1.0;
     std::vector<RealNum> ba_x;
     std::vector<RealNum> ba_y;
     std::vector<RealNum> ba_z;
@@ -121,13 +128,18 @@ class GraphSearch {
     std::vector<RealNum> bg_y;
     std::vector<RealNum> bg_z;
     std::vector<Vec3> totalLocationErrorDefault;
-    bool ReCalculateVisibilitySetMC(NodePtr parent,Idx m,NodePtr new_node,RealNum cost);
+    std::vector<bool> exitRiskZoneDefault;
+    std::vector<RealNum> costToComeRiskZoneDefault;
+    
+    bool ReCalculateVisibilitySetMC(NodePtr parent, Idx m, NodePtr new_node, RealNum &cost);
     VisibilitySet vis;
-    Vec3 LowerBordersXYZ = Vec3{-100-2,-22-2,-20-2};
-    Vec3 UpperBordersXYZ = Vec3{100+2,2+2,0+2};
+    Vec3 LowerBordersXYZ = Vec3{-100 - 2, -22 - 2, -20 - 2};
+    Vec3 UpperBordersXYZ = Vec3{100 + 2, 2 + 2, 0 + 2};
+    RealNum LocationErrorFunc(const RealNum b_a, const RealNum b_g, const RealNum timeRiskZone) const;
+    ob::SpaceInformationPtr space_info_;
     /////
 
-  private:
+private:
     Inspection::GPtr graph_{nullptr};
     SizeType virtual_graph_size_{0};
     SizeType prev_graph_size_{0};
@@ -136,10 +148,10 @@ class GraphSearch {
     RealNum greedy_cost_{0};
 
 #if USE_GHOST_DATA
-    RealNum p_ {1.0};
+    RealNum p_{1.0};
     RealNum eps_{0.0};
 #endif
-    SizeType time_build_ {0};
+    SizeType time_build_{0};
     SizeType time_vis_{0};
     SizeType time_valid_{0};
     SizeType time_search_{0};
@@ -163,37 +175,34 @@ class GraphSearch {
     NodePtr PopFromQueue();
     NodePtr PopFromQueueCompleteLazy();
     bool IsUpToDate(const NodePtr p) const;
-    bool NewNodesInvolved(const NodePtr parent, const std::vector<Idx>& successor) const;
+    bool NewNodesInvolved(const NodePtr parent, const std::vector<Idx> &successor) const;
     void ComputeAndAddSuccessors(const NodePtr p);
     void ComputeAndAddSuccessorsCompleteLazy(const NodePtr p);
     NodePtr ComputeNearestSuccessor(const NodePtr parent);
     bool InGoalSet(const NodePtr n) const;
-    bool StronglyDominates(const RealNum& l1, const VisibilitySet& s1, const RealNum& l2,
-                           const VisibilitySet& s2) const;
+    bool StronglyDominates(const RealNum &l1, const VisibilitySet &s1, const RealNum &l2,
+                           const VisibilitySet &s2) const;
     bool DominatedByClosedState(const NodePtr node) const;
     bool DominatedByOpenState(const NodePtr node);
     bool DominatedByOpenState2(const NodePtr node);
-    bool DominatedByOpenStateCompleteLazy(const NodePtr node, const bool skip_queue_operations=false);
+    bool DominatedByOpenStateCompleteLazy(const NodePtr node, const bool skip_queue_operations = false);
     bool Dominates(const NodePtr n1, const NodePtr n2) const;
-    bool ValidPath(const std::vector<Idx>& path);
+    bool ValidPath(const std::vector<Idx> &path);
     SizeType RelativeTime(const TimePoint start) const;
     void PrintClosedSets() const;
     void PrintOpenSets() const;
-    void PrintNodeStatus(const NodePtr node, std::ostream& out=std::cout) const;
+    void PrintNodeStatus(const NodePtr node, std::ostream &out = std::cout) const;
     Idx CheckOpenSets() const;
     bool CheckTermination() const;
     void ReconstructNode(const NodePtr node) const;
-    void TraceFirstUnboundedNode(const NodePtr node, std::queue<NodePtr>& recycle_bin);
+    void TraceFirstUnboundedNode(const NodePtr node, std::queue<NodePtr> &recycle_bin);
     void UpdateUnboundedNodes();
-    void RecycleSubsumedNodes(NodePtr node, std::queue<NodePtr>& recycle_bin,
-                              const bool force_recycle_all=false);
-
-
+    void RecycleSubsumedNodes(NodePtr node, std::queue<NodePtr> &recycle_bin,
+                              const bool force_recycle_all = false);
 
     ////////////////////////////
     // Inspection::VPtr vertex;
     std::shared_ptr<drone::DronePlanner> planner;
 };
-
 
 #endif // GRAPH_SEARCH_H_

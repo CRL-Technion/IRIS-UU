@@ -1,6 +1,7 @@
 #include "graph_search.h"
 
 Inspection::VPtr vertex(new Inspection::Vertex(0));
+Inspection::VPtr parentVertex(new Inspection::Vertex(0));
 
 GraphSearch::GraphSearch(const Inspection::GPtr graph) : graph_(graph)
 {
@@ -18,11 +19,19 @@ GraphSearch::GraphSearch(const Inspection::GPtr graph) : graph_(graph)
     // Planner
     planner = std::make_shared<drone::DronePlanner>(robot, env, 1);
 
-    auto space = ob::StateSpacePtr(new DroneStateSpace());
+    // space_info_ = ob::StateSpacePtr(new DroneStateSpace());
+    auto state_space_ = ob::StateSpacePtr(new DroneStateSpace());
+
+    space_info_.reset(new ob::SpaceInformation(state_space_));
+    // using namespace std::placeholders;
+    // space_info_->setStateValidityChecker(std::bind(&DronePlanner::StateValid, this, _1));
+    // space_info_->setStateValidityCheckingResolution(validity_res_);
+    // space_info_->setup();
     // VPtr v(new Inspection::Vertex(0));
     // Inspection::VPtr vertex(new Inspection::Vertex(0));
     // vertex(new Inspection::Vertex(0));
-    vertex->state = space->allocState();
+    vertex->state = space_info_->allocState();
+    parentVertex->state = space_info_->allocState();
 }
 
 void GraphSearch::ReadLocationErrorParameters(const String Location_Error_file_name)
@@ -98,6 +107,8 @@ void GraphSearch::ReadLocationErrorParameters(const String Location_Error_file_n
     {
         Vec3 temp{0.0, 0.0, 0.0};
         totalLocationErrorDefault.push_back(temp);
+        exitRiskZoneDefault.push_back(false);
+        costToComeRiskZoneDefault.push_back(0.0);
     }
 }
 
@@ -270,6 +281,41 @@ std::vector<Idx> GraphSearch::SearchVirtualGraph()
             if (result_node == nullptr || n->BetterThan(result_node))
             {
                 result_node = n;
+                std::cout << "this->CoverageSize(): " << result_node->CoverageSize() << std::endl;
+                for (size_t i = 0; i < MAX_COVERAGE_SIZE; i++)
+                {
+                    if (i == MAX_COVERAGE_SIZE - 1)
+                    {
+                        std::cout << " " << result_node->VisSet().bitset_[i] << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << " " << result_node->VisSet().bitset_[i];
+                    }
+                }
+                std::vector<Idx> path;
+                auto tag = result_node;
+                path.push_back(tag->Index());
+
+                while (tag)
+                {
+                    auto super_edge = tag->LocalPath();
+
+                    for (auto i = 1; i < super_edge.size(); ++i)
+                    {
+                        path.push_back(super_edge[i]);
+                    }
+
+                    tag = tag->Parent();
+                }
+
+                std::reverse(path.begin(), path.end());
+                for (auto &p : path)
+                {
+                    std::cout << " " << p;
+                }
+
+                std::cout << std::endl;
             }
 
             // Check for termination.
@@ -415,6 +461,8 @@ void GraphSearch::InitDataStructures()
         source_node->SetGhostVisSet(graph_->Vertex(source_idx_)->vis);
 #endif
         source_node->SetTotalLocationError(totalLocationErrorDefault);
+        source_node->SetExitRiskZone(exitRiskZoneDefault);
+        source_node->SetCostToComeRiskZone(costToComeRiskZoneDefault);
 
         queue_->push(source_node);
         open_sets_[source_idx_].insert(source_node);
@@ -541,8 +589,22 @@ void GraphSearch::Extend(NodePtr n)
         new_node->CopyAsChild(n);
         auto cost = map_->Cost(v, n->Index());
 #if UAV_NAVIGATION_ERROR
-        bool IsInRiskZone = map_->IsTargetEdgeInRiskZone(n->Index(), v);
         vis.Clear();
+        // if (v < 99 && n->Index() < 99)
+
+        auto parentPosition = graph_->Vertex(n->Index())->state->as<DroneStateSpace::StateType>()->Position();
+        auto candidateVertexPos = graph_->Vertex(v)->state->as<DroneStateSpace::StateType>()->Position();
+        Vec3 direction = (candidateVertexPos - parentPosition);
+        auto normVec = direction.norm();
+        direction.normalize();
+        Vec3 temp_originalPos;
+        RealNum epsilon = 0.1;
+        temp_originalPos[0] = candidateVertexPos[0] + direction[0] * epsilon;
+        temp_originalPos[1] = candidateVertexPos[1] + direction[1] * epsilon;
+        temp_originalPos[2] = candidateVertexPos[2] + direction[2] * epsilon;
+        // bool IsInRiskZone = map_->IsTargetEdgeInRiskZone(n->Index(), v);
+        bool IsInRiskZone = planner->IsPointInsideBox(temp_originalPos, LowerBordersXYZ, UpperBordersXYZ);
+
         if (IsInRiskZone)
         {
 
@@ -550,13 +612,16 @@ void GraphSearch::Extend(NodePtr n)
             {
                 continue;
             }
+            // std::cout << "cost" << cost << std::endl;
         }
         else
         {
             vis.Insert(graph_->Vertex(v)->vis);
-            new_node->SetCostToComeRiskZone(0.0);
             new_node->SetTotalLocationError(totalLocationErrorDefault);
+            new_node->SetExitRiskZone(exitRiskZoneDefault);
+            new_node->SetCostToComeRiskZone(costToComeRiskZoneDefault);
         }
+
 #endif
         // std::cout << "v: " << graph_->Vertex(v)->vis.Size() << std::endl;
         // new_node->Extend(v, cost, graph_->Vertex(v)->vis);
@@ -589,198 +654,278 @@ void GraphSearch::Extend(NodePtr n)
     //                 ComputeAndAddSuccessorsCompleteLazy(n);
     //             }
 }
-bool GraphSearch::ReCalculateVisibilitySetMC(NodePtr n, Idx v, NodePtr new_node, RealNum cost)
+bool GraphSearch::ReCalculateVisibilitySetMC(NodePtr n, Idx v, NodePtr new_node, RealNum &cost)
 {
     //planner->ComputeVisibilitySet(graph_->Vertex(v));
+    // auto currentTimeRiskZone = cost; //map_->CostRiskZone(m, parent->Index());
+    // auto perviousTimeRiskZone = n->GetCostToComeRiskZone();
+    // new_node->SetCostToComeRiskZone(currentTimeRiskZone + perviousTimeRiskZone);
+
     Idx MonteCarloNum = ba_x.size();
 
     if (MonteCarloNum < 0.5)
     {
         vis.Insert(graph_->Vertex(v)->vis);
-        new_node->SetCostToComeRiskZone(0.0);
-        new_node->SetTotalLocationError(totalLocationErrorDefault);
+        // new_node->SetCostToComeRiskZone(0.0);
+        // new_node->SetTotalLocationError(totalLocationErrorDefault);
+        // source_node->SetExitRiskZone(exitRiskZoneDefault);
+
         return true;
     }
-    if (v > 100) ///todo to not see POI outside of risk zone
-    {
-        new_node->SetCostToComeRiskZone(0.0);
-        new_node->SetTotalLocationError(totalLocationErrorDefault);
-        return true;
-    }
+    // std::cout << "aaaaaaaaaaaaa" << std::endl;
+    // if (v > 99) ///todo to not see POI outside of risk zone
+    // {
+    //     vis.Insert(graph_->Vertex(v)->vis);
+    //     new_node->SetCostToComeRiskZone(0.0);
+    //     new_node->SetTotalLocationError(totalLocationErrorDefault);
+    //     source_node->SetExitRiskZone(exitRiskZoneDefault);
+
+    //     return true;
+    // }
+    // auto parentPosition = graph_->Vertex(n->Index())->state->as<DroneStateSpace::StateType>()->Position();
+    // auto candidateVertexPos = graph_->Vertex(v)->state->as<DroneStateSpace::StateType>()->Position();
+    // Vec3 direction = (candidateVertexPos - parentPosition);
+    // auto normVec = direction.norm();
+    // direction.normalize();
+    // Vec3 temp_originalPos;
+    // RealNum epsilon = 0.1;
+    // temp_originalPos[0] = candidateVertexPos[0] + direction[0] * epsilon;
+    // temp_originalPos[1] = candidateVertexPos[1] + direction[1] * epsilon;
+    // temp_originalPos[2] = candidateVertexPos[2] + direction[2] * epsilon;
+
+    // if (!planner->IsPointInsideBox(temp_originalPos, LowerBordersXYZ, UpperBordersXYZ))
+
+    // {
+    //     vis.Insert(graph_->Vertex(v)->vis);
+    //     new_node->SetCostToComeRiskZone(0.0);
+    //     new_node->SetTotalLocationError(totalLocationErrorDefault);
+    // source_node->SetExitRiskZone(exitRiskZoneDefault);
+
+    //     return true;
+    // }
+
+    // auto exitRiskZone = false;
+    RealNum x_error = 0, y_error = 0, z_error = 0, totalCost = 0, currentTimeRiskZone = 0, perviousTimeRiskZone = 0;
+
+    Vec3 pos;
     auto parentPosition = graph_->Vertex(n->Index())->state->as<DroneStateSpace::StateType>()->Position();
-
     auto candidateVertexPos = graph_->Vertex(v)->state->as<DroneStateSpace::StateType>()->Position();
-    Vec3 direction = (candidateVertexPos - parentPosition);
-    auto normVec = direction.norm();
-    direction.normalize();
-    Vec3 temp_originalPos;
-    RealNum epsilon = 0.1;
-    temp_originalPos[0] = candidateVertexPos[0] + direction[0] * epsilon;
-    temp_originalPos[1] = candidateVertexPos[1] + direction[1] * epsilon;
-    temp_originalPos[2] = candidateVertexPos[2] + direction[2] * epsilon;
+    auto previousTotalLocationError = new_node->GetTotalLocationError();
+    auto perviousExitRiskZone = new_node->GetExitRiskZone();
+    auto perviousCostRiskZone = new_node->GetCostToComeRiskZone();
+    vertex->state->as<DroneStateSpace::StateType>()->SetYaw(graph_->Vertex(v)->state->as<DroneStateSpace::StateType>()->Yaw());
+    vertex->state->as<DroneStateSpace::StateType>()->SetCameraAngle(graph_->Vertex(v)->state->as<DroneStateSpace::StateType>()->CameraAngle());
+    parentVertex->state->as<DroneStateSpace::StateType>()->SetYaw(graph_->Vertex(n->Index())->state->as<DroneStateSpace::StateType>()->Yaw());
+    parentVertex->state->as<DroneStateSpace::StateType>()->SetCameraAngle(graph_->Vertex(n->Index())->state->as<DroneStateSpace::StateType>()->CameraAngle());
 
-    auto currentTimeRiskZone = cost; //map_->CostRiskZone(m, parent->Index());
-    auto perviousTimeRiskZone = n->CostToComeRiskZone();
-    if (!planner->IsPointInsideBox(temp_originalPos, LowerBordersXYZ, UpperBordersXYZ))
+    // RealNum theta = graph_->Vertex(m)->state->as<DroneStateSpace::StateType>()->CameraAngle();
+    // RealNum psi = graph_->Vertex(m)->state->as<DroneStateSpace::StateType>()->Yaw();
 
+    // auto x = (candidateVertexPos[0]) - parentPosition[0];
+    // auto y = (candidateVertexPos[1]) - parentPosition[1];
+    // auto z = (candidateVertexPos[2]) - parentPosition[2];
+    // //todo psi and theta
+    // RealNum psi = atan2(y, x);
+    // RealNum theta = atan2(z, sqrt(x * x + y * y));
+    // auto counterExitRiskZone = 0;
+
+    for (size_t i = 0; i < ba_x.size(); i++)
     {
-        vis.Insert(graph_->Vertex(v)->vis);
-        new_node->SetCostToComeRiskZone(0.0);
-        new_node->SetTotalLocationError(totalLocationErrorDefault);
-        return true;
-    }
-    else
-    {
-        new_node->SetCostToComeRiskZone(currentTimeRiskZone + perviousTimeRiskZone);
 
-        if (new_node->CostToComeRiskZone() > minTimeAllowInRistZone)
+        ///for cost calculation
+        pos[0] = candidateVertexPos[0] + previousTotalLocationError[i][0];
+        pos[1] = candidateVertexPos[1] + previousTotalLocationError[i][1];
+        pos[2] = candidateVertexPos[2] + previousTotalLocationError[i][2];
+        parentVertex->state->as<DroneStateSpace::StateType>()->SetPosition(pos);
+        const ob::State *source = parentVertex->state;
+        if (perviousExitRiskZone[i])
         {
-            auto x = candidateVertexPos[0] - parentPosition[0];
-            auto y = candidateVertexPos[1] - parentPosition[1];
-            auto z = candidateVertexPos[2] - parentPosition[2];
-            //todo psi and theta
-            RealNum psi = atan2(y, x);
-            RealNum theta = atan2(z, sqrt(x * x + y * y));
-            vertex->state->as<DroneStateSpace::StateType>()->SetYaw(graph_->Vertex(v)->state->as<DroneStateSpace::StateType>()->Yaw());
-            vertex->state->as<DroneStateSpace::StateType>()->SetCameraAngle(graph_->Vertex(v)->state->as<DroneStateSpace::StateType>()->CameraAngle());
-            // RealNum theta = graph_->Vertex(m)->state->as<DroneStateSpace::StateType>()->CameraAngle();
-            // RealNum psi = graph_->Vertex(m)->state->as<DroneStateSpace::StateType>()->Yaw();
-            RealNum x_error = 0, y_error = 0, z_error = 0;
+            perviousExitRiskZone[i] = false;
+            previousTotalLocationError[i][0] = 0.0;
+            previousTotalLocationError[i][1] = 0.0;
+            previousTotalLocationError[i][2] = 0.0;
+            perviousCostRiskZone[i] = 0.0;
 
-            auto previousTotalLocationError = new_node->GetTotalLocationError();
-            Vec3 pos;
-
-            for (size_t i = 0; i < ba_x.size(); i++)
-            {
-
-                auto temp_x_error = ba_x[i] * (1.0 / 2.0) * (currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone);
-                temp_x_error += (1.0 / 6.0) * (currentTimeRiskZone * currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone * perviousTimeRiskZone) * (-bg_z[i] + bg_y[i]);
-
-                auto temp_y_error = ba_y[i] * (1.0 / 2.0) * (currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone);
-                temp_y_error += (1.0 / 6.0) * (currentTimeRiskZone * currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone * perviousTimeRiskZone) * (bg_z[i] - bg_x[i]);
-
-                auto temp_z_error = ba_z[i] * (1.0 / 2.0) * (currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone);
-                temp_z_error += (1.0 / 6.0) * (currentTimeRiskZone * currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone * perviousTimeRiskZone) * (-bg_y[i] + bg_x[i]);
-
-                previousTotalLocationError[i][0] += cos(theta) * cos(psi) * temp_x_error - sin(psi) * temp_y_error + sin(theta) * cos(psi) * temp_z_error;
-                previousTotalLocationError[i][1] += cos(theta) * sin(psi) * temp_x_error + cos(psi) * temp_y_error + sin(theta) * sin(psi) * temp_z_error;
-                previousTotalLocationError[i][2] += -sin(theta) * temp_x_error + cos(theta) * temp_z_error;
-                x_error += previousTotalLocationError[i][0];
-                y_error += previousTotalLocationError[i][1];
-                z_error += previousTotalLocationError[i][2];
-
-                pos[0] = candidateVertexPos[0] + previousTotalLocationError[i][0];
-                pos[1] = candidateVertexPos[1] + previousTotalLocationError[i][1];
-                pos[2] = candidateVertexPos[2] + previousTotalLocationError[i][2];
-
-                if (!planner->IsPointInsideBox(pos, LowerBordersXYZ, UpperBordersXYZ))
-                {
-
-                    // pos[0] = candidateVertexPos[0];
-                    // pos[1] = candidateVertexPos[1];
-                    // pos[2] = candidateVertexPos[2];
-                    previousTotalLocationError[i][0] = 0.0;
-                    previousTotalLocationError[i][1] = 0.0;
-                    previousTotalLocationError[i][2] = 0.0;
-                    // x_error /= (i+1);
-                    // y_error /= (i+1);
-                    // z_error /= (i+1);
-                    // auto TotalError = sqrt(x_error * x_error + y_error * y_error + z_error * z_error);
-                    // std::cout << "candidateVertexPos = " <<  candidateVertexPos[0] << "," <<  candidateVertexPos[1] << "," <<  candidateVertexPos[2] << std::endl;
-                    // std::cout << "pos = " <<  pos[0] << "," <<  pos[1] << "," <<  pos[2] << std::endl;
-
-                    // std::cout << "TotalError = " << x_error << "," << y_error << "," << z_error << std::endl;
-                }
-
-                vertex->state->as<DroneStateSpace::StateType>()->SetPosition(pos);
-                planner->ComputeVisibilitySet(vertex);
-
-                for (size_t j = 0; j < MAX_COVERAGE_SIZE; j++)
-                {
-
-                    //todo make bitset_ private
-                    if (virtual_graph_coverage_.bitset_[j] > 0.5 && vertex->vis.bitset_[j] > 0.5)
-                    {
-                        vis.bitset_[j] += 1;
-                    }
-                }
-            }
-            new_node->SetTotalLocationError(previousTotalLocationError);
-
-            for (size_t j = 0; j < MAX_COVERAGE_SIZE; j++)
-            {
-                // if (virtual_graph_coverage_.visPOI[j] > 0.5 && graph_->Vertex(m)->vis.visPOI[j] > 0.5)
-                // {
-                //     x_error /= MonteCarloNum;
-                //     y_error /= MonteCarloNum;
-                //     z_error /= MonteCarloNum;
-                //     auto TotalError = sqrt(x_error * x_error + y_error * y_error + z_error * z_error);
-                //     auto p = 1 - TotalError * 0.1;
-                //     vis.visPOI[j] = 1 - (1 - p) * (1 - new_node->VisSet().visPOI[j]);
-
-                //     if (vis.visPOI[j] > 0.99)
-                //     {
-                //         vis.visPOI[j] = 1;
-                //     }
-                //     if (vis.visPOI[j] < 0)
-                //     {
-                //         vis.visPOI[j] = 0;
-                //     }
-                // }
-                if (vis.bitset_[j] > 0.5)
-                {
-                    RealNum p = 0.0;
-                    if (MonteCarloNum > 0.5)
-                    {
-                        p = 1.0 * vis.bitset_[j] / MonteCarloNum;
-                    }
-                    else
-                    {
-                        p = 1;
-                    }
-
-                    vis.bitset_[j] = 1 - (1 - p) * (1 - new_node->VisSet().bitset_[j]);
-                    if (vis.bitset_[j] > 0.9)
-                    {
-                        vis.bitset_[j] = 1;
-                    }
-                    if (vis.bitset_[j] < 0)
-                    {
-                        vis.bitset_[j] = 0;
-                    }
-                }
-            }
+            const ob::State *target = graph_->Vertex(v)->state;
+            currentTimeRiskZone = space_info_->distance(source, target);
         }
-        else
+
+        perviousTimeRiskZone = perviousCostRiskZone[i];
+        currentTimeRiskZone = cost;
+
+        if ((currentTimeRiskZone + perviousTimeRiskZone) > maxTimeAllowInRistZone)
         {
-            vis.Insert(graph_->Vertex(v)->vis);
+            // std::cout << "accumulatedCostRiskZone " << CostRiskZone+accumulatedCostRiskZone;
+            // std::cout << ","<< new_node->CostToComeRiskZone()  << std::endl;
+            //vis.Insert(graph_->Vertex(v)->vis);
+            return false;
+        }
+
+        // if ((currentTimeRiskZone + perviousTimeRiskZone) > minTimeAllowInRistZone)
+        // {
+        //     auto milli_g2mpss = 9.81 / 1e3;                    //   Conversion from [mili g ] to [m/s^2]
+        //     auto degPerHr2radPerSec = (3.14 / 180.0) / 3600.0; //  Conversion from [deg/hr] to [rad/s]
+        //     auto b_a = b_a_milli_g * milli_g2mpss;
+        //     auto b_g = b_g_degPerHr * degPerHr2radPerSec;
+        //     auto costRiskZone = LocationErrorFunc(b_a, b_g, new_node->CostToComeRiskZone());
+        //     auto MinTimeCostRiskZone = LocationErrorFunc(b_a, b_g, minTimeAllowInRistZone);
+        //     if (costRiskZone > MinTimeCostRiskZone)
+        //     {
+        //         cost = cost + multipleCostFunction * (costRiskZone - MinTimeCostRiskZone); // 1000000;
+        //         // std::cout << "cost" << cost << std::endl;
+        //     }
+        // }
+
+
+        auto x = (candidateVertexPos[0] + previousTotalLocationError[i][0]) - parentPosition[0];
+        auto y = (candidateVertexPos[1] + previousTotalLocationError[i][1]) - parentPosition[1];
+        auto z = (candidateVertexPos[2] + previousTotalLocationError[i][2]) - parentPosition[2];
+        //todo psi and theta
+        RealNum psi = atan2(y, x);
+        RealNum theta = atan2(z, sqrt(x * x + y * y));
+        auto temp_x_error = ba_x[i] * (1.0 / 2.0) * (currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone);
+        temp_x_error += (1.0 / 6.0) * (currentTimeRiskZone * currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone * perviousTimeRiskZone) * (-bg_z[i] + bg_y[i]);
+
+        auto temp_y_error = ba_y[i] * (1.0 / 2.0) * (currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone);
+        temp_y_error += (1.0 / 6.0) * (currentTimeRiskZone * currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone * perviousTimeRiskZone) * (bg_z[i] - bg_x[i]);
+
+        auto temp_z_error = ba_z[i] * (1.0 / 2.0) * (currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone);
+        temp_z_error += (1.0 / 6.0) * (currentTimeRiskZone * currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone * perviousTimeRiskZone) * (-bg_y[i] + bg_x[i]);
+
+        previousTotalLocationError[i][0] += cos(theta) * cos(psi) * temp_x_error - sin(psi) * temp_y_error + sin(theta) * cos(psi) * temp_z_error;
+        previousTotalLocationError[i][1] += cos(theta) * sin(psi) * temp_x_error + cos(psi) * temp_y_error + sin(theta) * sin(psi) * temp_z_error;
+        previousTotalLocationError[i][2] += -sin(theta) * temp_x_error + cos(theta) * temp_z_error;
+
+        x_error += previousTotalLocationError[i][0];
+        y_error += previousTotalLocationError[i][1];
+        z_error += previousTotalLocationError[i][2];
+
+        pos[0] = candidateVertexPos[0] + previousTotalLocationError[i][0];
+        pos[1] = candidateVertexPos[1] + previousTotalLocationError[i][1];
+        pos[2] = candidateVertexPos[2] + previousTotalLocationError[i][2];
+
+        if (!planner->IsPointInsideBox(pos, LowerBordersXYZ, UpperBordersXYZ))
+        {
+            perviousExitRiskZone[i] = true;
+            // counterExitRiskZone++;
+            // if (counterExitRiskZone >= MonteCarloNum - 0.5)
+            // {
+            //     exitRiskZone = true;
+            // }
+            //todo maybe update cost
+            // pos[0] = candidateVertexPos[0];
+            // pos[1] = candidateVertexPos[1];
+            // pos[2] = candidateVertexPos[2];
+            // previousTotalLocationError[i][0] = 0.0;
+            // previousTotalLocationError[i][1] = 0.0;
+            // previousTotalLocationError[i][2] = 0.0;
+            // // vis.Insert(graph_->Vertex(v)->vis);
             // new_node->SetCostToComeRiskZone(0.0);
             // new_node->SetTotalLocationError(totalLocationErrorDefault);
+            // source_node->SetExitRiskZone(exitRiskZoneDefault);
+
+            // return true;
+            // x_error /= (i+1);
+            // y_error /= (i+1);
+            // z_error /= (i+1);
+            // auto TotalError = sqrt(x_error * x_error + y_error * y_error + z_error * z_error);
+            // std::cout << "candidateVertexPos = " <<  candidateVertexPos[0] << "," <<  candidateVertexPos[1] << "," <<  candidateVertexPos[2] << std::endl;
+            // std::cout << "pos = " <<  pos[0] << "," <<  pos[1] << "," <<  pos[2] << std::endl;
+
+            // std::cout << "TotalError = " << x_error << "," << y_error << "," << z_error << std::endl;
+        }
+
+        vertex->state->as<DroneStateSpace::StateType>()->SetPosition(pos);
+        planner->ComputeVisibilitySet(vertex);
+
+        //recalculate cost
+        const ob::State *target = vertex->state;
+        auto currentCost = space_info_->distance(source, target);
+        perviousCostRiskZone[i] += currentCost;
+        totalCost += currentCost;
+        // std::cout << "aaa " << std::endl;
+
+        for (size_t j = 0; j < MAX_COVERAGE_SIZE; j++)
+        {
+            //todo make bitset_ private
+            if (virtual_graph_coverage_.bitset_[j] > 0.5 && vertex->vis.bitset_[j] > 0.5)
+            {
+                vis.bitset_[j] += 1;
+
+                // std::cout << " " << j;
+            }
+        }
+        // std::cout << " " << std::endl;
+    }
+    cost = 1.0 * totalCost / MonteCarloNum;
+    // std::cout << "bbb " << std::endl;
+    // if (exitRiskZone)
+    // {
+    //     new_node->SetCostToComeRiskZone(0.0);
+    //     new_node->SetTotalLocationError(totalLocationErrorDefault);
+    //     new_node->SetExitRiskZone(exitRiskZoneDefault);
+    // }
+    // else
+    // {
+
+    //     new_node->SetTotalLocationError(previousTotalLocationError);
+    //     new_node->SetExitRiskZone(perviousExitRiskZone);
+    // }
+    new_node->SetTotalLocationError(previousTotalLocationError);
+    new_node->SetExitRiskZone(perviousExitRiskZone);
+    new_node->SetCostToComeRiskZone(perviousCostRiskZone);
+
+    for (size_t j = 0; j < MAX_COVERAGE_SIZE; j++)
+    {
+        // if (virtual_graph_coverage_.visPOI[j] > 0.5 && graph_->Vertex(m)->vis.visPOI[j] > 0.5)
+        // {
+        //     x_error /= MonteCarloNum;
+        //     y_error /= MonteCarloNum;
+        //     z_error /= MonteCarloNum;
+        //     auto TotalError = sqrt(x_error * x_error + y_error * y_error + z_error * z_error);
+        //     auto p = 1 - TotalError * 0.1;
+        //     vis.visPOI[j] = 1 - (1 - p) * (1 - new_node->VisSet().visPOI[j]);
+
+        //     if (vis.visPOI[j] > 0.99)
+        //     {
+        //         vis.visPOI[j] = 1;
+        //     }
+        //     if (vis.visPOI[j] < 0)
+        //     {
+        //         vis.visPOI[j] = 0;
+        //     }
+        // }
+        if (vis.bitset_[j] > 0.5)
+        {
+            RealNum p = 0.0;
+            if (MonteCarloNum > 0.5)
+            {
+                p = 1.0 * vis.bitset_[j] / MonteCarloNum;
+            }
+            else
+            {
+                p = 1;
+            }
+
+            vis.bitset_[j] = 1 - (1 - p) * (1 - new_node->VisSet().bitset_[j]);
+            if (vis.bitset_[j] > 0.99)
+            {
+                vis.bitset_[j] = 1;
+            }
+            if (vis.bitset_[j] < 0)
+            {
+                vis.bitset_[j] = 0;
+            }
         }
     }
 
-    if ((currentTimeRiskZone + perviousTimeRiskZone) > maxTimeAllowInRistZone)
-    {
-        // std::cout << "accumulatedCostRiskZone " << CostRiskZone+accumulatedCostRiskZone;
-        // std::cout << ","<< new_node->CostToComeRiskZone()  << std::endl;
-
-        //return false;
-    }
-
-    // if ((currentTimeRiskZone + perviousTimeRiskZone) > minTimeAllowInRistZone)
-    // {
-    //     auto milli_g2mpss = 9.81 / 1e3;                //   Conversion from [mili g ] to [m/s^2]
-    //     auto degPerHr2radPerSec = (3.14 / 180) / 3600; //  Conversion from [deg/hr] to [rad/s]
-    //     auto b_a = b_a_milli_g * milli_g2mpss;
-    //     auto b_g = b_g_degPerHr * degPerHr2radPerSec;
-    //     auto costRiskZone = map_->LocationErrorFunc(b_a, b_g, new_node->CostToComeRiskZone());
-    //     auto MinTimeCostRiskZone = map_->LocationErrorFunc(b_a, b_g, minTimeAllowInRistZone);
-    //     if (costRiskZone > MinTimeCostRiskZone)
-    //     {
-    //         cost = cost + multipleCostFunction * (costRiskZone - MinTimeCostRiskZone); // 1000000;
-    //     }
-    // }
     return true;
+}
+RealNum GraphSearch::LocationErrorFunc(const RealNum b_a, const RealNum b_g, const RealNum timeRiskZone) const
+{
+    auto g = 9.81;
+    auto LocationError = ((1.0 / 2.0) * b_a * timeRiskZone * timeRiskZone + (1.0 / 6.0) * g * b_g * timeRiskZone * timeRiskZone * timeRiskZone);
+    return LocationError;
 }
 bool GraphSearch::AddNode(NodePtr n, const bool skip_queue_operations)
 {
@@ -864,8 +1009,10 @@ bool GraphSearch::SubsumedByOpenState(NodePtr node, const bool skip_queue_operat
 #if USE_GHOST_DATA
 
 #if USE_GHOST_COST_AS_KEY
+                //todo Contains
+                // if (node->GhostCost() < s->GhostCost() || !s->GhostVisSet().Contains(node->GhostVisSet()))
+                if (node->GhostCost() < s->GhostCost() || !s->GhostVisSet().Size() > (node->GhostVisSet().Size()))
 
-                if (node->GhostCost() < s->GhostCost() || !s->GhostVisSet().Contains(node->GhostVisSet()))
                 {
                     need_update_queue = true;
                 }
@@ -1477,8 +1624,10 @@ bool GraphSearch::DominatedByOpenState(const NodePtr node)
 #if USE_GHOST_DATA
 
 #if USE_GHOST_COST_AS_KEY
-
+            //todo Contains
             if (node->GhostCost() < s->GhostCost() || !s->GhostVisSet().Contains(node->GhostVisSet()))
+            // if (node->GhostCost() < s->GhostCost() || !s->GhostVisSet().Size() > (node->GhostVisSet().Size()))
+
             {
                 need_update_queue = true;
             }
@@ -1588,8 +1737,10 @@ bool GraphSearch::DominatedByOpenState2(const NodePtr node)
 #if USE_GHOST_DATA
 
 #if USE_GHOST_COST_AS_KEY
-
+            //todo Contains
             if (node->GhostCost() < s->GhostCost() || !s->GhostVisSet().Contains(node->GhostVisSet()))
+            // if (node->GhostCost() < s->GhostCost() || !s->GhostVisSet().Size() > (node->GhostVisSet().Size()))
+
             {
                 need_update_queue = true;
             }
@@ -1698,8 +1849,9 @@ bool GraphSearch::DominatedByOpenStateCompleteLazy(const NodePtr node,
 #if USE_GHOST_DATA
 
 #if USE_GHOST_COST_AS_KEY
-
-                if (node->GhostCost() < s->GhostCost() || !s->GhostVisSet().Contains(node->GhostVisSet()))
+                //todo Contains
+                // if (node->GhostCost() < s->GhostCost() || !s->GhostVisSet().Contains(node->GhostVisSet()))
+                if (node->GhostCost() < s->GhostCost() || !s->GhostVisSet().Size() > (node->GhostVisSet().Size()))
                 {
                     need_update_queue = true;
                 }
@@ -1767,7 +1919,7 @@ bool GraphSearch::Dominates(const NodePtr n1, const NodePtr n2) const
     {
         return false;
     }
-
+    //todo smaller with epsilon
     if (union_set.Size() * p_ > n1->CoverageSize())
     {
         return false;

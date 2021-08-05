@@ -1,6 +1,7 @@
 #include "node.h"
 
-Node::Node(const Idx index) : index_(index) {
+Node::Node(const Idx index) : index_(index)
+{
     // vis sets are default to be empty
     vis_set_.Clear();
     local_path_.clear();
@@ -10,11 +11,13 @@ Node::Node(const Idx index) : index_(index) {
 #endif
 }
 
-Node::Node(const NodePtr other) {
+Node::Node(const NodePtr other)
+{
     this->DeepCopy(other);
 }
 
-void Node::DeepCopy(const NodePtr other) {
+void Node::DeepCopy(const NodePtr other)
+{
     is_subsumed_ = other->IsSubsumed();
     checked_collision_ = other->IsChecked();
     valid_ = other->IsValid();
@@ -40,11 +43,13 @@ void Node::DeepCopy(const NodePtr other) {
 #if USE_HEURISTIC
     h_ = other->Heuristic();
 #endif
-cost_to_come_risk_zone = other->CostToComeRiskZone();
-	SetTotalLocationError(other->GetTotalLocationError());
+    SetCostToComeRiskZone(other->GetCostToComeRiskZone());
+    SetTotalLocationError(other->GetTotalLocationError());
+    SetExitRiskZone(other->GetExitRiskZone());
 }
 
-void Node::CopyAsChild(const NodePtr other) {
+void Node::CopyAsChild(const NodePtr other)
+{
     // index_ = other->Index();
     cost_to_come_ = other->CostToCome();
     vis_set_ = other->VisSet();
@@ -58,139 +63,208 @@ void Node::CopyAsChild(const NodePtr other) {
 #if USE_HEURISTIC
     h_ = other->Heuristic();
 #endif
-cost_to_come_risk_zone = other->CostToComeRiskZone();
-	SetTotalLocationError(other->GetTotalLocationError());
+    SetCostToComeRiskZone(other->GetCostToComeRiskZone());
+    SetTotalLocationError(other->GetTotalLocationError());
+    SetExitRiskZone(other->GetExitRiskZone());
 }
 void Node::SetTotalLocationError(const std::vector<Vec3> otherTotalLocationError)
 {
-	
-	//totalLocationError.clear();
-	// memcpy(&totalLocationError,otherTotalLocationError,sizeof(totalLocationError));
-	auto MonteCarloNumber = otherTotalLocationError.size();
-	if (MonteCarloNumber>totalLocationError.size())
-	{
-	for (size_t i = 0; i < MonteCarloNumber; i++)
-	{
 
-		totalLocationError.push_back(otherTotalLocationError[i]);
-	}
-	}
-	else
-	{
-		for (size_t i = 0; i < MonteCarloNumber; i++)
-	{
+    //totalLocationError.clear();
+    // memcpy(&totalLocationError,otherTotalLocationError,sizeof(totalLocationError));
+    auto MonteCarloNumber = otherTotalLocationError.size();
+    if (MonteCarloNumber > totalLocationError.size())
+    {
+        for (size_t i = 0; i < MonteCarloNumber; i++)
+        {
 
-		totalLocationError[i] =(otherTotalLocationError[i]);
-	}
-	}
-	
+            totalLocationError.push_back(otherTotalLocationError[i]);
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i < MonteCarloNumber; i++)
+        {
+
+            totalLocationError[i] = (otherTotalLocationError[i]);
+        }
+    }
 }
 std::vector<Vec3> Node::GetTotalLocationError()
 {
-	return totalLocationError;
+    return totalLocationError;
 }
-void Node::Print(std::ostream& out, const SizeType time) const {
+
+void Node::SetExitRiskZone(const std::vector<bool> otherExitRiskZone)
+{
+
+    
+    auto MonteCarloNumber = otherExitRiskZone.size();
+    if (MonteCarloNumber > exitRiskZone.size())
+    {
+        for (size_t i = 0; i < MonteCarloNumber; i++)
+        {
+
+            exitRiskZone.push_back(otherExitRiskZone[i]);
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i < MonteCarloNumber; i++)
+        {
+
+            exitRiskZone[i] = (otherExitRiskZone[i]);
+        }
+    }
+}
+std::vector<bool> Node::GetExitRiskZone()
+{
+    return exitRiskZone;
+}
+
+std::vector<RealNum> Node::GetCostToComeRiskZone() const
+{
+    return cost_to_come_risk_zone;
+}
+void Node::SetCostToComeRiskZone(const std::vector<RealNum> otherCostRiskZone)
+{
+    auto MonteCarloNumber = otherCostRiskZone.size();
+    if (MonteCarloNumber > cost_to_come_risk_zone.size())
+    {
+        for (size_t i = 0; i < MonteCarloNumber; i++)
+        {
+
+            cost_to_come_risk_zone.push_back(otherCostRiskZone[i]);
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i < MonteCarloNumber; i++)
+        {
+
+            cost_to_come_risk_zone[i] = (otherCostRiskZone[i]);
+        }
+    }
+}
+
+void Node::Print(std::ostream &out, const SizeType time) const
+{
     out << time << "\t\t"
         << std::setiosflags(std::ios::fixed)
         << std::setprecision(4)
         << cost_to_come_ << "   \t"
-        << CoverageSize()*100.0 / RealNum(MAX_COVERAGE_SIZE) << "  \t";
+        << CoverageSize() * 100.0 / RealNum(MAX_COVERAGE_SIZE) << "  \t";
 
 #if USE_GHOST_DATA
     out << ghost_cost_ << "  \t"
-        << GhostCoverageSize()*100.0 / RealNum(MAX_COVERAGE_SIZE);
+        << GhostCoverageSize() * 100.0 / RealNum(MAX_COVERAGE_SIZE);
 #endif
 
     out << std::endl;
 }
 
-void Node::SetIndex(const Idx index) {
+void Node::SetIndex(const Idx index)
+{
     index_ = index;
 }
 
-Idx Node::Index() const {
+Idx Node::Index() const
+{
     return index_;
 }
 
-void Node::SetCostToCome(const RealNum cost) {
+void Node::SetCostToCome(const RealNum cost)
+{
     cost_to_come_ = cost;
 }
 
-void Node::IncreaseCostToComeBy(const RealNum addon_cost) {
+void Node::IncreaseCostToComeBy(const RealNum addon_cost)
+{
     cost_to_come_ += addon_cost;
 }
 
-RealNum Node::CostToCome() const {
+RealNum Node::CostToCome() const
+{
     return cost_to_come_;
 }
-RealNum Node::CostToComeRiskZone() const
-{
-	return cost_to_come_risk_zone;
-}
-void Node::SetCostToComeRiskZone(const RealNum cost_risk_zone)
-{
-	cost_to_come_risk_zone = cost_risk_zone;
-}
 
-void Node::SetParent(NodePtr parent) {
+
+void Node::SetParent(NodePtr parent)
+{
     parent_ = parent;
 }
 
-void Node::RemoveParent() {
+void Node::RemoveParent()
+{
     parent_ = nullptr;
 }
 
-NodePtr Node::Parent() const {
+NodePtr Node::Parent() const
+{
     return parent_;
 }
 
-void Node::SetVisSet(const VisibilitySet& set) {
+void Node::SetVisSet(const VisibilitySet &set)
+{
     vis_set_ = set;
 }
 
-void Node::ExtendVisSet(const VisibilitySet& set) {
+void Node::ExtendVisSet(const VisibilitySet &set)
+{
     vis_set_.Insert(set);
 }
 
-const VisibilitySet& Node::VisSet() const {
+const VisibilitySet &Node::VisSet() const
+{
     return vis_set_;
 }
 
-RealNum Node::CoverageSize() const {
+RealNum Node::CoverageSize() const
+{
     return vis_set_.Size();
 }
 
-void Node::SetSubsumed(const bool subsumed) {
+void Node::SetSubsumed(const bool subsumed)
+{
     is_subsumed_ = subsumed;
 }
 
-bool Node::IsSubsumed() const {
+bool Node::IsSubsumed() const
+{
     return is_subsumed_;
 }
 
-void Node::SetChecked(const bool checked) {
+void Node::SetChecked(const bool checked)
+{
     checked_collision_ = checked;
 }
 
-bool Node::IsChecked() const {
+bool Node::IsChecked() const
+{
     return checked_collision_;
 }
 
-void Node::SetValid(const bool valid) {
+void Node::SetValid(const bool valid)
+{
     valid_ = valid;
 }
 
-bool Node::IsValid() const {
+bool Node::IsValid() const
+{
     return valid_;
 }
 
-bool Node::BetterThan(const NodePtr other) const {
-    if (this->CoverageSize() < other->CoverageSize()) {
+bool Node::BetterThan(const NodePtr other) const
+{
+    //todo smaller with epsilon
+
+    if (this->CoverageSize() < other->CoverageSize())
+    {
         return false;
     }
 
-    if (this->CoverageSize() > other->CoverageSize()) {
-        std::cout << "this->CoverageSize(): " << this->CoverageSize() <<std::endl;
+    if (this->CoverageSize() > other->CoverageSize())
+    {
 
         return true;
     }
@@ -198,7 +272,8 @@ bool Node::BetterThan(const NodePtr other) const {
     return (this->CostToCome() < other->CostToCome());
 }
 
-void Node::Extend(const Idx index, const RealNum cost, const VisibilitySet& set) {
+void Node::Extend(const Idx index, const RealNum cost, const VisibilitySet &set)
+{
     this->SetIndex(index);
     this->IncreaseCostToComeBy(cost);
     this->ExtendVisSet(set);
@@ -211,7 +286,8 @@ void Node::Extend(const Idx index, const RealNum cost, const VisibilitySet& set)
 #endif
 }
 
-void Node::Update(const RealNum edge_cost, const VisibilitySet& set) {
+void Node::Update(const RealNum edge_cost, const VisibilitySet &set)
+{
     this->cost_to_come_ = this->parent_->CostToCome() + edge_cost;
     this->vis_set_.Insert(set);
 
@@ -221,27 +297,33 @@ void Node::Update(const RealNum edge_cost, const VisibilitySet& set) {
 #endif
 }
 
-void Node::SetLocalPath(const std::vector<Idx>& path) {
+void Node::SetLocalPath(const std::vector<Idx> &path)
+{
     local_path_ = path;
 }
 
-std::vector<Idx> Node::LocalPath() const {
+std::vector<Idx> Node::LocalPath() const
+{
     return local_path_;
 }
 
-void Node::AppendLocalPath(std::vector<Idx>* path) const {
+void Node::AppendLocalPath(std::vector<Idx> *path) const
+{
     // local_path_ has no current index
     SizeType len = local_path_.size();
 
-    for (Idx i = 1; i < len-1; ++i) {
+    for (Idx i = 1; i < len - 1; ++i)
+    {
         path->push_back(local_path_[i]);
     }
 }
 
-void Node::Subsume(const NodePtr other, bool skip_update) {
+void Node::Subsume(const NodePtr other, bool skip_update)
+{
 #if USE_GHOST_DATA
 
-    if (!skip_update) {
+    if (!skip_update)
+    {
         this->UpdateGhostCost(other->GhostCost());
         this->ExtendGhostVisSet(other->GhostVisSet());
     }
@@ -251,7 +333,7 @@ void Node::Subsume(const NodePtr other, bool skip_update) {
     other->SetSubsumed(true);
 #if KEEP_SUBSUMING_HISTORY
 #if SAVE_PREDECESSOR
-    auto&& other_subsumed = other->SubsumedNodes();
+    auto &&other_subsumed = other->SubsumedNodes();
     subsumed_nodes_.insert(subsumed_nodes_.end(), other_subsumed.begin(), other_subsumed.end());
     other->ClearSubsumeHistory();
     subsumed_nodes_.push_back(other->Parent());
@@ -262,59 +344,73 @@ void Node::Subsume(const NodePtr other, bool skip_update) {
     num_subsumed_++;
 }
 
-SizeType Node::NumberOfSubsumed() const {
+SizeType Node::NumberOfSubsumed() const
+{
     return num_subsumed_;
 }
 
-std::vector<NodePtr> Node::SubsumedNodes() const {
+std::vector<NodePtr> Node::SubsumedNodes() const
+{
     return subsumed_nodes_;
 }
 
-void Node::ClearSubsumeHistory() {
+void Node::ClearSubsumeHistory()
+{
     num_subsumed_ = 0;
     subsumed_nodes_.clear();
 }
 
-void Node::ResetSuccessorStatusID() {
+void Node::ResetSuccessorStatusID()
+{
     successor_status_id_ = 0;
 }
 
-void Node::IncreaseSuccessorStatusID() {
+void Node::IncreaseSuccessorStatusID()
+{
     successor_status_id_++;
 }
 
-void Node::SetSuccessorStaturID(const Idx id) {
+void Node::SetSuccessorStaturID(const Idx id)
+{
     successor_status_id_ = id;
 }
 
-Idx Node::SuccessorStatusID() const {
+Idx Node::SuccessorStatusID() const
+{
     return successor_status_id_;
 }
 
-bool Node::Latest() const {
+bool Node::Latest() const
+{
     return if_latest_;
 }
 
-void Node::SetLatest(const bool if_latest) {
+void Node::SetLatest(const bool if_latest)
+{
     if_latest_ = if_latest;
 }
 
-bool Node::ReusedFromClosedSet() const {
+bool Node::ReusedFromClosedSet() const
+{
     return reused_from_closed_set_;
 }
 
-void Node::SetReuseFromClosedSet(const bool reuse) {
+void Node::SetReuseFromClosedSet(const bool reuse)
+{
     reused_from_closed_set_ = reuse;
 }
 
-bool Node::IsBounded(const RealNum p, const RealNum eps) const {
+bool Node::IsBounded(const RealNum p, const RealNum eps) const
+{
 #if USE_GHOST_DATA
 
-    if (cost_to_come_ > (1 + eps)*ghost_cost_) {
+    if (cost_to_come_ > (1 + eps) * ghost_cost_)
+    {
         return false;
     }
 
-    if (vis_set_.Size() < p*ghost_vis_set_.Size()) {
+    if (vis_set_.Size() < p * ghost_vis_set_.Size())
+    {
         return false;
     }
 
@@ -323,30 +419,35 @@ bool Node::IsBounded(const RealNum p, const RealNum eps) const {
     return true;
 }
 
-RealNum Node::LocalPathCost() const {
+RealNum Node::LocalPathCost() const
+{
     return local_path_cost_;
 }
 
-void Node::SetSearchID(const Idx search_id) {
+void Node::SetSearchID(const Idx search_id)
+{
     search_id_ = search_id;
 }
 
-Idx Node::SearchID() const {
+Idx Node::SearchID() const
+{
     return search_id_;
 }
 
-void Node::SetExtendedGraphSize(const SizeType& size) {
+void Node::SetExtendedGraphSize(const SizeType &size)
+{
     extended_graph_size_ = size;
 }
 
-SizeType Node::ExtendedGraphSize() const {
+SizeType Node::ExtendedGraphSize() const
+{
     return extended_graph_size_;
 }
 
-
 #if USE_GHOST_DATA
 
-void Node::SetGhostVisSet(const VisibilitySet& set) {
+void Node::SetGhostVisSet(const VisibilitySet &set)
+{
     // if (ghost_vis_set_.Size() > 0) {
     //  ghost_vis_set_.Clear();
     // }
@@ -354,37 +455,46 @@ void Node::SetGhostVisSet(const VisibilitySet& set) {
     ghost_vis_set_ = set;
 }
 
-void Node::ExtendGhostVisSet(const VisibilitySet& set) {
+void Node::ExtendGhostVisSet(const VisibilitySet &set)
+{
     ghost_vis_set_.Insert(set);
 }
 
-const VisibilitySet& Node::GhostVisSet() const {
+const VisibilitySet &Node::GhostVisSet() const
+{
     return ghost_vis_set_;
 }
 
-VisibilitySet& Node::GhostVisSet() {
+VisibilitySet &Node::GhostVisSet()
+{
     return ghost_vis_set_;
 }
 
-Idx Node::GhostCoverageSize() const {
+Idx Node::GhostCoverageSize() const
+{
     return ghost_vis_set_.Size();
 }
 
-void Node::SetGhostCost(const RealNum cost) {
+void Node::SetGhostCost(const RealNum cost)
+{
     ghost_cost_ = cost;
 }
 
-void Node::IncreaseGhostCostBy(const RealNum addon_cost) {
+void Node::IncreaseGhostCostBy(const RealNum addon_cost)
+{
     ghost_cost_ += addon_cost;
 }
 
-void Node::UpdateGhostCost(const RealNum cost) {
-    if (cost < ghost_cost_) {
+void Node::UpdateGhostCost(const RealNum cost)
+{
+    if (cost < ghost_cost_)
+    {
         ghost_cost_ = cost;
     }
 }
 
-RealNum Node::GhostCost() const {
+RealNum Node::GhostCost() const
+{
     return ghost_cost_;
 }
 
@@ -392,11 +502,13 @@ RealNum Node::GhostCost() const {
 
 #if USE_HEURISTIC
 
-void Node::SetHeuristic(const RealNum h) {
+void Node::SetHeuristic(const RealNum h)
+{
     h_ = h;
 }
 
-RealNum Node::Heuristic() const {
+RealNum Node::Heuristic() const
+{
     return h_;
 }
 

@@ -168,7 +168,7 @@ namespace drone
         auto yaw = robot_->Config()->Yaw();
         Idx i = 0;
         //add vertices Under the bridge
-        auto numberOfVerticesUnderTheBridge = 100;
+        auto numberOfVerticesUnderTheBridge = 50;
         for (i = 0; i < numberOfVerticesUnderTheBridge; i++)
         {
 
@@ -473,7 +473,7 @@ namespace drone
             // {
             //     cameraAngle = 0.7854;
             // }
-            auto numberOfOutsidePoints = 36;
+            auto numberOfOutsidePoints = 50;
             if (j > 0)
             {
                 NumVerticesOutside_2 = graph->NumVertices();

@@ -77,6 +77,7 @@ clean: external/clean
 # Directory level rules for directory app
 
 # Recursive "all" directory target.
+app/all: app/CMakeFiles/checkPOIandCollision.dir/all
 app/all: app/CMakeFiles/search_graph.dir/all
 app/all: app/CMakeFiles/build_graph.dir/all
 
@@ -88,6 +89,7 @@ app/preinstall:
 .PHONY : app/preinstall
 
 # Recursive "clean" directory target.
+app/clean: app/CMakeFiles/checkPOIandCollision.dir/clean
 app/clean: app/CMakeFiles/search_graph.dir/clean
 app/clean: app/CMakeFiles/build_graph.dir/clean
 
@@ -196,7 +198,7 @@ src/ompl/clean: src/ompl/CMakeFiles/ompl.dir/clean
 src/CMakeFiles/crisp_robot.dir/all: src/CMakeFiles/drone_robot.dir/all
 	$(MAKE) -f src/CMakeFiles/crisp_robot.dir/build.make src/CMakeFiles/crisp_robot.dir/depend
 	$(MAKE) -f src/CMakeFiles/crisp_robot.dir/build.make src/CMakeFiles/crisp_robot.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=7,8,9 "Built target crisp_robot"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=9,10,11 "Built target crisp_robot"
 .PHONY : src/CMakeFiles/crisp_robot.dir/all
 
 # Build rule for subdir invocation for target.
@@ -223,7 +225,7 @@ src/CMakeFiles/crisp_robot.dir/clean:
 src/CMakeFiles/ct_anatomy.dir/all:
 	$(MAKE) -f src/CMakeFiles/ct_anatomy.dir/build.make src/CMakeFiles/ct_anatomy.dir/depend
 	$(MAKE) -f src/CMakeFiles/ct_anatomy.dir/build.make src/CMakeFiles/ct_anatomy.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=10,11 "Built target ct_anatomy"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=12,13 "Built target ct_anatomy"
 .PHONY : src/CMakeFiles/ct_anatomy.dir/all
 
 # Build rule for subdir invocation for target.
@@ -250,7 +252,7 @@ src/CMakeFiles/ct_anatomy.dir/clean:
 src/CMakeFiles/drone_robot.dir/all: src/CMakeFiles/graph.dir/all
 	$(MAKE) -f src/CMakeFiles/drone_robot.dir/build.make src/CMakeFiles/drone_robot.dir/depend
 	$(MAKE) -f src/CMakeFiles/drone_robot.dir/build.make src/CMakeFiles/drone_robot.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=14,15,16 "Built target drone_robot"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=16,17,18 "Built target drone_robot"
 .PHONY : src/CMakeFiles/drone_robot.dir/all
 
 # Build rule for subdir invocation for target.
@@ -284,7 +286,7 @@ src/CMakeFiles/planar_robot.dir/all: src/ompl/CMakeFiles/rrg.dir/all
 src/CMakeFiles/planar_robot.dir/all: external/crisp_kinematics/CMakeFiles/crisp_kinematics.dir/all
 	$(MAKE) -f src/CMakeFiles/planar_robot.dir/build.make src/CMakeFiles/planar_robot.dir/depend
 	$(MAKE) -f src/CMakeFiles/planar_robot.dir/build.make src/CMakeFiles/planar_robot.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=29,30,31 "Built target planar_robot"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=31,32,33 "Built target planar_robot"
 .PHONY : src/CMakeFiles/planar_robot.dir/all
 
 # Build rule for subdir invocation for target.
@@ -311,7 +313,7 @@ src/CMakeFiles/planar_robot.dir/clean:
 src/CMakeFiles/planar_env.dir/all:
 	$(MAKE) -f src/CMakeFiles/planar_env.dir/build.make src/CMakeFiles/planar_env.dir/depend
 	$(MAKE) -f src/CMakeFiles/planar_env.dir/build.make src/CMakeFiles/planar_env.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=27,28 "Built target planar_env"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=29,30 "Built target planar_env"
 .PHONY : src/CMakeFiles/planar_env.dir/all
 
 # Build rule for subdir invocation for target.
@@ -338,7 +340,7 @@ src/CMakeFiles/planar_env.dir/clean:
 src/CMakeFiles/io.dir/all:
 	$(MAKE) -f src/CMakeFiles/io.dir/build.make src/CMakeFiles/io.dir/depend
 	$(MAKE) -f src/CMakeFiles/io.dir/build.make src/CMakeFiles/io.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=19,20 "Built target io"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=21,22 "Built target io"
 .PHONY : src/CMakeFiles/io.dir/all
 
 # Build rule for subdir invocation for target.
@@ -371,7 +373,7 @@ src/CMakeFiles/search.dir/all: src/ompl/CMakeFiles/rrg.dir/all
 src/CMakeFiles/search.dir/all: external/crisp_kinematics/CMakeFiles/crisp_kinematics.dir/all
 	$(MAKE) -f src/CMakeFiles/search.dir/build.make src/CMakeFiles/search.dir/depend
 	$(MAKE) -f src/CMakeFiles/search.dir/build.make src/CMakeFiles/search.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=34,35,36,37 "Built target search"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=36,37,38,39 "Built target search"
 .PHONY : src/CMakeFiles/search.dir/all
 
 # Build rule for subdir invocation for target.
@@ -398,7 +400,7 @@ src/CMakeFiles/search.dir/clean:
 src/CMakeFiles/graph.dir/all: src/ompl/CMakeFiles/drone.dir/all
 	$(MAKE) -f src/CMakeFiles/graph.dir/build.make src/CMakeFiles/graph.dir/depend
 	$(MAKE) -f src/CMakeFiles/graph.dir/build.make src/CMakeFiles/graph.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=17,18 "Built target graph"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=19,20 "Built target graph"
 .PHONY : src/CMakeFiles/graph.dir/all
 
 # Build rule for subdir invocation for target.
@@ -452,7 +454,7 @@ src/CMakeFiles/bridge_env.dir/clean:
 src/CMakeFiles/vis_set.dir/all:
 	$(MAKE) -f src/CMakeFiles/vis_set.dir/build.make src/CMakeFiles/vis_set.dir/depend
 	$(MAKE) -f src/CMakeFiles/vis_set.dir/build.make src/CMakeFiles/vis_set.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=40,41 "Built target vis_set"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=42,43 "Built target vis_set"
 .PHONY : src/CMakeFiles/vis_set.dir/all
 
 # Build rule for subdir invocation for target.
@@ -479,7 +481,7 @@ src/CMakeFiles/vis_set.dir/clean:
 src/ompl/CMakeFiles/drone.dir/all: src/ompl/CMakeFiles/ompl.dir/all
 	$(MAKE) -f src/ompl/CMakeFiles/drone.dir/build.make src/ompl/CMakeFiles/drone.dir/depend
 	$(MAKE) -f src/ompl/CMakeFiles/drone.dir/build.make src/ompl/CMakeFiles/drone.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=12,13 "Built target drone"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=14,15 "Built target drone"
 .PHONY : src/ompl/CMakeFiles/drone.dir/all
 
 # Build rule for subdir invocation for target.
@@ -506,7 +508,7 @@ src/ompl/CMakeFiles/drone.dir/clean:
 src/ompl/CMakeFiles/rrg.dir/all:
 	$(MAKE) -f src/ompl/CMakeFiles/rrg.dir/build.make src/ompl/CMakeFiles/rrg.dir/depend
 	$(MAKE) -f src/ompl/CMakeFiles/rrg.dir/build.make src/ompl/CMakeFiles/rrg.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=32,33 "Built target rrg"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=34,35 "Built target rrg"
 .PHONY : src/ompl/CMakeFiles/rrg.dir/all
 
 # Build rule for subdir invocation for target.
@@ -538,7 +540,7 @@ src/ompl/CMakeFiles/ompl.dir/all: src/ompl/CMakeFiles/rrg.dir/all
 src/ompl/CMakeFiles/ompl.dir/all: external/crisp_kinematics/CMakeFiles/crisp_kinematics.dir/all
 	$(MAKE) -f src/ompl/CMakeFiles/ompl.dir/build.make src/ompl/CMakeFiles/ompl.dir/depend
 	$(MAKE) -f src/ompl/CMakeFiles/ompl.dir/build.make src/ompl/CMakeFiles/ompl.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=21,22,23,24,25,26 "Built target ompl"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=23,24,25,26,27,28 "Built target ompl"
 .PHONY : src/ompl/CMakeFiles/ompl.dir/all
 
 # Build rule for subdir invocation for target.
@@ -559,6 +561,41 @@ src/ompl/CMakeFiles/ompl.dir/clean:
 .PHONY : src/ompl/CMakeFiles/ompl.dir/clean
 
 #=============================================================================
+# Target rules for target app/CMakeFiles/checkPOIandCollision.dir
+
+# All Build rule for target.
+app/CMakeFiles/checkPOIandCollision.dir/all: src/CMakeFiles/crisp_robot.dir/all
+app/CMakeFiles/checkPOIandCollision.dir/all: src/CMakeFiles/ct_anatomy.dir/all
+app/CMakeFiles/checkPOIandCollision.dir/all: src/CMakeFiles/planar_robot.dir/all
+app/CMakeFiles/checkPOIandCollision.dir/all: src/CMakeFiles/planar_env.dir/all
+app/CMakeFiles/checkPOIandCollision.dir/all: src/CMakeFiles/io.dir/all
+app/CMakeFiles/checkPOIandCollision.dir/all: src/CMakeFiles/bridge_env.dir/all
+app/CMakeFiles/checkPOIandCollision.dir/all: src/CMakeFiles/vis_set.dir/all
+app/CMakeFiles/checkPOIandCollision.dir/all: src/ompl/CMakeFiles/rrg.dir/all
+app/CMakeFiles/checkPOIandCollision.dir/all: external/crisp_kinematics/CMakeFiles/crisp_kinematics.dir/all
+	$(MAKE) -f app/CMakeFiles/checkPOIandCollision.dir/build.make app/CMakeFiles/checkPOIandCollision.dir/depend
+	$(MAKE) -f app/CMakeFiles/checkPOIandCollision.dir/build.make app/CMakeFiles/checkPOIandCollision.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=5,6 "Built target checkPOIandCollision"
+.PHONY : app/CMakeFiles/checkPOIandCollision.dir/all
+
+# Build rule for subdir invocation for target.
+app/CMakeFiles/checkPOIandCollision.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/davidalpert/Projects/IRIS/debug/CMakeFiles 35
+	$(MAKE) -f CMakeFiles/Makefile2 app/CMakeFiles/checkPOIandCollision.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/davidalpert/Projects/IRIS/debug/CMakeFiles 0
+.PHONY : app/CMakeFiles/checkPOIandCollision.dir/rule
+
+# Convenience name for target.
+checkPOIandCollision: app/CMakeFiles/checkPOIandCollision.dir/rule
+
+.PHONY : checkPOIandCollision
+
+# clean rule for target.
+app/CMakeFiles/checkPOIandCollision.dir/clean:
+	$(MAKE) -f app/CMakeFiles/checkPOIandCollision.dir/build.make app/CMakeFiles/checkPOIandCollision.dir/clean
+.PHONY : app/CMakeFiles/checkPOIandCollision.dir/clean
+
+#=============================================================================
 # Target rules for target app/CMakeFiles/search_graph.dir
 
 # All Build rule for target.
@@ -572,7 +609,7 @@ app/CMakeFiles/search_graph.dir/all: src/ompl/CMakeFiles/rrg.dir/all
 app/CMakeFiles/search_graph.dir/all: external/crisp_kinematics/CMakeFiles/crisp_kinematics.dir/all
 	$(MAKE) -f app/CMakeFiles/search_graph.dir/build.make app/CMakeFiles/search_graph.dir/depend
 	$(MAKE) -f app/CMakeFiles/search_graph.dir/build.make app/CMakeFiles/search_graph.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=38,39 "Built target search_graph"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=40,41 "Built target search_graph"
 .PHONY : app/CMakeFiles/search_graph.dir/all
 
 # Build rule for subdir invocation for target.
@@ -634,7 +671,7 @@ app/CMakeFiles/build_graph.dir/clean:
 external/crisp_kinematics/CMakeFiles/crisp_kinematics.dir/all:
 	$(MAKE) -f external/crisp_kinematics/CMakeFiles/crisp_kinematics.dir/build.make external/crisp_kinematics/CMakeFiles/crisp_kinematics.dir/depend
 	$(MAKE) -f external/crisp_kinematics/CMakeFiles/crisp_kinematics.dir/build.make external/crisp_kinematics/CMakeFiles/crisp_kinematics.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=5,6 "Built target crisp_kinematics"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/davidalpert/Projects/IRIS/debug/CMakeFiles --progress-num=7,8 "Built target crisp_kinematics"
 .PHONY : external/crisp_kinematics/CMakeFiles/crisp_kinematics.dir/all
 
 # Build rule for subdir invocation for target.

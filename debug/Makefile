@@ -280,6 +280,19 @@ ompl/fast:
 .PHONY : ompl/fast
 
 #=============================================================================
+# Target rules for targets named checkPOIandCollision
+
+# Build rule for target.
+checkPOIandCollision: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 checkPOIandCollision
+.PHONY : checkPOIandCollision
+
+# fast build rule for target.
+checkPOIandCollision/fast:
+	$(MAKE) -f app/CMakeFiles/checkPOIandCollision.dir/build.make app/CMakeFiles/checkPOIandCollision.dir/build
+.PHONY : checkPOIandCollision/fast
+
+#=============================================================================
 # Target rules for targets named search_graph
 
 # Build rule for target.
@@ -339,6 +352,7 @@ help:
 	@echo "... drone"
 	@echo "... rrg"
 	@echo "... ompl"
+	@echo "... checkPOIandCollision"
 	@echo "... search_graph"
 	@echo "... build_graph"
 	@echo "... crisp_kinematics"

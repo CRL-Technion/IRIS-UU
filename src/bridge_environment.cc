@@ -110,11 +110,11 @@ namespace drone
             v[0] = -95;
             v[1] = -11;
             v[2] = -5;
-            for (i = 0; i < 200; i++)
+            for (i = 0; i < MAX_COVERAGE_SIZE; i++)
             {
 
                 AddTargetPoint(v);
-                v[0] = v[0] + 1;
+                v[0] = v[0] + 200.0/MAX_COVERAGE_SIZE;
                 // std::cout << "v: " << v[0] << " " << v[1] << " " << v[2] << std::endl;
             }
 

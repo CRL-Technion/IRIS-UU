@@ -111,6 +111,21 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
+app/CMakeFiles/checkPOIandCollision.dir/rule:
+	cd /home/davidalpert/Projects/IRIS/debug && $(MAKE) -f CMakeFiles/Makefile2 app/CMakeFiles/checkPOIandCollision.dir/rule
+.PHONY : app/CMakeFiles/checkPOIandCollision.dir/rule
+
+# Convenience name for target.
+checkPOIandCollision: app/CMakeFiles/checkPOIandCollision.dir/rule
+
+.PHONY : checkPOIandCollision
+
+# fast build rule for target.
+checkPOIandCollision/fast:
+	cd /home/davidalpert/Projects/IRIS/debug && $(MAKE) -f app/CMakeFiles/checkPOIandCollision.dir/build.make app/CMakeFiles/checkPOIandCollision.dir/build
+.PHONY : checkPOIandCollision/fast
+
+# Convenience name for target.
 app/CMakeFiles/search_graph.dir/rule:
 	cd /home/davidalpert/Projects/IRIS/debug && $(MAKE) -f CMakeFiles/Makefile2 app/CMakeFiles/search_graph.dir/rule
 .PHONY : app/CMakeFiles/search_graph.dir/rule
@@ -167,6 +182,33 @@ build_graph.cc.s:
 	cd /home/davidalpert/Projects/IRIS/debug && $(MAKE) -f app/CMakeFiles/build_graph.dir/build.make app/CMakeFiles/build_graph.dir/build_graph.cc.s
 .PHONY : build_graph.cc.s
 
+checkPOIandCollision.o: checkPOIandCollision.cc.o
+
+.PHONY : checkPOIandCollision.o
+
+# target to build an object file
+checkPOIandCollision.cc.o:
+	cd /home/davidalpert/Projects/IRIS/debug && $(MAKE) -f app/CMakeFiles/checkPOIandCollision.dir/build.make app/CMakeFiles/checkPOIandCollision.dir/checkPOIandCollision.cc.o
+.PHONY : checkPOIandCollision.cc.o
+
+checkPOIandCollision.i: checkPOIandCollision.cc.i
+
+.PHONY : checkPOIandCollision.i
+
+# target to preprocess a source file
+checkPOIandCollision.cc.i:
+	cd /home/davidalpert/Projects/IRIS/debug && $(MAKE) -f app/CMakeFiles/checkPOIandCollision.dir/build.make app/CMakeFiles/checkPOIandCollision.dir/checkPOIandCollision.cc.i
+.PHONY : checkPOIandCollision.cc.i
+
+checkPOIandCollision.s: checkPOIandCollision.cc.s
+
+.PHONY : checkPOIandCollision.s
+
+# target to generate assembly for a file
+checkPOIandCollision.cc.s:
+	cd /home/davidalpert/Projects/IRIS/debug && $(MAKE) -f app/CMakeFiles/checkPOIandCollision.dir/build.make app/CMakeFiles/checkPOIandCollision.dir/checkPOIandCollision.cc.s
+.PHONY : checkPOIandCollision.cc.s
+
 search_graph.o: search_graph.cc.o
 
 .PHONY : search_graph.o
@@ -201,12 +243,16 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... rebuild_cache"
+	@echo "... checkPOIandCollision"
 	@echo "... edit_cache"
 	@echo "... search_graph"
 	@echo "... build_graph"
 	@echo "... build_graph.o"
 	@echo "... build_graph.i"
 	@echo "... build_graph.s"
+	@echo "... checkPOIandCollision.o"
+	@echo "... checkPOIandCollision.i"
+	@echo "... checkPOIandCollision.s"
 	@echo "... search_graph.o"
 	@echo "... search_graph.i"
 	@echo "... search_graph.s"

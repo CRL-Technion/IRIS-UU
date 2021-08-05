@@ -124,6 +124,7 @@ set(CMAKE_DEPEND_INFO_FILES
   "src/ompl/CMakeFiles/drone.dir/DependInfo.cmake"
   "src/ompl/CMakeFiles/rrg.dir/DependInfo.cmake"
   "src/ompl/CMakeFiles/ompl.dir/DependInfo.cmake"
+  "app/CMakeFiles/checkPOIandCollision.dir/DependInfo.cmake"
   "app/CMakeFiles/search_graph.dir/DependInfo.cmake"
   "app/CMakeFiles/build_graph.dir/DependInfo.cmake"
   "external/crisp_kinematics/CMakeFiles/crisp_kinematics.dir/DependInfo.cmake"

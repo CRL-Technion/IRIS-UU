@@ -10,15 +10,16 @@
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
-class Node {
-  public:
+class Node
+{
+public:
     Node() = default;
     Node(const Idx index);
     Node(const NodePtr other);
 
     void DeepCopy(const NodePtr other);
     void CopyAsChild(const NodePtr other);
-    void Print(std::ostream& out, const SizeType time) const;
+    void Print(std::ostream &out, const SizeType time) const;
 
     void SetIndex(const Idx index);
     Idx Index() const;
@@ -26,17 +27,20 @@ class Node {
     void SetCostToCome(const RealNum cost);
     void IncreaseCostToComeBy(const RealNum addon_cost);
     RealNum CostToCome() const;
-    RealNum CostToComeRiskZone() const;
-	void SetCostToComeRiskZone(const RealNum cost_risk_zone);	
-	void SetTotalLocationError(const std::vector<Vec3> otherTotalLocationError);
-	std::vector<Vec3> GetTotalLocationError();
+    std::vector<RealNum> GetCostToComeRiskZone() const;
+    void SetCostToComeRiskZone(const std::vector<RealNum> cost_risk_zone);
+    void SetTotalLocationError(const std::vector<Vec3> otherTotalLocationError);
+    std::vector<Vec3> GetTotalLocationError();
+    void SetExitRiskZone(const std::vector<bool> otherExitRiskZone);
+    std::vector<bool> GetExitRiskZone();
+    ///////////
     void SetParent(NodePtr parent);
     void RemoveParent();
     NodePtr Parent() const;
 
-    void SetVisSet(const VisibilitySet& set);
-    void ExtendVisSet(const VisibilitySet& set);
-    const VisibilitySet& VisSet() const;
+    void SetVisSet(const VisibilitySet &set);
+    void ExtendVisSet(const VisibilitySet &set);
+    const VisibilitySet &VisSet() const;
     RealNum CoverageSize() const;
 
     void SetSubsumed(const bool subsmued);
@@ -49,14 +53,14 @@ class Node {
     bool IsValid() const;
 
     bool BetterThan(const NodePtr other) const;
-    void Extend(const Idx index, const RealNum cost, const VisibilitySet& set);
-    void Update(const RealNum edge_cost, const VisibilitySet& set);
+    void Extend(const Idx index, const RealNum cost, const VisibilitySet &set);
+    void Update(const RealNum edge_cost, const VisibilitySet &set);
 
-    void SetLocalPath(const std::vector<Idx>& path);
+    void SetLocalPath(const std::vector<Idx> &path);
     std::vector<Idx> LocalPath() const;
-    void AppendLocalPath(std::vector<Idx>* path) const;
+    void AppendLocalPath(std::vector<Idx> *path) const;
 
-    void Subsume(const NodePtr other, bool skip_update=false);
+    void Subsume(const NodePtr other, bool skip_update = false);
     SizeType NumberOfSubsumed() const;
     std::vector<NodePtr> SubsumedNodes() const;
     void ClearSubsumeHistory();
@@ -78,14 +82,14 @@ class Node {
     void SetSearchID(const Idx search_id);
     Idx SearchID() const;
 
-    void SetExtendedGraphSize(const SizeType& size);
+    void SetExtendedGraphSize(const SizeType &size);
     SizeType ExtendedGraphSize() const;
 
 #if USE_GHOST_DATA
-    void SetGhostVisSet(const VisibilitySet& set);
-    void ExtendGhostVisSet(const VisibilitySet& set);
-    const VisibilitySet& GhostVisSet() const;
-    VisibilitySet& GhostVisSet();
+    void SetGhostVisSet(const VisibilitySet &set);
+    void ExtendGhostVisSet(const VisibilitySet &set);
+    const VisibilitySet &GhostVisSet() const;
+    VisibilitySet &GhostVisSet();
     Idx GhostCoverageSize() const;
 
     void SetGhostCost(const RealNum cost);
@@ -99,7 +103,7 @@ class Node {
     RealNum Heuristic() const;
 #endif
 
-  private:
+private:
     bool is_subsumed_{false};
     bool checked_collision_{false};
     bool valid_{true};
@@ -111,10 +115,11 @@ class Node {
     Idx search_id_{0};
     SizeType num_subsumed_{0};
     RealNum cost_to_come_{0};
-    RealNum cost_to_come_risk_zone{0};
+    std::vector<RealNum> cost_to_come_risk_zone{0};
     RealNum local_path_cost_{0};
     VisibilitySet vis_set_;
     std::vector<Vec3> totalLocationError;
+    std::vector<bool> exitRiskZone;
     NodePtr parent_{nullptr};
     std::vector<Idx> local_path_;
     std::vector<NodePtr> subsumed_nodes_;
@@ -122,12 +127,12 @@ class Node {
     SizeType extended_graph_size_{0};
 
 #if USE_GHOST_DATA
-    RealNum ghost_cost_ {0};
+    RealNum ghost_cost_{0};
     VisibilitySet ghost_vis_set_;
 #endif
 
 #if USE_HEURISTIC
-    RealNum h_ {0};
+    RealNum h_{0};
 #endif
 
 }; // Node

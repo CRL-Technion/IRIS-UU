@@ -116,7 +116,7 @@ VisibilitySet &VisibilitySet::operator=(const VisibilitySet &other)
 
 bool VisibilitySet::operator[](Idx i) const
 {
-    return  bitset_[i];
+    return bitset_[i];
 }
 
 bool VisibilitySet::operator==(const VisibilitySet &other) const
@@ -138,15 +138,14 @@ bool VisibilitySet::operator==(const VisibilitySet &other) const
     // {
     //     if (other_bitset_[i] > 0.5 && bitset_[i] < 0.5)
     //     {
-    //         return false; 
+    //         return false;
     //     }
     //     if (other_bitset_[i] < 0.5 && bitset_[i] > 0.5)
     //     {
-    //         return false; 
+    //         return false;
     //     }
-            
-    // }  
-       
+
+    // }
 
     // return true;
 }
@@ -188,11 +187,11 @@ void VisibilitySet::Insert(const VisibilitySet &other)
     {
         // if (other_bitset_[i] > 0.5)
         // {
-        //    bitset_[i] = 1; 
+        //    bitset_[i] = 1;
         // }
-      //bitset_[i] |=other_bitset_[i];
+        //bitset_[i] |=other_bitset_[i];
 
-       bitset_[i] = std::max(bitset_[i], other_bitset_[i]);
+        bitset_[i] = std::max(bitset_[i], other_bitset_[i]);
     }
 }
 
@@ -204,9 +203,8 @@ void VisibilitySet::Remove(const VisibilitySet &other)
     // {
     //     if (other_bitset_[i] < 0.5)
     //     {
-    //        bitset_[i] = 0; 
+    //        bitset_[i] = 0;
     //     }
-       
 
     // }
 }
@@ -232,7 +230,7 @@ bool VisibilitySet::Contains(const VisibilitySet &other) const
     //     }
     // }
     // return isContians;
-
+    // return Size() >=  other.Size();
     auto other_bitset_ = other.bitset();
 
     bool isContians = true;
@@ -242,18 +240,18 @@ bool VisibilitySet::Contains(const VisibilitySet &other) const
         // {
         //     isContians = false;
         //     break;
-        // }    
+        // }
 
+        // if (bitset_[i] < (other_bitset_[i] - 1e-6))
         if (bitset_[i] < (other_bitset_[i] - 1e-6))
+
         {
             isContians = false;
             break;
         }
-        
     }
- 
+
     return isContians;
-   
 }
 
 bool VisibilitySet::IsContainedIn(const VisibilitySet &other) const
@@ -272,7 +270,6 @@ bool VisibilitySet::IsContainedIn(const VisibilitySet &other) const
     // }
     // return isContians;
 
-
     // auto other_bitset_ = other.bitset();
 
     // bool isContians = true;
@@ -283,7 +280,7 @@ bool VisibilitySet::IsContainedIn(const VisibilitySet &other) const
     //         isContians = false;
     //         break;
     //     }
-       
+
     // }
     // return isContians;
 }
@@ -295,26 +292,23 @@ RealNum VisibilitySet::Size() const
     // return ( double ) sum;
     // auto temp = std::accumulate(std::begin(bitset_), std::end(bitset_), 0);
     // return temp;
-    RealNum initial_sum  = 0; 
+    RealNum initial_sum = 0;
     for (size_t i = 0; i < bitset_.size(); i++)
     {
         // if (std::abs(visPOI[i]-1) <eps)
-        if (bitset_[i]>0.5)
-        {
-            
-        }
+        // if (bitset_[i]>0.5)
+        // {
+
+        // }
         // initial_sum +=1;
-        initial_sum +=bitset_[i];
+        initial_sum += bitset_[i];
     }
-    return initial_sum;//(SizeType)(initial_sum+0.1);
+    return initial_sum; //(SizeType)(initial_sum+0.1);
 }
 
 const VisibilitySet::Bitset &VisibilitySet::bitset() const
 {
     return bitset_;
 }
-
-
-
 
 #endif //useBitSet
