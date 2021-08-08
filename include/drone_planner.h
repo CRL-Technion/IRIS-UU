@@ -40,20 +40,20 @@ namespace drone
     void SetParams(const RealNum step_size, const bool if_k_nearest);
     void BuildAndSaveInspectionGraph(const String file_name, const Idx target_size);
     void ComputeVisibilitySet(Inspection::VPtr vertex) const;
- ///////////////////////
+    ///////////////////////
     void InsertIntermediatePointsToGraph(Inspection::Graph *graph, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ);
-    Inspection::EPtr InsertIntermediatePointToGraph(Inspection::Graph *graph,Inspection::EPtr edge,Vec3 InsertIntermediatePosition);
+    Inspection::EPtr InsertIntermediatePointToGraph(Inspection::Graph *graph, Inspection::EPtr edge, Vec3 InsertIntermediatePosition);
 
     void InsertGraphPointToyProblem(Inspection::Graph *graph, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ);
     void InsertGraphPointOutSideToyProblem(Inspection::Graph *graph, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ);
 
     bool IsPointInsideBox(const Vec3 &point, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ);
     void MarkEdgeRiskZone(Inspection::Graph *graph, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ);
-
+    ob::SpaceInformationPtr Define_space_info_();
     //////////////////////
     bool CheckEdge(const ob::State *source, const ob::State *target) const;
+
   private:
-   
     RobotPtr robot_;
     EnvPtr env_;
     Idx seed_;
@@ -78,8 +78,6 @@ namespace drone
     std::vector<RealNum> StateToConfig(const ob::State *state) const;
     std::vector<Vec2> StateToShape(const ob::State *state) const;
     void ComputeRobotVisibilitySet(VisibilitySet &vis_set) const;
-
-    
 
 #if REJECT_SAMPLING
     VisibilitySet global_vis_set_;

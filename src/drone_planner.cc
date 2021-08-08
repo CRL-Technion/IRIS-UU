@@ -36,7 +36,6 @@ namespace drone
                 pos[j] = uni(rng) * (hi - lo) + lo;
             }
 
-
             yaw = uni(rng) * (kMaxYaw - kMinYaw) + kMinYaw;
             camera_angle = uni(rng) * (kMaxCameraAngle - kMinCameraAngle) + kMinCameraAngle;
 
@@ -69,6 +68,38 @@ namespace drone
     {
         step_size_ = step_size;
         k_nearest_ = if_k_nearest;
+    }
+
+    ob::SpaceInformationPtr DronePlanner::Define_space_info_()
+    {
+        auto state_space_ = ob::StateSpacePtr(new DroneStateSpace());
+        ob::RealVectorBounds bounds(5);
+
+        for (auto i = 0; i < 3; ++i)
+        {
+            if (i < 2)
+            {
+                bounds.setLow(i, env_->EnvironmentBoundary(i) - validation_distance_);
+            }
+            else
+            {
+                bounds.setLow(i, env_->EnvironmentBoundary(i));
+            }
+
+            bounds.setHigh(i, env_->EnvironmentBoundary(i, false) + validation_distance_);
+        }
+
+        bounds.setLow(3, kMinYaw);
+        bounds.setHigh(3, kMaxYaw);
+        bounds.setLow(4, kMinCameraAngle);
+        bounds.setHigh(4, kMaxCameraAngle);
+        state_space_->as<DroneStateSpace>()->setBounds(bounds);
+        space_info_.reset(new ob::SpaceInformation(state_space_));
+        using namespace std::placeholders;
+        space_info_->setStateValidityChecker(std::bind(&DronePlanner::StateValid, this, _1));
+        space_info_->setStateValidityCheckingResolution(validity_res_);
+        space_info_->setup();
+        return space_info_;
     }
 
     void DronePlanner::BuildAndSaveInspectionGraph(const String file_name, const Idx target_size)
