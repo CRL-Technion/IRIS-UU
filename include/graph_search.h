@@ -72,10 +72,10 @@ class GraphSearch
     };
 
     using PriorityQueue = std::priority_queue<NodePtr, std::vector<NodePtr>, QueueCmp>;
-    using OpenSet = std::set<NodePtr, CoverageCmp>;
-    // using OpenSet = std::unordered_set<NodePtr>;
-    using ClosedSet = std::set<NodePtr, CoverageCmp>;
-    // using ClosedSet = std::unordered_set<NodePtr>;
+    // using OpenSet = std::set<NodePtr, CoverageCmp>;
+    using OpenSet = std::unordered_set<NodePtr>;
+    // using ClosedSet = std::set<NodePtr, CoverageCmp>;
+    using ClosedSet = std::unordered_set<NodePtr>;
 
     inline static const std::map<Idx, String> kLazinessMap = {{0, "no lazy"},
                                                               {1, "LazySP"},
@@ -130,11 +130,15 @@ public:
     std::vector<Vec3> totalLocationErrorDefault;
     std::vector<bool> exitRiskZoneDefault;
     std::vector<RealNum> costToComeRiskZoneDefault;
-    
+
     bool ReCalculateVisibilitySetMC(NodePtr parent, Idx m, NodePtr new_node, RealNum &cost);
     VisibilitySet vis;
-    Vec3 LowerBordersXYZ = Vec3{-100 - 2, -22 - 2, -20 - 2};
-    Vec3 UpperBordersXYZ = Vec3{100 + 2, 2 + 2, 0 + 2};
+    // Vec3 LowerBordersXYZ = Vec3{-100 - 2, -22 - 2, -20 - 2};
+    // Vec3 UpperBordersXYZ = Vec3{100 + 2, 2 + 2, 0 + 2};
+    //    Vec3 LowerBordersXYZ = Vec3{-50 - 2, -11 - 2, -20 - 2};
+    // Vec3 UpperBordersXYZ = Vec3{100 + 2, 1 + 2, 0 + 2};
+    // Vec3 LowerBordersXYZ = Vec3{-100 - 2, -11 - 2, -20 - 2};
+    // Vec3 UpperBordersXYZ = Vec3{100 + 2, 1 + 2, 0 + 2};
     RealNum LocationErrorFunc(const RealNum b_a, const RealNum b_g, const RealNum timeRiskZone) const;
     ob::SpaceInformationPtr space_info_;
     /////

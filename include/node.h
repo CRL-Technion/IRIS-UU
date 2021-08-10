@@ -90,7 +90,7 @@ public:
     void ExtendGhostVisSet(const VisibilitySet &set);
     const VisibilitySet &GhostVisSet() const;
     VisibilitySet &GhostVisSet();
-    Idx GhostCoverageSize() const;
+    RealNum GhostCoverageSize() const;
 
     void SetGhostCost(const RealNum cost);
     void IncreaseGhostCostBy(const RealNum addon_cost);

@@ -4,10 +4,11 @@
 
 #include "graph_search.h"
 
-int main(int argc, char** argv) {
-    if (argc < 9) {
-        std::cerr << "Usage: " << argv[0] <<
-                  " file_to_read initial_p initial_eps tightening_rate laziness_mode successor_mode batching_ratio file_to_write"
+int main(int argc, char **argv)
+{
+    if (argc < 9)
+    {
+        std::cerr << "Usage: " << argv[0] << " file_to_read initial_p initial_eps tightening_rate laziness_mode successor_mode batching_ratio file_to_write"
                   << std::endl;
         exit(1);
     }
@@ -32,16 +33,16 @@ int main(int argc, char** argv) {
     // graph->ReadFromFiles(file_to_read);
     graph->ReadFromFiles(file_to_read, true, 5);
 
-
     GraphSearch search(graph);
-  #if UAV_NAVIGATION_ERROR
+#if UAV_NAVIGATION_ERROR
     {
-    String Location_Error_file_name = argv[9];
-    search.ReadLocationErrorParameters(Location_Error_file_name); 
+        String Location_Error_file_name = argv[9];
+        search.ReadLocationErrorParameters(Location_Error_file_name);
     }
-    #endif
+#endif
     RealNum p = initial_p;
     RealNum eps = initial_eps;
+    std::cout << "p and eps = " << p << " " << eps << std::endl;
     SizeType step = 1;
     SizeType addtional = 0;
     std::ofstream fout;
@@ -50,13 +51,16 @@ int main(int argc, char** argv) {
     std::ofstream fout_result;
     fout_result.open(file_to_write + "_result");
 
-    if (!fout.is_open()) {
+    if (!fout.is_open())
+    {
         std::cerr << file_to_write << " cannot be opened!" << std::endl;
         exit(1);
     }
 
-    if (!fout_result.is_open()) {
-        std::cerr << file_to_write + "_result" << " cannot be opened!" << std::endl;
+    if (!fout_result.is_open())
+    {
+        std::cerr << file_to_write + "_result"
+                  << " cannot be opened!" << std::endl;
         exit(1);
     }
 
@@ -79,7 +83,8 @@ int main(int argc, char** argv) {
 
     std::vector<Idx> path;
 
-    for (SizeType graph_size = step; graph_size <= graph->NumVertices(); graph_size += step) {
+    for (SizeType graph_size = step; graph_size <= graph->NumVertices(); graph_size += step)
+    {
         graph_size = graph->NumVertices();
         search.ExpandVirtualGraph(graph_size);
         addtional += step;
@@ -87,19 +92,22 @@ int main(int argc, char** argv) {
         auto update_rate = tightening_rate;
         //auto update_rate = pow(tightening_rate, sqrt(graph_size));
 
-        for (auto i = 0; i < step; ++i) {
-            p += (1 - p)*update_rate;
-            eps += (0 - eps)*update_rate;
+        for (auto i = 0; i < step; ++i)
+        {
+            p += (1 - p) * update_rate;
+            eps += (0 - eps) * update_rate;
         }
 
-        if (search.ResultCoverageSize() / (RealNum)search.VirtualGraphCoverageSize() >= ratio * p
-                && addtional < 200) {
+        if (search.ResultCoverageSize() / (RealNum)search.VirtualGraphCoverageSize() >= ratio * p && addtional < 200)
+        {
             continue;
         }
 
         search.UpdateApproximationParameters(eps, p);
 
         std::cout << "Graph size: " << graph_size << std::flush;
+        std::cout << "virtual_graph_coverage_.Size(): " << (RealNum)search.VirtualGraphCoverageSize() << std::endl;
+
         path = search.SearchVirtualGraph();
         std::cout << "\r                                 " << std::flush;
 
@@ -110,10 +118,11 @@ int main(int argc, char** argv) {
         search.PrintResult(std::cout);
         search.PrintResult(fout);
 
-        fout_result << graph_size;// << ": ";
+        fout_result << graph_size; // << ": ";
 
-        for (auto& p : path) {
-            fout_result <<" "<< p  ;
+        for (auto &p : path)
+        {
+            fout_result << " " << p;
         }
 
         fout_result << std::endl;

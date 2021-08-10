@@ -39,12 +39,12 @@ namespace drone
             yaw = uni(rng) * (kMaxYaw - kMinYaw) + kMinYaw;
             camera_angle = uni(rng) * (kMaxCameraAngle - kMinCameraAngle) + kMinCameraAngle;
 
-#if UAV_NAVIGATION_ERROR
-            pos[0] = -102;
-            pos[1] = -11;
-            yaw = 0.0;
-            camera_angle = 0;
-#endif
+            // #if UAV_NAVIGATION_ERROR
+            //             pos[0] = -102;
+            //             pos[1] = -11;
+            //             yaw = 0.0;
+            //             camera_angle = 0;
+            // #endif
 
             robot_->SetConfig(pos, yaw, camera_angle);
             robot_->ComputeShape();
@@ -164,32 +164,34 @@ namespace drone
 
         ob::PlannerData tree_data(space_info_);
         ob::PlannerData graph_data(space_info_);
-        auto ToleranceBorder = 2;
-        Vec3 LowerBordersXYZ{-100 - ToleranceBorder, -22 - ToleranceBorder, -20 - ToleranceBorder};
-        Vec3 UpperBordersXYZ{100 + ToleranceBorder, 2 + ToleranceBorder, 0 + ToleranceBorder};
-#if UAV_NAVIGATION_ERROR
-        InsertGraphPointToyProblem(graph, LowerBordersXYZ, UpperBordersXYZ);
-        InsertGraphPointOutSideToyProblem(graph, LowerBordersXYZ, UpperBordersXYZ);
-        InsertIntermediatePointsToGraph(graph, LowerBordersXYZ, UpperBordersXYZ);
-        MarkEdgeRiskZone(graph, LowerBordersXYZ, UpperBordersXYZ);
 
-        std::cout << "Covered targets: " << graph->NumTargetsCovered()
-                  << ", " << graph->NumTargetsCovered() * (RealNum)100 / num_targets_ << "%" << std::endl;
+        // #if UAV_NAVIGATION_ERROR
+        //         InsertGraphPointToyProblem(graph);
+        //         InsertGraphPointOutSideToyProblem(graph);
+        //         InsertIntermediatePointsToGraph(graph);
+        //         MarkEdgeRiskZone(graph);
 
-#else
+        //         std::cout << "Covered targets: " << graph->NumTargetsCovered()
+        //                   << ", " << graph->NumTargetsCovered() * (RealNum)100 / num_targets_ << "%" << std::endl;
+
+        // #else
         while (graph->NumVertices() < target_size)
         {
             BuildRRGIncrementally(graph, planner, tree_data, graph_data);
             std::cout << "Covered targets: " << graph->NumTargetsCovered()
                       << ", " << graph->NumTargetsCovered() * (RealNum)100 / num_targets_ << "%" << std::endl;
         }
-#endif
+        std::cout << "Number of vertices : " << graph->NumVertices() << "\n";
+        std::cout << "Number of edges : " << graph->NumEdges() << "\n";
+        // InsertIntermediatePointsToGraph(graph);
+        // MarkEdgeRiskZone(graph);
+        // #endif
 
         graph->Save(file_name, true);
 
         delete graph;
     }
-    void DronePlanner::InsertGraphPointToyProblem(Inspection::Graph *graph, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ)
+    void DronePlanner::InsertGraphPointToyProblem(Inspection::Graph *graph)
     {
         Vec3 pos;
         pos[0] = -100; //robot_->Config()->Position()[0];
@@ -316,7 +318,67 @@ namespace drone
         return edge2;
     }
 
-    void DronePlanner::InsertIntermediatePointsToGraph(Inspection::Graph *graph, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ)
+    bool DronePlanner::FindInsertPointRiskZone(const Vec3 &source, const Vec3 &target, Vec3 &desirePoint)
+    {
+        Vec3 direction = (target - source);
+        auto normVec = direction.norm();
+        direction.normalize();
+        std::vector<double> t;
+        Idx i = 0;
+        for (i = 0; i < 3; i++)
+        {
+            t.push_back((LowerBordersXYZ[i] - source[i]) / direction[i]);
+            t.push_back((UpperBordersXYZ[i] - source[i]) / direction[i]);
+        }
+        sort(t.begin(), t.end());
+        for (i = 0; i < t.size(); i++)
+        {
+            if (t[i] > 0 && t[i] < normVec)
+            {
+                desirePoint[0] = source[0] + (t[i] + 1e-2) * direction[0];
+                desirePoint[1] = source[1] + (t[i] + 1e-2) * direction[1];
+                desirePoint[2] = source[2] + (t[i] + 1e-2) * direction[2];
+
+                if (IsPointInsideBox(desirePoint))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    bool DronePlanner::FindExitPointRiskZone(const Vec3 &source, const Vec3 &target, Vec3 &desirePoint)
+    {
+        Vec3 direction = (target - source);
+        auto normVec = direction.norm();
+        direction.normalize();
+        std::vector<double> t;
+        Idx i = 0;
+        for (i = 0; i < 3; i++)
+        {
+            t.push_back((LowerBordersXYZ[i] - source[i]) / direction[i]);
+            t.push_back((UpperBordersXYZ[i] - source[i]) / direction[i]);
+        }
+        sort(t.begin(), t.end());
+        for (i = 0; i < t.size(); i++)
+        {
+            if (t[i] > 0 && t[i] < normVec)
+            {
+                desirePoint[0] = source[0] + (t[i] + 1e-2) * direction[0];
+                desirePoint[1] = source[1] + (t[i] + 1e-2) * direction[1];
+                desirePoint[2] = source[2] + (t[i] + 1e-2) * direction[2];
+
+                if (!IsPointInsideBox(desirePoint))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    void DronePlanner::InsertIntermediatePointsToGraph(Inspection::Graph *graph)
     {
         Idx indexWhile = 0;
         Inspection::Graph *tempgraph = new Inspection::Graph();
@@ -340,8 +402,8 @@ namespace drone
             auto normVec = direction.norm();
             direction.normalize();
 
-            bool isSourceInside = IsPointInsideBox(source, LowerBordersXYZ, UpperBordersXYZ);
-            bool istargetInside = IsPointInsideBox(target, LowerBordersXYZ, UpperBordersXYZ);
+            bool isSourceInside = IsPointInsideBox(source);
+            bool istargetInside = IsPointInsideBox(target);
 
             if (isSourceInside && istargetInside) //convex Risk zone
             {
@@ -379,8 +441,8 @@ namespace drone
 
                     if (!isSourceInside)
                     {
-                        isPlusEpsInside = IsPointInsideBox(intersectPointPlusEps, LowerBordersXYZ, UpperBordersXYZ);
-                        isMinusEpsInside = IsPointInsideBox(intersectPointMinusEps, LowerBordersXYZ, UpperBordersXYZ);
+                        isPlusEpsInside = IsPointInsideBox(intersectPointPlusEps);
+                        isMinusEpsInside = IsPointInsideBox(intersectPointMinusEps);
                         if ((isPlusEpsInside || isMinusEpsInside) && !isEnterAlready)
                         {
                             counterAddVertexPerEdge++;
@@ -395,8 +457,8 @@ namespace drone
                     }
                     else
                     {
-                        isPlusEpsInside = IsPointInsideBox(intersectPointPlusEps, LowerBordersXYZ, UpperBordersXYZ);
-                        isMinusEpsInside = IsPointInsideBox(intersectPointMinusEps, LowerBordersXYZ, UpperBordersXYZ);
+                        isPlusEpsInside = IsPointInsideBox(intersectPointPlusEps);
+                        isMinusEpsInside = IsPointInsideBox(intersectPointMinusEps);
                         if (!(isPlusEpsInside && isMinusEpsInside))
                         {
 
@@ -423,7 +485,7 @@ namespace drone
         std::cout << "Add Intermediate Edges : " << counterAddEdges << "\n";
     }
 
-    void DronePlanner::MarkEdgeRiskZone(Inspection::Graph *graph, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ)
+    void DronePlanner::MarkEdgeRiskZone(Inspection::Graph *graph)
     {
         RealNum eps = 1E-3;
 
@@ -438,35 +500,13 @@ namespace drone
             direction.normalize();
 
             auto middlePoint = source + normVec / 2 * direction;
-            // auto sourceInRiskZone = IsPointInsideBox(SourcePoint,LowerBordersXYZ,UpperBordersXYZ);
-            // auto TargetPoint = target - eps*direction;
-            // auto targetInRiskZone = IsPointInsideBox(TargetPoint,LowerBordersXYZ,UpperBordersXYZ);
-            // edge->IsBelongToRiskZone = sourceInRiskZone && targetInRiskZone;
 
-            auto middlePointInRiskZone = IsPointInsideBox(middlePoint, LowerBordersXYZ, UpperBordersXYZ);
+            auto middlePointInRiskZone = IsPointInsideBox(middlePoint);
             edge->IsEdgeBelongToRiskZone = middlePointInRiskZone;
-
-            // if (ToyProblem)
-            // {
-            //     if (edge->source <2*62 && edge->target<2*62)
-            //     {
-            //        edge->IsBelongToRiskZone=1;
-
-            //     }
-            //     continue;
-            //     // auto temp =IsPointInsideBox(source,LowerBordersXYZ,UpperBordersXYZ);
-            //     // if (temp)
-            //     // {
-            //     //     edge->IsBelongToRiskZone = IsPointInsideBox(target,LowerBordersXYZ,UpperBordersXYZ);;
-            //     // }
-
-            //     // continue;
-            // }
-            // edge->IsBelongToRiskZone = IsPointInsideBox(intersectPoint,LowerBordersXYZ,UpperBordersXYZ);
         }
     }
 
-    bool DronePlanner::IsPointInsideBox(const Vec3 &point, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ)
+    bool DronePlanner::IsPointInsideBox(const Vec3 &point)
     {
         if ((point[0] > LowerBordersXYZ[0]) && (point[0] < UpperBordersXYZ[0]) && (point[1] > LowerBordersXYZ[1]) && (point[1] < UpperBordersXYZ[1]) && (point[2] > LowerBordersXYZ[2]) && (point[2] < UpperBordersXYZ[2]))
         {
@@ -477,7 +517,7 @@ namespace drone
         return false;
     }
 
-    void DronePlanner::InsertGraphPointOutSideToyProblem(Inspection::Graph *graph, Vec3 LowerBordersXYZ, Vec3 UpperBordersXYZ)
+    void DronePlanner::InsertGraphPointOutSideToyProblem(Inspection::Graph *graph)
     {
         auto NumVerticesOutside_1 = graph->NumVertices();
         auto NumVerticesOutside_2 = 0;

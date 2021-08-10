@@ -470,7 +470,7 @@ VisibilitySet &Node::GhostVisSet()
     return ghost_vis_set_;
 }
 
-Idx Node::GhostCoverageSize() const
+RealNum Node::GhostCoverageSize() const
 {
     return ghost_vis_set_.Size();
 }
