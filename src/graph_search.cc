@@ -865,17 +865,17 @@ bool GraphSearch::ReCalculateVisibilitySetMC(NodePtr n, Idx v, NodePtr new_node,
             //     }
             // }
 
-            RealNormalDist NormR(0, 1);
-            RealNormalDist NormAngle(0, 2 * M_PI);
-            auto r = NormR(rng);
-            auto azimuth = NormAngle(rng);
-            auto elevation = NormAngle(rng);
+            // RealNormalDist NormR(0, 1);
+            // RealNormalDist NormAngle(0, 2 * M_PI);
+            // auto r = NormR(rng);
+            // auto azimuth = NormAngle(rng);
+            // auto elevation = NormAngle(rng);
 
-            previousTotalLocationError[i][0] = r * cos(elevation) * cos(azimuth);
-            previousTotalLocationError[i][1] = r * cos(elevation) * sin(azimuth);
-            previousTotalLocationError[i][2] = r * sin(elevation);
-            perviousCostRiskZone[i] = 0.0;
-            currentTimeRiskZone = 0.0;
+            // previousTotalLocationError[i][0] = r * cos(elevation) * cos(azimuth);
+            // previousTotalLocationError[i][1] = r * cos(elevation) * sin(azimuth);
+            // previousTotalLocationError[i][2] = r * sin(elevation);
+            // perviousCostRiskZone[i] = 0.0;
+            // currentTimeRiskZone = 0.0;
         }
 
         const ob::State *target = vertex->state;

@@ -103,25 +103,25 @@ namespace drone
 
     void BridgeEnvironment::InitializeTargets()
     {
-        // #if UAV_NAVIGATION_ERROR
-        //         {
-        //             Vec3 v;
-        //             Idx i = 0;
-        //             v[0] = -95;
-        //             v[1] = -11;
-        //             v[2] = -5;
-        //             for (i = 0; i < MAX_COVERAGE_SIZE; i++)
-        //             {
+        #if UAV_NAVIGATION_ERROR
+                {
+                    Vec3 v;
+                    Idx i = 0;
+                    v[0] = -95;
+                    v[1] = -11;
+                    v[2] = -5;
+                    for (i = 0; i < MAX_COVERAGE_SIZE; i++)
+                    {
 
-        //                 AddTargetPoint(v);
-        //                 v[0] = v[0] + 200.0/MAX_COVERAGE_SIZE;
-        //                 // std::cout << "v: " << v[0] << " " << v[1] << " " << v[2] << std::endl;
-        //             }
+                        AddTargetPoint(v);
+                        v[0] = v[0] + 200.0/MAX_COVERAGE_SIZE;
+                        // std::cout << "v: " << v[0] << " " << v[1] << " " << v[2] << std::endl;
+                    }
 
-        //             std::cout << "Number of targets: " << global_idx_ << std::endl;
-        //             return;
-        //         }
-        // #else
+                    std::cout << "Number of targets: " << global_idx_ << std::endl;
+                    return;
+                }
+        #else
 
         for (const auto &v : raw_vertices_)
         {
@@ -135,7 +135,7 @@ namespace drone
 
             AddTargetPoint(v);
         }
-        // #endif
+        #endif
         std::cout << "Number of targets: " << global_idx_ << std::endl;
     }
 

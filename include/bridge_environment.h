@@ -11,9 +11,9 @@ namespace drone {
 
 namespace nigh = unc::robotics::nigh;
 
-// const String kBridgeStructureFilename = "../data/bridge/bridgeTestLarge.obj";
+const String kBridgeStructureFilename = "../data/bridge/bridgeTestLarge.obj";
 // const String kBridgeStructureFilename = "../data/bridge/bridge_small.obj";
-const String kBridgeStructureFilename = "../data/bridge/bridge.obj";
+// const String kBridgeStructureFilename = "../data/bridge/bridge.obj";
 
 struct InspectPoint {
     SizeType idx;
