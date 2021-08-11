@@ -781,9 +781,11 @@ bool GraphSearch::ReCalculateVisibilitySetMC(NodePtr n, Idx v, NodePtr new_node,
         parentPosition[2] += previousTotalLocationError[i][2];
         bool IsParentInRiskZone = planner->IsPointInsideBox(parentPosition);
 
-        if (perviousExitRiskZone[i]) //case that parent is outside riskZone only because drift of sensors
+        // if (perviousExitRiskZone[i]) //case that parent is outside riskZone only because drift of sensors
+        if (perviousExitRiskZone[i] || (!IsParentInRiskZone))
         {
-            //todo assuming that the gps will fix the position outside of the risk zone
+            perviousExitRiskZone[i] = false;
+
             RealNormalDist NormR(0, 1);
             RealNormalDist NormAngle(0, 2 * M_PI);
             auto r = NormR(rng);
@@ -794,7 +796,6 @@ bool GraphSearch::ReCalculateVisibilitySetMC(NodePtr n, Idx v, NodePtr new_node,
             previousTotalLocationError[i][1] = r * cos(elevation) * sin(azimuth);
             previousTotalLocationError[i][2] = r * sin(elevation);
             perviousCostRiskZone[i] = 0.0;
-            currentTimeRiskZone = 0.0;
         }
         //todo this is approximation of the candidateVertexPos
         candidateVertexPos[0] += previousTotalLocationError[i][0];
@@ -804,86 +805,38 @@ bool GraphSearch::ReCalculateVisibilitySetMC(NodePtr n, Idx v, NodePtr new_node,
         //start calculate currentTimeRiskZone
         bool IsCandidateInRiskZone = planner->IsPointInsideBox(candidateVertexPos);
 
-        // if (perviousExitRiskZone[i] || (!IsParentInRiskZone))
-        // {
-        //     perviousExitRiskZone[i] = false;
-
-        //     RealNormalDist NormR(0, 1);
-        //     RealNormalDist NormAngle(0, 2 * M_PI);
-        //     auto r = NormR(rng);
-        //     auto azimuth = NormAngle(rng);
-        //     auto elevation = NormAngle(rng);
-
-        //     previousTotalLocationError[i][0] = r * cos(elevation) * cos(azimuth);
-        //     previousTotalLocationError[i][1] = r * cos(elevation) * sin(azimuth);
-        //     previousTotalLocationError[i][2] = r * sin(elevation);
-        //     perviousCostRiskZone[i] = 0.0;
-        // }
         Vec3 InsertPoint;
         Vec3 VertexPointInRiskZone;
-        auto needToConsiderRiskZone = false;
-        auto needToUpdateOnlyTheCost = false;
+        // auto needToConsiderRiskZone = false;
+        // auto needToUpdateOnlyTheCost = false;
         if (IsCandidateInRiskZone)
         {
+            VertexPointInRiskZone[0] = candidateVertexPos[0];
+            VertexPointInRiskZone[1] = candidateVertexPos[1];
+            VertexPointInRiskZone[2] = candidateVertexPos[2];
+            // needToConsiderRiskZone = true;
             if (IsParentInRiskZone) //type 5
             {
                 InsertPoint[0] = parentPosition[0];
                 InsertPoint[1] = parentPosition[1];
                 InsertPoint[2] = parentPosition[2];
-                VertexPointInRiskZone[0] = candidateVertexPos[0];
-                VertexPointInRiskZone[1] = candidateVertexPos[1];
-                VertexPointInRiskZone[2] = candidateVertexPos[2];
-                needToConsiderRiskZone = true;
             }
             else //find the entry point
             {
                 //type 4
                 auto IsInsertToRiskZone = planner->FindInsertPointRiskZone(parentPosition, candidateVertexPos, InsertPoint);
-
-                VertexPointInRiskZone[0] = candidateVertexPos[0];
-                VertexPointInRiskZone[1] = candidateVertexPos[1];
-                VertexPointInRiskZone[2] = candidateVertexPos[2];
-                needToConsiderRiskZone = true;
             }
         }
         else // todo:: assuming that the GNSS fix the position but we need to update only the cost (but maybe there is a case that because of the error the candidate is in riskZone??)
         {
-            // needToUpdateOnlyTheCost = true;
-
-            // if (IsParentInRiskZone) //type 3 - find the exit Point
-            // {
-            //     auto IsExitToRiskZone = planner->FindInsertPointRiskZone(parentPosition, candidateVertexPos, VertexPointInRiskZone);
-            // }
-            // else
-            // {
-            //     auto IsInsertToRiskZone = planner->FindInsertPointRiskZone(parentPosition, candidateVertexPos, InsertPoint);
-            //     if (!IsInsertToRiskZone) //type 1
-            //     {
-            //     }
-            //     else
-            //     {
-            //     }
-            // }
-
-            // RealNormalDist NormR(0, 1);
-            // RealNormalDist NormAngle(0, 2 * M_PI);
-            // auto r = NormR(rng);
-            // auto azimuth = NormAngle(rng);
-            // auto elevation = NormAngle(rng);
-
-            // previousTotalLocationError[i][0] = r * cos(elevation) * cos(azimuth);
-            // previousTotalLocationError[i][1] = r * cos(elevation) * sin(azimuth);
-            // previousTotalLocationError[i][2] = r * sin(elevation);
-            // perviousCostRiskZone[i] = 0.0;
-            // currentTimeRiskZone = 0.0;
         }
 
-        const ob::State *target = vertex->state;
-        if (needToConsiderRiskZone)
+        if (IsCandidateInRiskZone)//(needToConsiderRiskZone)
         {
             parentVertex->state->as<DroneStateSpace::StateType>()->SetPosition(InsertPoint);
             const ob::State *source = parentVertex->state;
 
+            //todo: this is approximation for calculate "currentTimeRiskZone"
             vertex->state->as<DroneStateSpace::StateType>()->SetPosition(VertexPointInRiskZone);
             const ob::State *targetInitial = vertex->state;
 
@@ -938,14 +891,16 @@ bool GraphSearch::ReCalculateVisibilitySetMC(NodePtr n, Idx v, NodePtr new_node,
             pos[0] = VertexPointInRiskZone[0] + previousTotalLocationError[i][0];
             pos[1] = VertexPointInRiskZone[1] + previousTotalLocationError[i][1];
             pos[2] = VertexPointInRiskZone[2] + previousTotalLocationError[i][2];
-            if (!planner->IsPointInsideBox(pos))
-            {
-                perviousExitRiskZone[i] = true;
-            }
+            // if (!planner->IsPointInsideBox(pos))
+            // {
+            //     perviousExitRiskZone[i] = true;
+            // }
             vertex->state->as<DroneStateSpace::StateType>()->SetPosition(pos);
             //recalculate cost
-
-            currentCost = space_info_->distance(source, target);
+            const ob::State *target = vertex->state;
+            parentVertex->state->as<DroneStateSpace::StateType>()->SetPosition(parentPosition);
+            const ob::State *sourceOriginal = parentVertex->state;
+            currentCost = space_info_->distance(sourceOriginal, target);
             perviousCostRiskZone[i] += currentCost;
 
             totalCost += currentCost;

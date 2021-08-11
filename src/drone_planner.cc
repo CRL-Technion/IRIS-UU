@@ -39,12 +39,12 @@ namespace drone
             yaw = uni(rng) * (kMaxYaw - kMinYaw) + kMinYaw;
             camera_angle = uni(rng) * (kMaxCameraAngle - kMinCameraAngle) + kMinCameraAngle;
 
-            #if UAV_NAVIGATION_ERROR
-                        pos[0] = -102;
-                        pos[1] = -11;
-                        yaw = 0.0;
-                        camera_angle = 0;
-            #endif
+#if UAV_NAVIGATION_ERROR
+            pos[0] = -102;
+            pos[1] = -11;
+            yaw = 0.0;
+            camera_angle = 0;
+#endif
 
             robot_->SetConfig(pos, yaw, camera_angle);
             robot_->ComputeShape();
@@ -165,16 +165,17 @@ namespace drone
         ob::PlannerData tree_data(space_info_);
         ob::PlannerData graph_data(space_info_);
 
-        #if UAV_NAVIGATION_ERROR
-                InsertGraphPointToyProblem(graph);
-                InsertGraphPointOutSideToyProblem(graph);
-                // InsertIntermediatePointsToGraph(graph);
-                // MarkEdgeRiskZone(graph);
+#if UAV_NAVIGATION_ERROR
+        InsertGraphPointToyProblem(graph);
+        InsertGraphPointOutSideToyProblem(graph);
+        // InsertIntermediatePointsToGraph(graph);
+        // MarkEdgeRiskZone(graph);
+        std::cout << "Number of vertices : " << graph->NumVertices() << "\n";
+        std::cout << "Number of edges : " << graph->NumEdges() << "\n";
+        std::cout << "Covered targets: " << graph->NumTargetsCovered()
+                  << ", " << graph->NumTargetsCovered() * (RealNum)100 / num_targets_ << "%" << std::endl;
 
-                std::cout << "Covered targets: " << graph->NumTargetsCovered()
-                          << ", " << graph->NumTargetsCovered() * (RealNum)100 / num_targets_ << "%" << std::endl;
-
-        #else
+#else
         while (graph->NumVertices() < target_size)
         {
             BuildRRGIncrementally(graph, planner, tree_data, graph_data);
@@ -183,9 +184,9 @@ namespace drone
         }
         std::cout << "Number of vertices : " << graph->NumVertices() << "\n";
         std::cout << "Number of edges : " << graph->NumEdges() << "\n";
-        // InsertIntermediatePointsToGraph(graph);
-        // MarkEdgeRiskZone(graph);
-        #endif
+// InsertIntermediatePointsToGraph(graph);
+// MarkEdgeRiskZone(graph);
+#endif
 
         graph->Save(file_name, true);
 
@@ -508,7 +509,9 @@ namespace drone
 
     bool DronePlanner::IsPointInsideBox(const Vec3 &point)
     {
-        if ((point[0] > LowerBordersXYZ[0]) && (point[0] < UpperBordersXYZ[0]) && (point[1] > LowerBordersXYZ[1]) && (point[1] < UpperBordersXYZ[1]) && (point[2] > LowerBordersXYZ[2]) && (point[2] < UpperBordersXYZ[2]))
+        if ((point[0] > LowerBordersXYZ[0]) && (point[0] < UpperBordersXYZ[0]) &&
+            (point[1] > LowerBordersXYZ[1]) && (point[1] < UpperBordersXYZ[1]) &&
+            (point[2] > LowerBordersXYZ[2]) && (point[2] < UpperBordersXYZ[2]))
         {
             // std::cout << "IsPointInsideBox \n"<< std::endl;
             // getchar();
