@@ -734,6 +734,16 @@ global_common.h
 graph_search.h
 /home/davidalpert/Projects/IRIS/src/graph_search.h
 
+/home/davidalpert/Projects/IRIS/src/node.cc
+node.h
+/home/davidalpert/Projects/IRIS/src/node.h
+
+/home/davidalpert/Projects/IRIS/src/traceback_map.cc
+traceback_map.h
+/home/davidalpert/Projects/IRIS/src/traceback_map.h
+assert.h
+-
+
 /usr/include/eigen3/Eigen/Cholesky
 Core
 /usr/include/eigen3/Eigen/Core

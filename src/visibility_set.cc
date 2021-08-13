@@ -121,18 +121,18 @@ bool VisibilitySet::operator[](Idx i) const
 
 bool VisibilitySet::operator==(const VisibilitySet &other) const
 {
-    return (bitset_ == other.bitset());
-    // auto other_bitset_ = other.bitset();
-    //    bool isEqual = true;
-    // for (size_t i = 0; i < MAX_COVERAGE_SIZE; i++)
-    // {
-    //     if (std::abs(bitset_[i]-other_bitset_[i]) >1e-6)
-    //     {
-    //         isEqual = false;
-    //         break;
-    //     }
-    // }
-    // return isEqual;
+    // return (bitset_ == other.bitset());
+    auto other_bitset_ = other.bitset();
+       bool isEqual = true;
+    for (size_t i = 0; i < MAX_COVERAGE_SIZE; i++)
+    {
+        if (std::abs(bitset_[i]-other_bitset_[i]) >1e-6)
+        {
+            isEqual = false;
+            break;
+        }
+    }
+    return isEqual;
     //  auto other_bitset_ = other.bitset();
     // for (size_t i = 0; i < bitset_.size(); i++)
     // {
@@ -243,7 +243,7 @@ bool VisibilitySet::Contains(const VisibilitySet &other) const
         // }
 
         // if (bitset_[i] < (other_bitset_[i] - 1e-6))
-        if (bitset_[i] < (other_bitset_[i] - 1e-6))
+        if (bitset_[i] < (other_bitset_[i] - 1e-3))
 
         {
             isContians = false;

@@ -34,7 +34,7 @@ namespace drone
         }
 
         InitializeTargets();
-        //InitializeObstaclePointCloud();
+        // InitializeObstaclePointCloud();
 
         // io::WriteJSPtCloud("../data/test.js", obstacles_, 0.5, IdxPoint(255, 255, 255));
     }
@@ -103,7 +103,7 @@ namespace drone
 
     void BridgeEnvironment::InitializeTargets()
     {
-        #if UAV_NAVIGATION_ERROR
+        #if ToyProblem
                 {
                     Vec3 v;
                     Idx i = 0;
@@ -128,7 +128,7 @@ namespace drone
             // Avoid duplicating target points.
             const auto neartest = nn_.nearest(v)->first.point;
 
-            if ((neartest - v).norm() < 7.4)
+            if ((neartest - v).norm() < 10)
             {
                 continue;
             }

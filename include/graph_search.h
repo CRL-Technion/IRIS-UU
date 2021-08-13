@@ -141,6 +141,8 @@ public:
     // Vec3 UpperBordersXYZ = Vec3{100 + 2, 1 + 2, 0 + 2};
     RealNum LocationErrorFunc(const RealNum b_a, const RealNum b_g, const RealNum timeRiskZone) const;
     ob::SpaceInformationPtr space_info_;
+    Vec3 InsertPoint;
+    Vec3 pos;
     /////
 
 private:
