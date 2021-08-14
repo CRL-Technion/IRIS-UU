@@ -768,7 +768,7 @@ bool GraphSearch::ReCalculateVisibilitySetMC(NodePtr n, Idx v, NodePtr new_node,
                 // std::cout << "accumulatedCostRiskZone " << CostRiskZone+accumulatedCostRiskZone;
                 std::cout << "," << currentTimeRiskZone + perviousTimeRiskZone << std::endl;
                 //vis.Insert(graph_->Vertex(v)->vis);
-                return false;
+                // return false;
             }
 
             // if ((currentTimeRiskZone + perviousTimeRiskZone) > minTimeAllowInRistZone)
