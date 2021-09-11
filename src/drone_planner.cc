@@ -379,6 +379,23 @@ namespace drone
         return false;
     }
 
+// void DronePlanner::RandomNoiseGPS(Vec3 &TotalLocationError) 
+//     {
+//         RealNormalDist NormR(0, 1);
+//             RealNormalDist NormAngle(0, 2 * M_PI);
+//             auto r = NormR(rng);
+//             auto azimuth = NormAngle(rng);
+//             auto elevation = NormAngle(rng);
+
+//             TotalLocationError[i][0] = r * cos(elevation) * cos(azimuth);
+//             TotalLocationError[i][1] = r * cos(elevation) * sin(azimuth);
+//             TotalLocationError[i][2] = -r * sin(elevation);
+//     }
+
+// double DronePlanner::ComputeCost(const Vec3 TotalLocationError,const Vec3 TotalLocationError) const
+// {
+
+// }
     void DronePlanner::InsertIntermediatePointsToGraph(Inspection::Graph *graph)
     {
         Idx indexWhile = 0;

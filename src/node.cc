@@ -98,7 +98,6 @@ std::vector<Vec3> Node::GetTotalLocationError()
 void Node::SetExitRiskZone(const std::vector<bool> otherExitRiskZone)
 {
 
-    
     auto MonteCarloNumber = otherExitRiskZone.size();
     if (MonteCarloNumber > exitRiskZone.size())
     {
@@ -175,19 +174,28 @@ Idx Node::Index() const
 
 void Node::SetCostToCome(const RealNum cost)
 {
+    // int temp = round(cost * 100);
+    // double temp1 = temp / 100.0;
+    // cost_to_come_ = temp1;
     cost_to_come_ = cost;
+    // cost_to_come_ = floor(10000 * cost_to_come_) / 10000.0;
 }
 
 void Node::IncreaseCostToComeBy(const RealNum addon_cost)
 {
     cost_to_come_ += addon_cost;
+    // cost_to_come_ = floor(10000 * cost_to_come_) / 10000.0;
+
+    // int temp = round(cost_to_come_ * 100);
+    // double temp1 = temp / 100.0;
+    // cost_to_come_ = temp1;
 }
 
-RealNum Node::CostToCome() const
+RealNum Node::CostToCome() 
 {
+    // cost_to_come_ = floor(10000 * cost_to_come_) / 10000.0;
     return cost_to_come_;
 }
-
 
 void Node::SetParent(NodePtr parent)
 {
@@ -254,7 +262,7 @@ bool Node::IsValid() const
     return valid_;
 }
 
-bool Node::BetterThan(const NodePtr other) const
+bool Node::BetterThan(const NodePtr other) 
 {
     //todo smaller with epsilon
 
@@ -265,7 +273,6 @@ bool Node::BetterThan(const NodePtr other) const
 
     if (this->CoverageSize() > other->CoverageSize())
     {
-
         return true;
     }
 
@@ -478,11 +485,17 @@ RealNum Node::GhostCoverageSize() const
 void Node::SetGhostCost(const RealNum cost)
 {
     ghost_cost_ = cost;
+    // ghost_cost_ = floor(10000 * ghost_cost_) / 10000.0;
 }
 
 void Node::IncreaseGhostCostBy(const RealNum addon_cost)
 {
     ghost_cost_ += addon_cost;
+    // ghost_cost_ = floor(10000 * ghost_cost_) / 10000.0;
+
+    // int temp = round(ghost_cost_ * 100);
+    // double temp1 = temp / 100.0;
+    // ghost_cost_ = temp1;
 }
 
 void Node::UpdateGhostCost(const RealNum cost)
@@ -491,10 +504,16 @@ void Node::UpdateGhostCost(const RealNum cost)
     {
         ghost_cost_ = cost;
     }
+    // ghost_cost_ = floor(10000 * ghost_cost_) / 10000.0;
+
+    // int temp = round(ghost_cost_ * 100);
+    // double temp1 = temp / 100.0;
+    // ghost_cost_ = temp1;
 }
 
-RealNum Node::GhostCost() const
+RealNum Node::GhostCost() 
 {
+    // ghost_cost_ = floor(10000 * ghost_cost_) / 10000.0;
     return ghost_cost_;
 }
 

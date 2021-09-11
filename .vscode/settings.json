@@ -69,5 +69,6 @@
         "core": "cpp"
     },
     "C_Cpp.default.compilerPath": "/home/davidalpert/.vscode-server/extensions/bartmanabyss.amiga-debug-1.0.0\\bin\\opt\\bin\\m68k-amiga-elf-gcc.exe",
-    "C_Cpp.dimInactiveRegions": true
+    "C_Cpp.dimInactiveRegions": true,
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }

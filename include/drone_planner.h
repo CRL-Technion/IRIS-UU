@@ -53,6 +53,9 @@ namespace drone
     ob::SpaceInformationPtr Define_space_info_();
     Vec3 LowerBordersXYZ = Vec3{-100 - 2, -22 - 2, -20 - 2};
     Vec3 UpperBordersXYZ = Vec3{100 + 2, 2 + 2, 0 + 2};
+
+    // void RandomNoiseGPS(Vec3 &TotalLocationError);
+    //double ComputeCost(const Vec3 TotalLocationError, const Vec3 TotalLocationError) const
     //////////////////////
     bool CheckEdge(const ob::State *source, const ob::State *target) const;
 

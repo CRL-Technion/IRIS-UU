@@ -14,3 +14,8 @@ if (USE_C++17)
 else (USE_C++17)
     target_link_libraries(checkPOIandCollision crisp_robot planar_robot)
 endif()
+
+
+
+add_executable(checkProbModel checkProbModel.cc)
+target_link_libraries(checkProbModel search)

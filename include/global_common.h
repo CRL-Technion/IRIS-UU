@@ -12,7 +12,7 @@
 #include <Eigen/Dense>
 
 #define DEBUG_MODE 0
-#define ToyProblem 1
+#define ToyProblem 0
 #define UAV_NAVIGATION_ERROR 1
 #define REJECT_SAMPLING 1
 
@@ -39,8 +39,8 @@
 #if USE_PLANAR
 #define MAX_COVERAGE_SIZE 400
 #else
-#define MAX_COVERAGE_SIZE 100//61// 100//538//885//100//3817 // 14021 // 27384 // 3346
-#endif // USE_PLANAR
+#define MAX_COVERAGE_SIZE 61 //100//61// 100//538//885//100//3817 // 14021 // 27384 // 3346
+#endif                       // USE_PLANAR
 
 #endif // USE_CRISP
 
@@ -58,7 +58,9 @@
 using String = std::string;
 using Idx = unsigned short;
 using SizeType = std::size_t;
+
 using RealNum = float;
+// using RealNum = double;
 using Rand = std::mt19937_64;
 using RealUniformDist = std::uniform_real_distribution<RealNum>;
 using RealNormalDist = std::normal_distribution<RealNum>;
@@ -88,5 +90,35 @@ const RealNum EPS = 1e-6;
 // timing
 using Clock = std::chrono::high_resolution_clock;
 using TimePoint = std::chrono::time_point<Clock>;
+
+
+class Float
+{
+private:
+    float val;
+
+public:
+    // Float(float f) : val(f){};
+
+    bool operator==(Float const &other) const
+    {
+        float diff = std::fabs(val - other.val);
+
+        return (diff < std::numeric_limits<float>::epsilon()) && (diff > -std::numeric_limits<float>::epsilon());
+    }
+    bool operator>(float const &other) const
+    {
+        return (val > (other + std::numeric_limits<float>::epsilon())) && ((val - std::numeric_limits<float>::epsilon()) > other);
+        // return (val - other)> ((fabs (val) <fabs (other)? fabs (other): fabs (val)) * 1e-6);
+    }
+    bool operator<(float const &other) const
+    {
+        return (val < (other - std::numeric_limits<float>::epsilon())) && ((val + std::numeric_limits<float>::epsilon()) < other);
+        // return (other - val)> ((fabs (val) <fabs (other)? fabs (other): fabs (val)) * 1e-6);
+    }
+
+    // conversion operator could be handy
+    operator float() { return val; }
+};
 
 #endif // GLOBAL_COMMON_H_

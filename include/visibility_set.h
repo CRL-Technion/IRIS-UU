@@ -20,7 +20,11 @@ public:
   VisibilitySet(const VisibilitySet &other);
 
   VisibilitySet &operator=(const VisibilitySet &other);
+#if useBitSet
   bool operator[](Idx i) const;
+#else
+  RealNum operator[](Idx i) const;
+#endif
   bool operator==(const VisibilitySet &other) const;
   bool operator<(const VisibilitySet &other) const;
   bool operator>(const VisibilitySet &other) const;
@@ -42,10 +46,8 @@ public:
 #endif
   const Bitset &bitset() const;
 
-
-// private:
+  // private:
   Bitset bitset_;
-
 };
 
 #endif // VISIBILITY_SET_H

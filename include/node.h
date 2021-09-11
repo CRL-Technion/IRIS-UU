@@ -26,7 +26,7 @@ public:
 
     void SetCostToCome(const RealNum cost);
     void IncreaseCostToComeBy(const RealNum addon_cost);
-    RealNum CostToCome() const;
+    RealNum CostToCome();
     std::vector<RealNum> GetCostToComeRiskZone() const;
     void SetCostToComeRiskZone(const std::vector<RealNum> cost_risk_zone);
     void SetTotalLocationError(const std::vector<Vec3> otherTotalLocationError);
@@ -52,7 +52,7 @@ public:
     void SetValid(const bool valid);
     bool IsValid() const;
 
-    bool BetterThan(const NodePtr other) const;
+    bool BetterThan(const NodePtr other) ;
     void Extend(const Idx index, const RealNum cost, const VisibilitySet &set);
     void Update(const RealNum edge_cost, const VisibilitySet &set);
 
@@ -95,7 +95,7 @@ public:
     void SetGhostCost(const RealNum cost);
     void IncreaseGhostCostBy(const RealNum addon_cost);
     void UpdateGhostCost(const RealNum cost);
-    RealNum GhostCost() const;
+    RealNum GhostCost();
 #endif
 
 #if USE_HEURISTIC

@@ -145,6 +145,10 @@ public:
     Vec3 pos;
     /////
 
+#if USE_GHOST_DATA
+    RealNum p_{1.0};
+    RealNum eps_{0.0};
+#endif
 private:
     Inspection::GPtr graph_{nullptr};
     SizeType virtual_graph_size_{0};
@@ -153,10 +157,6 @@ private:
     NodePtr result_{nullptr};
     RealNum greedy_cost_{0};
 
-#if USE_GHOST_DATA
-    RealNum p_{1.0};
-    RealNum eps_{0.0};
-#endif
     SizeType time_build_{0};
     SizeType time_vis_{0};
     SizeType time_valid_{0};
@@ -185,7 +185,7 @@ private:
     void ComputeAndAddSuccessors(const NodePtr p);
     void ComputeAndAddSuccessorsCompleteLazy(const NodePtr p);
     NodePtr ComputeNearestSuccessor(const NodePtr parent);
-    bool InGoalSet(const NodePtr n) const;
+    bool InGoalSet(const NodePtr n) ;
     bool StronglyDominates(const RealNum &l1, const VisibilitySet &s1, const RealNum &l2,
                            const VisibilitySet &s2) const;
     bool DominatedByClosedState(const NodePtr node) const;

@@ -114,7 +114,7 @@ VisibilitySet &VisibilitySet::operator=(const VisibilitySet &other)
     return *this;
 }
 
-bool VisibilitySet::operator[](Idx i) const
+RealNum VisibilitySet::operator[](Idx i) const
 {
     return bitset_[i];
 }
@@ -123,16 +123,16 @@ bool VisibilitySet::operator==(const VisibilitySet &other) const
 {
     // return (bitset_ == other.bitset());
     auto other_bitset_ = other.bitset();
-       bool isEqual = true;
+    bool isEqual = true;
     for (size_t i = 0; i < MAX_COVERAGE_SIZE; i++)
     {
-        if (std::abs(bitset_[i]-other_bitset_[i]) >1e-6)
+        if (std::abs(bitset_[i] - other_bitset_[i]) > 1e-4)
         {
             isEqual = false;
             break;
         }
     }
-    return isEqual;
+    // return isEqual;
     //  auto other_bitset_ = other.bitset();
     // for (size_t i = 0; i < bitset_.size(); i++)
     // {
@@ -192,6 +192,7 @@ void VisibilitySet::Insert(const VisibilitySet &other)
         //bitset_[i] |=other_bitset_[i];
 
         bitset_[i] = std::max(bitset_[i], other_bitset_[i]);
+        // bitset_[i] = floor(100*std::max(bitset_[i], other_bitset_[i]))/100.0;
     }
 }
 
@@ -288,8 +289,8 @@ bool VisibilitySet::IsContainedIn(const VisibilitySet &other) const
 RealNum VisibilitySet::Size() const
 {
     // int count = sizeof( bitset_ ) / sizeof( bitset_[0] );
-    // double sum = std::accumulate( &bitset_, &bitset_ + count, 0 );
-    // return ( double ) sum;
+    // RealNum sum = std::accumulate( &bitset_, &bitset_ + count, 0 );
+    // return ( RealNum ) sum;
     // auto temp = std::accumulate(std::begin(bitset_), std::end(bitset_), 0);
     // return temp;
     RealNum initial_sum = 0;
@@ -303,7 +304,14 @@ RealNum VisibilitySet::Size() const
         // initial_sum +=1;
         initial_sum += bitset_[i];
     }
-    return initial_sum; //(SizeType)(initial_sum+0.1);
+    // int temp = round(initial_sum*100);
+
+    // // double tempM = temp%100;
+    // double temp1 = temp/100.0;
+
+    // return temp1; //(SizeType)(initial_sum+0.1);
+    return initial_sum;//
+    // return floor(100000 * initial_sum) / 100000.0;
 }
 
 const VisibilitySet::Bitset &VisibilitySet::bitset() const
