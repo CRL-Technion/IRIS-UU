@@ -34,7 +34,7 @@ namespace drone
         }
 
         InitializeTargets();
-        // InitializeObstaclePointCloud();
+        InitializeObstaclePointCloud();
 
         // io::WriteJSPtCloud("../data/test.js", obstacles_, 0.5, IdxPoint(255, 255, 255));
     }
@@ -128,13 +128,13 @@ namespace drone
             // Avoid duplicating target points.
             const auto neartest = nn_.nearest(v)->first.point;
 
-            if ((neartest - v).norm() < 10)
+            if ((neartest - v).norm() < 4)
             {
                 continue;
             }
 
             AddTargetPoint(v);
-        }
+        } 
         #endif
         std::cout << "Number of targets: " << global_idx_ << std::endl;
     }

@@ -128,6 +128,8 @@ std::vector<RealNum> Node::GetCostToComeRiskZone() const
 void Node::SetCostToComeRiskZone(const std::vector<RealNum> otherCostRiskZone)
 {
     auto MonteCarloNumber = otherCostRiskZone.size();
+    
+
     if (MonteCarloNumber > cost_to_come_risk_zone.size())
     {
         for (size_t i = 0; i < MonteCarloNumber; i++)
@@ -191,7 +193,7 @@ void Node::IncreaseCostToComeBy(const RealNum addon_cost)
     // cost_to_come_ = temp1;
 }
 
-RealNum Node::CostToCome() 
+RealNum Node::CostToCome()
 {
     // cost_to_come_ = floor(10000 * cost_to_come_) / 10000.0;
     return cost_to_come_;
@@ -262,7 +264,7 @@ bool Node::IsValid() const
     return valid_;
 }
 
-bool Node::BetterThan(const NodePtr other) 
+bool Node::BetterThan(const NodePtr other)
 {
     //todo smaller with epsilon
 
@@ -511,7 +513,7 @@ void Node::UpdateGhostCost(const RealNum cost)
     // ghost_cost_ = temp1;
 }
 
-RealNum Node::GhostCost() 
+RealNum Node::GhostCost()
 {
     // ghost_cost_ = floor(10000 * ghost_cost_) / 10000.0;
     return ghost_cost_;
