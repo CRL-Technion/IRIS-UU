@@ -23,19 +23,25 @@ namespace drone
 
         io::LoadObjModel(kBridgeStructureFilename, pos, texture, normal, v_i, t_i, n_i);
 
+        // std::cout << "p" << std::endl;
+
         for (const auto &p : pos)
         {
             raw_vertices_.emplace_back(p[0], p[1], p[2]);
+            // std::cout << "vertices" << p[0] << " " << p[1] << " " << p[2] << std::endl;
         }
 
+        // std::cout << "idx" << std::endl;
         for (const auto i : v_i)
         {
             vertex_idx_.emplace_back(i);
+            // std::cout << "faces_1 " <<  i << std::endl;
         }
 
         InitializeTargets();
-        InitializeObstaclePointCloud();
 
+        InitializeObstaclePointCloud();
+        std::cout << "obstacle_idx_" << obstacle_idx_ << std::endl;
         // io::WriteJSPtCloud("../data/test.js", obstacles_, 0.5, IdxPoint(255, 255, 255));
     }
 
@@ -103,39 +109,57 @@ namespace drone
 
     void BridgeEnvironment::InitializeTargets()
     {
-        #if ToyProblem
+#if ToyProblem
+        {
+            Vec3 v;
+            Idx i = 0;
+            Idx j = 0;
+            RealNum offset = 0.2;
+            v[0] = -12 - offset * 2;
+            v[1] = 4;
+            v[2] = 0;
+            for (i = 0; i < MAX_COVERAGE_SIZE / 3.0; i++)
+            {
+                for (j = 0; j < 3; j++)
                 {
-                    Vec3 v;
-                    Idx i = 0;
-                    v[0] = -95;
-                    v[1] = -11;
-                    v[2] = -5;
-                    for (i = 0; i < MAX_COVERAGE_SIZE; i++)
-                    {
-
-                        AddTargetPoint(v);
-                        v[0] = v[0] + 200.0/MAX_COVERAGE_SIZE;
-                        // std::cout << "v: " << v[0] << " " << v[1] << " " << v[2] << std::endl;
-                    }
-
-                    std::cout << "Number of targets: " << global_idx_ << std::endl;
-                    return;
+                    AddTargetPoint(v);
+                    std::cout << v[0] << " " << v[1] << " " << v[2] << std::endl;
+                    v[0] += offset;
                 }
-        #else
+                v[0] += 3 - offset * 3;
+            }
+
+            std::cout << "Number of targets: " << global_idx_ << std::endl;
+            return;
+        }
+#else
+        std::ofstream fout;
+        fout.open("targetsPoints");
+
+        if (!fout.is_open())
+        {
+            std::cerr << "targetsPoints file cannot be opened!" << std::endl;
+            exit(1);
+        }
 
         for (const auto &v : raw_vertices_)
         {
             // Avoid duplicating target points.
             const auto neartest = nn_.nearest(v)->first.point;
 
-            if ((neartest - v).norm() < 4)
+            if ((neartest - v).norm() < 5.5)
             {
                 continue;
             }
 
+            // std::cout << v[0] << " " << v[1] << " " << v[2] << std::endl;
+            fout << v[0] << " " << v[1] << " " << v[2] << std::endl;
+
             AddTargetPoint(v);
-        } 
-        #endif
+        }
+        fout.close();
+        std::cout << "targetsPoints saved!" << std::endl;
+#endif
         std::cout << "Number of targets: " << global_idx_ << std::endl;
     }
 
@@ -143,27 +167,36 @@ namespace drone
     {
         for (auto i = 0; i < vertex_idx_.size(); i += 3)
         {
+
             auto p0 = raw_vertices_[vertex_idx_[i]];
             auto p1 = raw_vertices_[vertex_idx_[i + 1]];
             auto p2 = raw_vertices_[vertex_idx_[i + 2]];
 
             faces_.emplace_back(vertex_idx_[i], vertex_idx_[i + 1], vertex_idx_[i + 2]);
+            // std::cout << "faces_" << vertex_idx_[i] << " " << vertex_idx_[i+1] << " " << vertex_idx_[i+2] << std::endl;
 
             auto area = TriangleArea((p1 - p0).norm(), (p2 - p1).norm(), (p0 - p2).norm());
+
+            // std::cout << "a: " << (p1 - p0).norm()<< "b: " << (p2 - p1).norm()<< "b: " << (p0 - p2).norm()<< "TriangleArea: " << area << std::endl;
 
             if (area < unit_area)
             {
                 continue;
             }
 
-            Idx num_points = std::floor(area / unit_area);
+            Idx num_points = std::floor(area / unit_area) * std::floor(area / unit_area) / 2.0;
+            // std::cout << "std::floor(area / unit_area): " << std::floor(area / unit_area)<< std::endl;
 
             for (auto j = 0; j < num_points; ++j)
             {
                 auto alpha = RandomNum(0, 1);
                 auto beta = RandomNum(0, 1 - alpha);
                 auto gamma = 1 - alpha - beta;
+                // std::cout << "gamma" << alpha << " " << beta << " " << gamma << std::endl;
+
                 auto new_point = alpha * p0 + beta * p1 + gamma * p2;
+                // std::cout << i << " " << j << std::endl;
+
                 AddObstacleOnlyPoint(new_point);
             }
         }
@@ -263,9 +296,39 @@ namespace drone
     // }
 
     std::vector<SizeType> BridgeEnvironment::GetVisiblePointIndices(const Vec3 &pos, const Vec3 &tang,
-                                                                    const RealNum fov_in_rad, const RealNum min_dof, const RealNum max_dof) const
+                                                                    const RealNum fov_in_rad, const RealNum min_dof, const RealNum max_dof)
     {
         std::vector<SizeType> visible_points;
+
+        // std::pair<Vec3, Vec3> input_args = std::make_pair(pos, tang);
+        // CacheKey cache_key = {input_args};
+        //     // std::cout << (cache_key.arg1.first).norm() << std::endl;
+
+        // auto cache_iter = cache1.find(cache_key);
+        // if (cache_iter != cache1.end())
+        // {
+        //     std::cout << "use cache" << std::endl;
+        //     // Cache hit: use the cached value
+        //     return cache1[cache_key];
+        // }
+
+        // CacheValue addMemberToCache(float arg1, float arg2, float arg3, float epsilon, int newMember)
+        // {
+        //     CacheKey key = {arg1, arg2, arg3, epsilon};
+        //     auto it = cache.find(key);
+        //     if (it != cache.end())
+        //     {
+        //         CacheValue cachedResult = it->second;
+        //         // Modify the cached result to include the new member
+        //         cachedResult.members.push_back(newMember);
+        //         cache[key] = cachedResult;
+        //         return cachedResult;
+        //     }
+        //     CacheValue result = // Calculate the result of the function and add the new member
+        //         result.members.push_back(newMember);
+        //     cache[key] = result;
+        //     return result;
+        // }
 
         // Compute points in valid range.
         auto large_set = NearestTargetsInSphere(pos, max_dof);
@@ -292,12 +355,25 @@ namespace drone
             bool visible = true;
             const auto dist = camera_to_point.norm();
             RealNum t, u, v;
-
+            Idx count = 0;
             for (const auto &f : faces_)
             {
                 const auto &v0 = raw_vertices_[f[0]];
                 const auto &v1 = raw_vertices_[f[1]];
                 const auto &v2 = raw_vertices_[f[2]];
+
+                // if (abs((pos - v0).norm() > dist + 1))
+                // {
+                //     continue;
+                // }
+                // if (abs((pos - v1).norm() > dist + 1))
+                // {
+                //     continue;
+                // }
+                // if (abs((pos - v2).norm() > dist + 1))
+                // {
+                //     continue;
+                // }
 
                 if (RayTriangleIntersect(pos, camera_to_point_normalized, v0, v1, v2, &t, &u, &v) && t < dist - EPS)
                 {
@@ -312,6 +388,8 @@ namespace drone
             }
         }
 
+        // cache[cache_key] = visible_points;
+        // cache1.insert(std::make_pair(cache_key,visible_points));
         return visible_points;
     }
 

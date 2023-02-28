@@ -45,7 +45,8 @@ void Node::DeepCopy(const NodePtr other)
 #endif
     SetCostToComeRiskZone(other->GetCostToComeRiskZone());
     SetTotalLocationError(other->GetTotalLocationError());
-    SetExitRiskZone(other->GetExitRiskZone());
+    SetCostToComeMc(other->GetCostToComeMc());
+    SetCollisionProbability(other->p_coll);
 }
 
 void Node::CopyAsChild(const NodePtr other)
@@ -65,13 +66,14 @@ void Node::CopyAsChild(const NodePtr other)
 #endif
     SetCostToComeRiskZone(other->GetCostToComeRiskZone());
     SetTotalLocationError(other->GetTotalLocationError());
-    SetExitRiskZone(other->GetExitRiskZone());
+    SetCostToComeMc(other->GetCostToComeMc());
+    SetCollisionProbability(other->p_coll);
 }
 void Node::SetTotalLocationError(const std::vector<Vec3> otherTotalLocationError)
 {
 
-    //totalLocationError.clear();
-    // memcpy(&totalLocationError,otherTotalLocationError,sizeof(totalLocationError));
+    // totalLocationError.clear();
+    //  memcpy(&totalLocationError,otherTotalLocationError,sizeof(totalLocationError));
     auto MonteCarloNumber = otherTotalLocationError.size();
     if (MonteCarloNumber > totalLocationError.size())
     {
@@ -95,16 +97,16 @@ std::vector<Vec3> Node::GetTotalLocationError()
     return totalLocationError;
 }
 
-void Node::SetExitRiskZone(const std::vector<bool> otherExitRiskZone)
+void Node::SetCostToComeMc(const std::vector<RealNum> otherCostToComeMc)
 {
 
-    auto MonteCarloNumber = otherExitRiskZone.size();
-    if (MonteCarloNumber > exitRiskZone.size())
+    auto MonteCarloNumber = otherCostToComeMc.size();
+    if (MonteCarloNumber > costToComeMc.size())
     {
         for (size_t i = 0; i < MonteCarloNumber; i++)
         {
 
-            exitRiskZone.push_back(otherExitRiskZone[i]);
+            costToComeMc.push_back(otherCostToComeMc[i]);
         }
     }
     else
@@ -112,23 +114,33 @@ void Node::SetExitRiskZone(const std::vector<bool> otherExitRiskZone)
         for (size_t i = 0; i < MonteCarloNumber; i++)
         {
 
-            exitRiskZone[i] = (otherExitRiskZone[i]);
+            costToComeMc[i] = (otherCostToComeMc[i]);
         }
     }
 }
-std::vector<bool> Node::GetExitRiskZone()
+std::vector<RealNum> Node::GetCostToComeMc()
 {
-    return exitRiskZone;
+    return costToComeMc;
+}
+
+void Node::SetCollisionProbability(const RealNum _p_coll)
+{
+    p_coll = _p_coll;
+}
+
+RealNum Node::GetCollisionProbability() const
+{
+    return p_coll;
 }
 
 std::vector<RealNum> Node::GetCostToComeRiskZone() const
 {
     return cost_to_come_risk_zone;
 }
+
 void Node::SetCostToComeRiskZone(const std::vector<RealNum> otherCostRiskZone)
 {
     auto MonteCarloNumber = otherCostRiskZone.size();
-    
 
     if (MonteCarloNumber > cost_to_come_risk_zone.size())
     {
@@ -266,7 +278,7 @@ bool Node::IsValid() const
 
 bool Node::BetterThan(const NodePtr other)
 {
-    //todo smaller with epsilon
+    // todo smaller with epsilon
 
     if (this->CoverageSize() < other->CoverageSize())
     {

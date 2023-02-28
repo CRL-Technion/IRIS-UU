@@ -1,10 +1,16 @@
 #include "ompl/drone_state_space.h"
 
-DroneStateSpace::DroneStateSpace() : ob::CompoundStateSpace() 
+DroneStateSpace::DroneStateSpace() : ob::CompoundStateSpace()  
 {
-	RealNum trans_weight = 0.6;
-	RealNum yaw_weight = 0.2;
-	RealNum camera_weight = 0.2;
+	// RealNum trans_weight = 0.6;
+	// RealNum yaw_weight = 0.2;
+	// RealNum camera_weight = 0.2;
+	// RealNum trans_weight = 0.5;
+	// RealNum yaw_weight = 0.25;
+	// RealNum camera_weight = 0.25;
+	RealNum trans_weight = 1;
+	RealNum yaw_weight = 0;
+	RealNum camera_weight = 0;
 
 	ob::StateSpacePtr trans(new ob::RealVectorStateSpace(3));
 	this->addSubspace(trans, trans_weight);

@@ -51,13 +51,17 @@ namespace drone
     bool IsPointInsideBox(const Vec3 &point);
     void MarkEdgeRiskZone(Inspection::Graph *graph);
     ob::SpaceInformationPtr Define_space_info_();
-    // Vec3 LowerBordersXYZ = Vec3{-100 - 2, -22 - 2, -20 - 2};
-    // Vec3 UpperBordersXYZ = Vec3{100 + 2, 2 + 2, 0 + 2};
+// Vec3 LowerBordersXYZ = Vec3{-100 - 2, -22 - 2, -20 - 2};
+// Vec3 UpperBordersXYZ = Vec3{100 + 2, 2 + 2, 0 + 2};
+#if ToyProblem
+    Vec3 LowerBordersXYZ = Vec3{-25, -1, -20};
+    Vec3 UpperBordersXYZ = Vec3{25, 1, 20};
+#else
     Vec3 LowerBordersXYZ = Vec3{50 - 2, -11 - 2, -20 - 2};
     Vec3 UpperBordersXYZ = Vec3{100 + 2, 1 + 2, 0 + 2};
-
+#endif
     // void RandomNoiseGPS(Vec3 &TotalLocationError);
-    //double ComputeCost(const Vec3 TotalLocationError, const Vec3 TotalLocationError) const
+    // double ComputeCost(const Vec3 TotalLocationError, const Vec3 TotalLocationError) const
     //////////////////////
     bool CheckEdge(const ob::State *source, const ob::State *target) const;
 

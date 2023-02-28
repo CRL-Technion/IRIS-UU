@@ -93,7 +93,7 @@ int main(int argc, char **argv)
         // addtional += step;
 
         auto update_rate = tightening_rate;
-        //auto update_rate = pow(tightening_rate, sqrt(graph_size));
+        // auto update_rate = pow(tightening_rate, sqrt(graph_size));
 
         // for (auto i = 0; i < step; ++i)
         // {
@@ -110,8 +110,8 @@ int main(int argc, char **argv)
 
         std::cout << "Graph size: " << graph_size << std::flush;
         std::cout << "virtual_graph_coverage_.Size(): " << (RealNum)search.VirtualGraphCoverageSize() << std::endl;
-
-        path = search.SearchVirtualGraph();
+        NodePtr result_node = nullptr;
+        path = search.SearchVirtualGraph(result_node);
         std::cout << "\r                                 " << std::flush;
 
         auto current = std::chrono::system_clock::now();

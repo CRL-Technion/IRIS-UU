@@ -66,7 +66,7 @@ class GraphSearch
         bool operator()(const NodePtr n1, const NodePtr n2) const
         {
             // larger coverage comes first
-            //todo smaller with epsilon
+            // todo smaller with epsilon
             return n1->CoverageSize() < n2->CoverageSize();
         }
     };
@@ -95,7 +95,7 @@ public:
     void UpdateApproximationParameters(const RealNum eps, const RealNum p);
 
     SizeType ExpandVirtualGraph(SizeType new_size);
-    std::vector<Idx> SearchVirtualGraph();
+    std::vector<Idx> SearchVirtualGraph(NodePtr &result_node);
     void InitDataStructures();
     NodePtr PopFromPriorityQueue();
     void Extend(NodePtr n);
@@ -109,6 +109,8 @@ public:
     RealNum ResultCost() const;
     void PrintResult(std::ostream &out) const;
     void PrintTitle(std::ostream &out) const;
+    void SaveResultsMC(std::ostream &out, NodePtr result_node) const;
+
     SizeType TotalTime() const;
     void SetMaxTimeAllowed(const SizeType &time);
     SizeType VirtualGraphNumEdges() const;
@@ -128,10 +130,13 @@ public:
     std::vector<RealNum> bg_y;
     std::vector<RealNum> bg_z;
     std::vector<Vec3> totalLocationErrorDefault;
-    std::vector<bool> exitRiskZoneDefault;
+    std::vector<RealNum> CostToComeMcDefault;
     std::vector<RealNum> costToComeRiskZoneDefault;
+    RealNum Threshold_p_coll = 1.0;
 
-    bool ReCalculateVisibilitySetMC(NodePtr parent, Idx m, NodePtr new_node, RealNum &cost);
+    bool ReCalculateIPVCost(NodePtr n, Idx v, NodePtr new_node, RealNum &cost);
+    bool ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealNum &cost);
+
     VisibilitySet vis;
     // Vec3 LowerBordersXYZ = Vec3{-100 - 2, -22 - 2, -20 - 2};
     // Vec3 UpperBordersXYZ = Vec3{100 + 2, 2 + 2, 0 + 2};
@@ -141,7 +146,7 @@ public:
     // Vec3 UpperBordersXYZ = Vec3{100 + 2, 1 + 2, 0 + 2};
     RealNum LocationErrorFunc(const RealNum b_a, const RealNum b_g, const RealNum timeRiskZone) const;
     ob::SpaceInformationPtr space_info_;
-    Vec3 InsertPoint;
+    Vec3 insertPoint;
     Vec3 pos;
     /////
 
@@ -150,6 +155,8 @@ public:
     RealNum eps_{0.0};
 #endif
 private:
+    Idx counterBetterThan;
+    RealNum previousUpdate;
     Inspection::GPtr graph_{nullptr};
     SizeType virtual_graph_size_{0};
     SizeType prev_graph_size_{0};
@@ -178,6 +185,8 @@ private:
     Idx source_idx_{0};
     Idx search_id_{0};
 
+    bool _isfirstTime;
+
     NodePtr PopFromQueue();
     NodePtr PopFromQueueCompleteLazy();
     bool IsUpToDate(const NodePtr p) const;
@@ -185,7 +194,7 @@ private:
     void ComputeAndAddSuccessors(const NodePtr p);
     void ComputeAndAddSuccessorsCompleteLazy(const NodePtr p);
     NodePtr ComputeNearestSuccessor(const NodePtr parent);
-    bool InGoalSet(const NodePtr n) ;
+    bool InGoalSet(const NodePtr n);
     bool StronglyDominates(const RealNum &l1, const VisibilitySet &s1, const RealNum &l2,
                            const VisibilitySet &s2) const;
     bool DominatedByClosedState(const NodePtr node) const;

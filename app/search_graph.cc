@@ -26,6 +26,7 @@ int main(int argc, char **argv)
     Idx successor_mode = std::stoi(argv[6]);
     RealNum ratio = std::stof(argv[7]);
     std::cout << "ratio:" << ratio << std::endl;
+    std::cout << "tightening_rate:" << tightening_rate << std::endl;
     String file_to_write = argv[8];
 
     Inspection::GPtr graph(new Inspection::Graph);
@@ -51,6 +52,9 @@ int main(int argc, char **argv)
     std::ofstream fout_result;
     fout_result.open(file_to_write + "_result");
 
+    std::ofstream fout_resultMC;
+    fout_resultMC.open(file_to_write + "_resultMC");
+
     if (!fout.is_open())
     {
         std::cerr << file_to_write << " cannot be opened!" << std::endl;
@@ -60,6 +64,13 @@ int main(int argc, char **argv)
     if (!fout_result.is_open())
     {
         std::cerr << file_to_write + "_result"
+                  << " cannot be opened!" << std::endl;
+        exit(1);
+    }
+
+    if (!fout_resultMC.is_open())
+    {
+        std::cerr << file_to_write + "_resultMC"
                   << " cannot be opened!" << std::endl;
         exit(1);
     }
@@ -82,21 +93,27 @@ int main(int argc, char **argv)
     search.PrintTitle(std::cout);
 
     std::vector<Idx> path;
+    // step = 10;
 
     for (SizeType graph_size = step; graph_size <= graph->NumVertices(); graph_size += step)
     {
+        // if (graph_size > graph->NumVertices())
+        // {
+        //     graph_size = graph->NumVertices();
+        // }
         graph_size = graph->NumVertices();
         search.ExpandVirtualGraph(graph_size);
         addtional += step;
 
         auto update_rate = tightening_rate;
-        //auto update_rate = pow(tightening_rate, sqrt(graph_size));
+        // auto update_rate = pow(tightening_rate, sqrt(graph_size));
 
         for (auto i = 0; i < step; ++i)
         {
             p += (1 - p) * update_rate;
             eps += (0 - eps) * update_rate;
         }
+        std::cout << "p and eps = " << p << " " << eps << std::endl;
 
         if (search.ResultCoverageSize() / (RealNum)search.VirtualGraphCoverageSize() >= ratio * p && addtional < 200)
         {
@@ -107,8 +124,8 @@ int main(int argc, char **argv)
 
         std::cout << "Graph size: " << graph_size << std::flush;
         std::cout << "virtual_graph_coverage_.Size(): " << (RealNum)search.VirtualGraphCoverageSize() << std::endl;
-
-        path = search.SearchVirtualGraph();
+        NodePtr result_node = nullptr;
+        path = search.SearchVirtualGraph(result_node);
         std::cout << "\r                                 " << std::flush;
 
         auto current = std::chrono::system_clock::now();
@@ -117,6 +134,35 @@ int main(int argc, char **argv)
 
         search.PrintResult(std::cout);
         search.PrintResult(fout);
+
+        fout_resultMC << graph_size; // << ": ";
+        for (size_t i = 0; i < MAX_COVERAGE_SIZE; i++)
+        {
+            fout_resultMC << " " << result_node->VisSet().bitset_[i];
+        }
+        fout_resultMC << std::endl;
+
+        fout_resultMC << graph_size<< std::endl;
+        // search.SaveResultsMC(fout_resultMC, result_node); // auto perviousCostToComeMc = new_node->GetCostToComeMc(););
+
+        NodePtr tag = result_node;
+
+        while (tag != nullptr)
+        {
+            auto temp = tag->GetCostToComeMc();
+            for (auto &p : temp)
+            {
+                fout_resultMC << " " << p;
+            }
+            fout_resultMC << std::endl;
+            tag = tag->Parent();
+        }
+        // auto temp = result_node->GetCostToComeMc();
+        // for (auto &p : temp)
+        // {
+        //     fout_resultMC << " " << p;
+        // }
+        // fout_resultMC << std::endl;
 
         fout_result << graph_size; // << ": ";
 

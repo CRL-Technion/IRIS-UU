@@ -33,17 +33,41 @@ namespace drone
             {
                 auto lo = (j == 2) ? env_->EnvironmentBoundary(j) : env_->EnvironmentBoundary(j) - validation_distance_;
                 auto hi = env_->EnvironmentBoundary(j, false) + validation_distance_;
+                // if (j == 0)
+                // {
+                //     lo = -8;
+                //     hi = -6;
+                // }
+
+                // if (j == 1)
+                // {
+                //     lo = 1;
+                //     hi = 2;
+                // }
+
                 pos[j] = uni(rng) * (hi - lo) + lo;
+                // if (j == 2)
+                // {
+                //     pos[j] = 0.0;
+                // }
             }
 
             yaw = uni(rng) * (kMaxYaw - kMinYaw) + kMinYaw;
             camera_angle = uni(rng) * (kMaxCameraAngle - kMinCameraAngle) + kMinCameraAngle;
 
+            // std::cout << "pos:" << std::endl;
+            // std::cout << pos << std::endl;
 #if ToyProblem
-            pos[0] = -102;
-            pos[1] = -11;
-            yaw = 0.0;
+            pos[0] = 12;
+            pos[1] = 0;
+            pos[2] = 0;
+
+            yaw = M_PI / 2.0;
             camera_angle = 0;
+            // pos[0] = -102;
+            // pos[1] = -11;
+            // yaw = 0.0;
+            // camera_angle = 0;
 #endif
 
             robot_->SetConfig(pos, yaw, camera_angle);
@@ -58,6 +82,11 @@ namespace drone
                 robot_->Config()->Print(std::cout);
                 return;
             }
+            robot_->SaveStartConfig();
+            std::cout << "Found at " << i << std::endl;
+            std::cout << "Start config: ";
+            robot_->Config()->Print(std::cout);
+            return;
         }
 
         std::cout << "Fail to find valid start config." << std::endl;
@@ -153,7 +182,7 @@ namespace drone
 
         // Planner.
         auto planner = ob::PlannerPtr(new og::RRG(space_info_));
-        planner->as<og::RRG>()->setRange(step_size_);
+        planner->as<og::RRG>()->setRange(10 * step_size_);
         planner->as<og::RRG>()->setGoalBias(0.0);
         planner->as<og::RRG>()->setKNearest(k_nearest_);
         planner->setProblemDefinition(problem_def);
@@ -167,7 +196,7 @@ namespace drone
 
 #if ToyProblem
         InsertGraphPointToyProblem(graph);
-        InsertGraphPointOutSideToyProblem(graph);
+        // InsertGraphPointOutSideToyProblem(graph);
         // InsertIntermediatePointsToGraph(graph);
         // MarkEdgeRiskZone(graph);
         std::cout << "Number of vertices : " << graph->NumVertices() << "\n";
@@ -176,6 +205,8 @@ namespace drone
                   << ", " << graph->NumTargetsCovered() * (RealNum)100 / num_targets_ << "%" << std::endl;
 
 #else
+        // InsertGraphPointToyProblem(graph);
+
         while (graph->NumVertices() < target_size)
         {
             BuildRRGIncrementally(graph, planner, tree_data, graph_data);
@@ -184,6 +215,37 @@ namespace drone
         }
         std::cout << "Number of vertices : " << graph->NumVertices() << "\n";
         std::cout << "Number of edges : " << graph->NumEdges() << "\n";
+        std::cout << "Covered targets: " << graph->NumTargetsCovered()
+                  << ", " << graph->NumTargetsCovered() * (RealNum)100 / num_targets_ << "%" << std::endl;
+
+        std::ofstream fout;
+        fout.open("targetsBuildIndex");
+
+        if (!fout.is_open())
+        {
+            std::cerr << "targetsBuildIndex file cannot be opened!" << std::endl;
+            exit(1);
+        }
+        for (const auto &v : graph->GlobalVisibility().bitset_)
+        {
+            fout << v << " " << std::endl;
+        }
+
+        // Vec3 pos;
+        // pos[0] = 0;
+        // pos[1] = 0;
+        // pos[2] = 0;
+        // auto nodetemp = env_->NearestTargetsInSphere(pos, 10000000000000);
+        // for (const auto &node : nodetemp)
+        // {
+        //     const auto p = node.first.point;
+        //     const auto idx = node.first.idx;
+        //     std::cout << "node.first.idx " << idx << std::endl;
+        //     std::cout << "node.first.p " <<p[0] << " " << p[1] << " " << p[2]  << std::endl;
+
+        // }
+        fout.close();
+        std::cout << "targetsBuildIndex saved!" << std::endl;
 // InsertIntermediatePointsToGraph(graph);
 // MarkEdgeRiskZone(graph);
 #endif
@@ -195,23 +257,60 @@ namespace drone
     void DronePlanner::InsertGraphPointToyProblem(Inspection::Graph *graph)
     {
         Vec3 pos;
-        pos[0] = -100; //robot_->Config()->Position()[0];
-        pos[1] = robot_->Config()->Position()[1];
-        pos[2] = robot_->Config()->Position()[2];
-        auto cameraAngle = robot_->Config()->CameraAngle();
-        auto yaw = robot_->Config()->Yaw();
+        pos[0] = 12; // robot_->Config()->Position()[0];
+        pos[1] = 0;
+        pos[2] = 0;
+        auto cameraAngle = 0;
+        auto yaw = M_PI / 2;
         Idx i = 0;
-        //add vertices Under the bridge
-        auto numberOfVerticesUnderTheBridge = 50;
-        for (i = 0; i < numberOfVerticesUnderTheBridge; i++)
+        Idx j = 0;
+        // add vertices Under the bridge
+        auto numberOfVertices = 100;
+        for (i = 0; i < numberOfVertices; i++)
         {
+            yaw = M_PI / 2;
+            // if (i == 0)
+            // {
+            //     pos[0] = 20; // robot_->Config()->Position()[0];
+            //     pos[1] = 0;
+            //     pos[2] = 0;
+            //     yaw = -M_PI / 2;
+            // }
+            if (i == 0)
+            {
+                pos[0] = 12; // robot_->Config()->Position()[0];
+                pos[1] = 0;
+                pos[2] = 0;
+            }
 
+            if (pos[0] < -13 && i < 12)
+            {
+                pos[0] = 12.0;
+                pos[1] = -2;
+            }
+            if (pos[0] < -13 && i < 24)
+            {
+                // break;
+                pos[0] = 12.0;
+                pos[1] = -4;
+            }
+
+            if (pos[0] < -13 && i < 30)
+            {
+                break;
+                pos[0] = 12.0;
+                pos[1] = -4;
+            }
+            // if (pos[0] < -13 && i > 13)
+            // {
+            //     break;
+            // }
             auto numVertices = graph->NumVertices();
             graph->AddVertex(numVertices);
             auto vertex = graph->Vertex(numVertices);
             vertex->state = space_info_->allocState();
 
-            //space_info_->copyState(vertex->state, graph->Vertex(targetIndex)->state);
+            // space_info_->copyState(vertex->state, graph->Vertex(targetIndex)->state);
             vertex->state->as<DroneStateSpace::StateType>()->SetPosition(pos);
             // std::cout << "pos: " << pos[0] << "pos: " << pos[1]<< "pos: " << pos[2] << std::endl;
 
@@ -221,39 +320,107 @@ namespace drone
             const TimePoint start = Clock::now();
             ComputeVisibilitySet(vertex);
             vertex->time_vis = RelativeTime(start);
-            vertex->time_build = 0; //todo calculate time_build of IntermediatePoint
+            vertex->time_build = 0; // todo calculate time_build of IntermediatePoint
 
             graph->UpdateGlobalVisibility(vertex->vis);
-            pos[0] += (UpperBordersXYZ[0] - LowerBordersXYZ[0]) / numberOfVerticesUnderTheBridge;
-            // if (pos[0]> -53 && pos[0] <-7)
-            // {
-            //     pos[1] = -10;
-            // }
-            // else{
-            //     pos[1] = -18;
-            // }
-            //std::cout << "InsertGraphPointToyProblem: " << i << std::endl;
+            pos[0] -= 3;
         }
         std::cout << "graph->NumVertices(): " << graph->NumVertices() << std::endl;
-        auto numVerticesUnderTheBridge = graph->NumVertices();
-        for (i = 0; i < graph->NumVertices() - 1; i++)
+        for (i = 0; i < graph->NumVertices(); i++)
         {
-            auto numEdges = graph->NumEdges();
-            const ob::State *source = graph->Vertex(i)->state;
-            const ob::State *target = graph->Vertex(i + 1)->state;
-            Inspection::EPtr edge1(new Inspection::Edge(i, i + 1));
-            edge1->cost = space_info_->distance(source, target);
-            if (validate_all_edges_)
+            for (j = 0; j < graph->NumVertices(); j++)
             {
+                if (i >= j)
+                {
+                    continue;
+                }
+                const ob::State *source = graph->Vertex(i)->state;
+                const ob::State *target = graph->Vertex(j)->state;
+                Inspection::EPtr edge1(new Inspection::Edge(i, j));
+                edge1->cost = space_info_->distance(source, target);
+                if (edge1->cost > 3.9)
+                {
+                    continue;
+                }
+                // if (validate_all_edges_)
+                // {
                 const TimePoint start = Clock::now();
-                //bool valid = this->CheckEdge(source,intermediate);
+                if (!CheckEdge(source, target))
+                {
+                    continue;
+                }
+                bool valid = CheckEdge(source, target);
                 edge1->checked = true;
-                edge1->valid = true;
-                edge1->time_forward_kinematics = RelativeTime(start);
-            }
+                edge1->valid = valid;
 
-            graph->AddEdge(edge1);
+                edge1->time_forward_kinematics = RelativeTime(start);
+                // }
+
+                graph->AddEdge(edge1);
+            }
         }
+        std::cout << "debug: " << graph->NumVertices() << std::endl;
+
+        // Vec3 pos;
+        // pos[0] = -100; // robot_->Config()->Position()[0];
+        // pos[1] = robot_->Config()->Position()[1];
+        // pos[2] = robot_->Config()->Position()[2];
+        // auto cameraAngle = robot_->Config()->CameraAngle();
+        // auto yaw = robot_->Config()->Yaw();
+        // Idx i = 0;
+        // // add vertices Under the bridge
+        // auto numberOfVerticesUnderTheBridge = 50;
+        // for (i = 0; i < numberOfVerticesUnderTheBridge; i++)
+        // {
+
+        //     auto numVertices = graph->NumVertices();
+        //     graph->AddVertex(numVertices);
+        //     auto vertex = graph->Vertex(numVertices);
+        //     vertex->state = space_info_->allocState();
+
+        //     // space_info_->copyState(vertex->state, graph->Vertex(targetIndex)->state);
+        //     vertex->state->as<DroneStateSpace::StateType>()->SetPosition(pos);
+        //     // std::cout << "pos: " << pos[0] << "pos: " << pos[1]<< "pos: " << pos[2] << std::endl;
+
+        //     vertex->state->as<DroneStateSpace::StateType>()->SetCameraAngle(cameraAngle);
+        //     vertex->state->as<DroneStateSpace::StateType>()->SetYaw(yaw);
+
+        //     const TimePoint start = Clock::now();
+        //     ComputeVisibilitySet(vertex);
+        //     vertex->time_vis = RelativeTime(start);
+        //     vertex->time_build = 0; // todo calculate time_build of IntermediatePoint
+
+        //     graph->UpdateGlobalVisibility(vertex->vis);
+        //     pos[0] += (UpperBordersXYZ[0] - LowerBordersXYZ[0]) / numberOfVerticesUnderTheBridge;
+        //     // if (pos[0]> -53 && pos[0] <-7)
+        //     // {
+        //     //     pos[1] = -10;
+        //     // }
+        //     // else{
+        //     //     pos[1] = -18;
+        //     // }
+        //     // std::cout << "InsertGraphPointToyProblem: " << i << std::endl;
+        // }
+        // std::cout << "graph->NumVertices(): " << graph->NumVertices() << std::endl;
+        // auto numVerticesUnderTheBridge = graph->NumVertices();
+        // for (i = 0; i < graph->NumVertices() - 1; i++)
+        // {
+        //     auto numEdges = graph->NumEdges();
+        //     const ob::State *source = graph->Vertex(i)->state;
+        //     const ob::State *target = graph->Vertex(i + 1)->state;
+        //     Inspection::EPtr edge1(new Inspection::Edge(i, i + 1));
+        //     edge1->cost = space_info_->distance(source, target);
+        //     if (validate_all_edges_)
+        //     {
+        //         const TimePoint start = Clock::now();
+        //         bool valid = this->CheckEdge(source,target);
+        //         edge1->checked = true;
+        //         edge1->valid = valid;
+        //         edge1->time_forward_kinematics = RelativeTime(start);
+        //     }
+
+        //     graph->AddEdge(edge1);
+        // }
     }
 
     Inspection::EPtr DronePlanner::InsertIntermediatePointToGraph(Inspection::Graph *graph, Inspection::EPtr edge, Vec3 InsertIntermediatePosition)
@@ -268,7 +435,7 @@ namespace drone
         auto vertex = graph->Vertex(numVertices);
         vertex->state = space_info_->allocState();
         // std::cout << "InsertIntermediatePosition " << InsertIntermediatePosition << std::endl;
-        //space_info_->copyState(vertex->state, graph->Vertex(targetIndex)->state);
+        // space_info_->copyState(vertex->state, graph->Vertex(targetIndex)->state);
         vertex->state->as<DroneStateSpace::StateType>()->SetPosition(InsertIntermediatePosition);
 
         auto SumCameraAngle = (graph->Vertex(sourceIndex)->state->as<DroneStateSpace::StateType>()->CameraAngle() + graph->Vertex(targetIndex)->state->as<DroneStateSpace::StateType>()->CameraAngle());
@@ -277,24 +444,24 @@ namespace drone
         vertex->state->as<DroneStateSpace::StateType>()->SetYaw(SumYaw / 2.0);
 
         const TimePoint start = Clock::now();
-        //ComputeVisibilitySet(vertex);
+        // ComputeVisibilitySet(vertex);
         vertex->time_vis = RelativeTime(start);
-        vertex->time_build = 0; //todo calculate time_build of IntermediatePoint
+        vertex->time_build = 0; // todo calculate time_build of IntermediatePoint
 
-        //graph->UpdateGlobalVisibility(vertex->vis);
+        // graph->UpdateGlobalVisibility(vertex->vis);
 
         const ob::State *source = graph->Vertex(sourceIndex)->state;
         const ob::State *intermediate = graph->Vertex(numVertices)->state;
         const ob::State *target = graph->Vertex(targetIndex)->state;
 
-        //add the first edge
+        // add the first edge
         Inspection::EPtr edge1(new Inspection::Edge(sourceIndex, numVertices));
         edge1->cost = space_info_->distance(source, intermediate);
 
         if (validate_all_edges_)
         {
             const TimePoint start = Clock::now();
-            //bool valid = this->CheckEdge(source,intermediate);
+            // bool valid = this->CheckEdge(source,intermediate);
             edge->checked = true;
             edge1->valid = true;
             edge1->time_forward_kinematics = RelativeTime(start);
@@ -302,14 +469,14 @@ namespace drone
 
         graph->AddEdge(edge1);
 
-        //add the second edge
+        // add the second edge
         Inspection::EPtr edge2(new Inspection::Edge(numVertices, targetIndex));
         edge2->cost = space_info_->distance(intermediate, target);
 
         if (validate_all_edges_)
         {
             const TimePoint start = Clock::now();
-            //bool valid = this->CheckEdge(intermediate,target);
+            // bool valid = this->CheckEdge(intermediate,target);
             edge->checked = true;
             edge2->valid = true;
             edge2->time_forward_kinematics = RelativeTime(start);
@@ -319,7 +486,99 @@ namespace drone
         return edge2;
     }
 
-    bool DronePlanner::FindInsertPointRiskZone(const Vec3 &source, const Vec3 &target, Vec3 &desirePoint)
+    bool DronePlanner::FindInsertPointRiskZone(const Vec3 &s, const Vec3 &t, Vec3 &intersection)
+    {
+        double dir[3];
+        for (int i = 0; i < 3; i++)
+        {
+            dir[i] = t[i] - s[i];
+        }
+
+        double tmin = -INFINITY, tmax = INFINITY;
+        for (int i = 0; i < 3; i++)
+        {
+            double t1 = (LowerBordersXYZ[i] - s[i]) / dir[i];
+            double t2 = (UpperBordersXYZ[i] - s[i]) / dir[i];
+            if (dir[i] > 0)
+            {
+                tmin = std::max(tmin, std::min(t1, t2));
+                tmax = std::min(tmax, std::max(t1, t2));
+            }
+            else if (dir[i] < 0)
+            {
+                tmin = std::max(tmin, std::min(t1, t2));
+                tmax = std::min(tmax, std::max(t1, t2));
+            }
+            else
+            {
+                // the ray is parallel to the plane of the box
+                if (s[i] < LowerBordersXYZ[i] || s[i] > UpperBordersXYZ[i])
+                {
+                    // the ray is outside the box
+                    return false;
+                }
+            }
+        }
+
+        if (tmax < tmin)
+        {
+            // the ray is pointing away from the box
+            return false;
+        }
+
+        // intersection point
+        for (int i = 0; i < 3; i++)
+        {
+            intersection[i] = s[i] + tmin * dir[i];
+        }
+
+        // check if the intersection point lies within the line segment
+        for (int i = 0; i < 3; i++)
+        {
+            double lambda = (intersection[i] - s[i]) / dir[i];
+            if (lambda < 0 || lambda > 1)
+            {
+                // the intersection point is outside the line segment
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // bool DronePlanner::FindInsertPointRiskZone(const Vec3 &source, const Vec3 &target, Vec3 &insertPoint)
+    // {
+    //     Vec3 direction = (target - source);
+    //     auto normVec = direction.norm();
+    //     direction.normalize();
+    //     std::vector<double> t;
+    //     Idx i = 0;
+    //     for (i = 0; i < 3; i++)
+    //     {
+    //         t.push_back((LowerBordersXYZ[i] - source[i]) / direction[i]);
+    //         t.push_back((UpperBordersXYZ[i] - source[i]) / direction[i]);
+    //     }
+    //     sort(t.begin(), t.end());
+    //     // std::cout << "------------" << std::endl;
+
+    //     for (i = 0; i < t.size(); i++)
+    //     {
+    //         // std::cout << "t[i]: " << t[i] << std::endl;
+    //         if (t[i] > 0 && t[i] < normVec)
+    //         {
+    //             insertPoint[0] = source[0] + (t[i] + 1e-2) * direction[0];
+    //             insertPoint[1] = source[1] + (t[i] + 1e-2) * direction[1];
+    //             insertPoint[2] = source[2] + (t[i] + 1e-2) * direction[2];
+
+    //             if (IsPointInsideBox(insertPoint))
+    //             {
+    //                 return true;
+    //             }
+    //         }
+    //     }
+    //     return false;
+    // }
+
+    bool DronePlanner::FindExitPointRiskZone(const Vec3 &source, const Vec3 &target, Vec3 &exitPoint)
     {
         Vec3 direction = (target - source);
         auto normVec = direction.norm();
@@ -336,11 +595,11 @@ namespace drone
         {
             if (t[i] > 0 && t[i] < normVec)
             {
-                desirePoint[0] = source[0] + (t[i] + 1e-2) * direction[0];
-                desirePoint[1] = source[1] + (t[i] + 1e-2) * direction[1];
-                desirePoint[2] = source[2] + (t[i] + 1e-2) * direction[2];
+                exitPoint[0] = source[0] + (t[i] + 1e-2) * direction[0];
+                exitPoint[1] = source[1] + (t[i] + 1e-2) * direction[1];
+                exitPoint[2] = source[2] + (t[i] + 1e-2) * direction[2];
 
-                if (IsPointInsideBox(desirePoint))
+                if (!IsPointInsideBox(exitPoint))
                 {
                     return true;
                 }
@@ -349,53 +608,23 @@ namespace drone
         return false;
     }
 
-    bool DronePlanner::FindExitPointRiskZone(const Vec3 &source, const Vec3 &target, Vec3 &desirePoint)
-    {
-        Vec3 direction = (target - source);
-        auto normVec = direction.norm();
-        direction.normalize();
-        std::vector<double> t;
-        Idx i = 0;
-        for (i = 0; i < 3; i++)
-        {
-            t.push_back((LowerBordersXYZ[i] - source[i]) / direction[i]);
-            t.push_back((UpperBordersXYZ[i] - source[i]) / direction[i]);
-        }
-        sort(t.begin(), t.end());
-        for (i = 0; i < t.size(); i++)
-        {
-            if (t[i] > 0 && t[i] < normVec)
-            {
-                desirePoint[0] = source[0] + (t[i] + 1e-2) * direction[0];
-                desirePoint[1] = source[1] + (t[i] + 1e-2) * direction[1];
-                desirePoint[2] = source[2] + (t[i] + 1e-2) * direction[2];
+    // void DronePlanner::RandomNoiseGPS(Vec3 &TotalLocationError)
+    //     {
+    //         RealNormalDist NormR(0, 1);
+    //             RealNormalDist NormAngle(0, 2 * M_PI);
+    //             auto r = NormR(rng);
+    //             auto azimuth = NormAngle(rng);
+    //             auto elevation = NormAngle(rng);
 
-                if (!IsPointInsideBox(desirePoint))
-                {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+    //             TotalLocationError[i][0] = r * cos(elevation) * cos(azimuth);
+    //             TotalLocationError[i][1] = r * cos(elevation) * sin(azimuth);
+    //             TotalLocationError[i][2] = -r * sin(elevation);
+    //     }
 
-// void DronePlanner::RandomNoiseGPS(Vec3 &TotalLocationError) 
-//     {
-//         RealNormalDist NormR(0, 1);
-//             RealNormalDist NormAngle(0, 2 * M_PI);
-//             auto r = NormR(rng);
-//             auto azimuth = NormAngle(rng);
-//             auto elevation = NormAngle(rng);
+    // double DronePlanner::ComputeCost(const Vec3 TotalLocationError,const Vec3 TotalLocationError) const
+    // {
 
-//             TotalLocationError[i][0] = r * cos(elevation) * cos(azimuth);
-//             TotalLocationError[i][1] = r * cos(elevation) * sin(azimuth);
-//             TotalLocationError[i][2] = -r * sin(elevation);
-//     }
-
-// double DronePlanner::ComputeCost(const Vec3 TotalLocationError,const Vec3 TotalLocationError) const
-// {
-
-// }
+    // }
     void DronePlanner::InsertIntermediatePointsToGraph(Inspection::Graph *graph)
     {
         Idx indexWhile = 0;
@@ -423,7 +652,7 @@ namespace drone
             bool isSourceInside = IsPointInsideBox(source);
             bool istargetInside = IsPointInsideBox(target);
 
-            if (isSourceInside && istargetInside) //convex Risk zone
+            if (isSourceInside && istargetInside) // convex Risk zone
             {
                 indexWhile++;
                 continue;
@@ -453,7 +682,7 @@ namespace drone
                 }
                 if (t[i] > 0 && t[i] < normVec)
                 {
-                    //std::cout << t[i] << std::endl;
+                    // std::cout << t[i] << std::endl;
                     Vec3 intersectPointPlusEps = source + (t[i] + eps) * direction;
                     Vec3 intersectPointMinusEps = source + (t[i] - eps) * direction;
 
@@ -526,9 +755,9 @@ namespace drone
 
     bool DronePlanner::IsPointInsideBox(const Vec3 &point)
     {
-        if ((point[0] > LowerBordersXYZ[0]) && (point[0] < UpperBordersXYZ[0]) &&
-            (point[1] > LowerBordersXYZ[1]) && (point[1] < UpperBordersXYZ[1]) &&
-            (point[2] > LowerBordersXYZ[2]) && (point[2] < UpperBordersXYZ[2]))
+        if ((point[0] >= LowerBordersXYZ[0]) && (point[0] <= UpperBordersXYZ[0]) &&
+            (point[1] >= LowerBordersXYZ[1]) && (point[1] <= UpperBordersXYZ[1]) &&
+            (point[2] >= LowerBordersXYZ[2]) && (point[2] <= UpperBordersXYZ[2]))
         {
             // std::cout << "IsPointInsideBox \n"<< std::endl;
             // getchar();
@@ -542,7 +771,7 @@ namespace drone
         auto NumVerticesOutside_1 = graph->NumVertices();
         auto NumVerticesOutside_2 = 0;
         Vec3 pos;
-        pos[0] = LowerBordersXYZ[0] - 5; //robot_->Config()->Position()[0];
+        pos[0] = LowerBordersXYZ[0] - 5; // robot_->Config()->Position()[0];
         pos[1] = UpperBordersXYZ[1] + 3;
         pos[2] = robot_->Config()->Position()[2];
         auto cameraAngle = robot_->Config()->CameraAngle();
@@ -551,7 +780,7 @@ namespace drone
         // auto MinusNumVertices = 0;
         // auto PlusNumVertices = 0;
         Idx i = 0;
-        //add vertices Under the bridge
+        // add vertices Under the bridge
         Idx j = 0;
 
         for (j = 0; j < 2; j++)
@@ -576,7 +805,7 @@ namespace drone
                 auto vertex = graph->Vertex(numVertices);
                 vertex->state = space_info_->allocState();
 
-                //space_info_->copyState(vertex->state, graph->Vertex(targetIndex)->state);
+                // space_info_->copyState(vertex->state, graph->Vertex(targetIndex)->state);
                 vertex->state->as<DroneStateSpace::StateType>()->SetPosition(pos);
                 // std::cout << "pos: " << pos[0] << "pos: " << pos[1]<< "pos: " << pos[2] << std::endl;
 
@@ -585,10 +814,10 @@ namespace drone
 
                 const TimePoint start = Clock::now();
                 // ComputeVisibilitySet(vertex);
-                vertex->time_vis = 0;   //RelativeTime(start);
-                vertex->time_build = 0; //todo calculate time_build of IntermediatePoint
+                vertex->time_vis = 0;   // RelativeTime(start);
+                vertex->time_build = 0; // todo calculate time_build of IntermediatePoint
 
-                //graph->UpdateGlobalVisibility(vertex->vis);
+                // graph->UpdateGlobalVisibility(vertex->vis);
                 pos[0] += (UpperBordersXYZ[0] - LowerBordersXYZ[0]) / (numberOfOutsidePoints / 2);
             }
             // MinusNumVertices = graph->NumVertices();
@@ -610,7 +839,7 @@ namespace drone
                 const ob::State *source = graph->Vertex(i)->state;
                 const ob::State *target = graph->Vertex(j)->state;
                 auto cost = space_info_->distance(source, target);
-                //if (cost>(UpperBordersXYZ[1]-LowerBordersXYZ[1])/2+10)
+                // if (cost>(UpperBordersXYZ[1]-LowerBordersXYZ[1])/2+10)
                 if (cost > (UpperBordersXYZ[1] - LowerBordersXYZ[1]) / 2 + 6)
                 {
                     continue;
@@ -624,8 +853,8 @@ namespace drone
                     const TimePoint start = Clock::now();
                     bool valid = this->CheckEdge(source, target);
                     edge1->checked = valid;
-                    //todo david
-                    edge1->valid = true; //this->CheckEdge(source,target);
+                    // todo david
+                    edge1->valid = true; // this->CheckEdge(source,target);
                     edge1->time_forward_kinematics = RelativeTime(start);
                 }
 
@@ -731,16 +960,18 @@ namespace drone
             vertex->state = space_info_->allocState();
             space_info_->copyState(vertex->state, tree_data.getVertex(i).getState());
 
-            const TimePoint start = Clock::now();
-            ComputeVisibilitySet(vertex);
-            vertex->time_vis = RelativeTime(start);
-            vertex->time_build = avg_time_build;
+            if (graph->NumTargetsCovered() < 20)
+            {
+                const TimePoint start = Clock::now();
+                ComputeVisibilitySet(vertex);
+                vertex->time_vis = RelativeTime(start);
+                vertex->time_build = avg_time_build;
 
-            graph->UpdateGlobalVisibility(vertex->vis);
+                graph->UpdateGlobalVisibility(vertex->vis);
 #if REJECT_SAMPLING
-            global_vis_set_.Insert(graph->GlobalVisibility());
+                global_vis_set_.Insert(graph->GlobalVisibility());
 #endif
-
+            }
             // tree edges
             std::vector<unsigned> edges;
             auto num_parent = tree_data.getIncomingEdges(i, edges);
@@ -751,6 +982,11 @@ namespace drone
                 Inspection::EPtr edge(new Inspection::Edge(p, i));
                 edge->checked = true;
                 edge->valid = true;
+                const ob::State *source = tree_data.getVertex(p).getState();
+                const ob::State *target = tree_data.getVertex(i).getState();
+                bool valid = this->CheckEdge(source, target);
+                edge->checked = true;
+                edge->valid = valid;
                 edge->cost = space_info_->distance(tree_data.getVertex(p).getState(),
                                                    tree_data.getVertex(i).getState());
                 graph->AddEdge(edge);
@@ -776,7 +1012,7 @@ namespace drone
                 {
                     const TimePoint start = Clock::now();
                     bool valid = this->CheckEdge(source, target);
-                    // edge->checked = true;
+                    edge->checked = true;
                     edge->valid = valid;
                     edge->time_forward_kinematics = RelativeTime(start);
                 }
@@ -893,7 +1129,10 @@ namespace drone
         Vec3 p0 = s0->Position();
         Vec3 p1 = s1->Position();
 
-        Idx num_steps = std::ceil((p0 - p1).norm() / 0.5);
+        // Idx num_steps = std::ceil((p0 - p1).norm() / 0.5);//todo david
+        Idx num_steps = std::ceil((p0 - p1).norm() / (robot_->SphereRadius() * 0.5));
+
+        // std::cout << "num_steps" << num_steps << " " << robot_->SphereRadius()  << " " << (p0 - p1).norm()<< std::endl;
 
         for (Idx i = 1; i < num_steps; ++i)
         {

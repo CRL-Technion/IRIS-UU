@@ -31,8 +31,11 @@ public:
     void SetCostToComeRiskZone(const std::vector<RealNum> cost_risk_zone);
     void SetTotalLocationError(const std::vector<Vec3> otherTotalLocationError);
     std::vector<Vec3> GetTotalLocationError();
-    void SetExitRiskZone(const std::vector<bool> otherExitRiskZone);
-    std::vector<bool> GetExitRiskZone();
+    void SetCostToComeMc(const std::vector<RealNum> otherCostToComeMc);
+    std::vector<RealNum> GetCostToComeMc();
+    void SetCollisionProbability(const RealNum _p_coll);
+    RealNum GetCollisionProbability() const;
+
     ///////////
     void SetParent(NodePtr parent);
     void RemoveParent();
@@ -52,7 +55,7 @@ public:
     void SetValid(const bool valid);
     bool IsValid() const;
 
-    bool BetterThan(const NodePtr other) ;
+    bool BetterThan(const NodePtr other);
     void Extend(const Idx index, const RealNum cost, const VisibilitySet &set);
     void Update(const RealNum edge_cost, const VisibilitySet &set);
 
@@ -116,10 +119,11 @@ private:
     SizeType num_subsumed_{0};
     RealNum cost_to_come_{0};
     std::vector<RealNum> cost_to_come_risk_zone{0};
+    RealNum p_coll;
     RealNum local_path_cost_{0};
     VisibilitySet vis_set_;
     std::vector<Vec3> totalLocationError;
-    std::vector<bool> exitRiskZone;
+    std::vector<RealNum> costToComeMc;
     NodePtr parent_{nullptr};
     std::vector<Idx> local_path_;
     std::vector<NodePtr> subsumed_nodes_;

@@ -39,7 +39,11 @@
 #if USE_PLANAR
 #define MAX_COVERAGE_SIZE 400
 #else
-#define MAX_COVERAGE_SIZE 117 //100//61// 100//538//885//100//3817 // 14021 // 27384 // 3346
+#if ToyProblem
+#define MAX_COVERAGE_SIZE 27 //100//61// 100//538//885//100//3817 // 14021 // 27384 // 3346
+#else
+#define MAX_COVERAGE_SIZE 61 //100//61// 100//538//885//100//3817 // 14021 // 27384 // 3346
+#endif
 #endif                       // USE_PLANAR
 
 #endif // USE_CRISP

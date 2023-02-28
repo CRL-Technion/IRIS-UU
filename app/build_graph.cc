@@ -16,11 +16,13 @@
 #endif // USE_PLANAR
 #endif // USE_CRISP
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv)
+{
 #if USE_CRISP
 
     // CRISP robot.
-    if (argc < 4) {
+    if (argc < 4)
+    {
         std::cerr << "Usage:" << argv[0] << " seed num_vertex file_to_write" << std::endl;
         exit(1);
     }
@@ -49,7 +51,7 @@ int main(int argc, char** argv) {
     auto planner = std::make_shared<crisp::CRISPPlanner>(robot, detector, seed);
     // If we want a fixed start configuration, use a fixed seed point here.
     planner->SampleStartConfig(1000, 1);
-    //planner->SampleStartConfig(1000, seed);
+    // planner->SampleStartConfig(1000, seed);
     planner->BuildAndSaveInspectionGraph(file_to_write, num_vertex);
 
 #else
@@ -57,7 +59,8 @@ int main(int argc, char** argv) {
 #if USE_PLANAR
 
     // Planar robot.
-    if (argc < 4) {
+    if (argc < 4)
+    {
         std::cerr << "Usage:" << argv[0] << " seed num_vertex file_to_write [num_obstacles]" << std::endl;
         exit(1);
     }
@@ -68,7 +71,8 @@ int main(int argc, char** argv) {
     String file_to_write = argv[3];
     Idx num_obstacles = 10;
 
-    if (argc > 4) {
+    if (argc > 4)
+    {
         num_obstacles = std::stoi(argv[4]);
     }
 
@@ -78,7 +82,7 @@ int main(int argc, char** argv) {
     std::vector<RealNum> link_length{0.2, 0.1, 0.2, 0.3, 0.1};
     std::vector<Vec2> bounds(num_links, Vec2(-M_PI, M_PI));
     bounds[0] = Vec2(0, M_PI);
-    RealNum fov = M_PI/2;
+    RealNum fov = M_PI / 2;
 
     auto robot = std::make_shared<planar::PlanarRobot>(origin, link_length, bounds);
     robot->SetCameraFOV(fov);
@@ -92,13 +96,14 @@ int main(int argc, char** argv) {
     auto planner = std::make_shared<planar::PlanarPlanner>(robot, env, seed);
     // If we want a fixed start configuration, use a fixed seed point here.
     planner->SampleStartConfig(1000, 1);
-    //planner->SampleStartConfig(1000, seed);
+    // planner->SampleStartConfig(1000, seed);
     planner->BuildAndSaveInspectionGraph(file_to_write, num_vertex);
 
 #else
 
     // Drone robot.
-    if (argc < 4) {
+    if (argc < 4)
+    {
         std::cerr << "Usage:" << argv[0] << " seed num_vertex file_to_write" << std::endl;
         exit(1);
     }
@@ -109,8 +114,10 @@ int main(int argc, char** argv) {
     String file_to_write = argv[3];
 
     // Robot.
-    auto robot = std::make_shared<drone::DroneRobot>(0.196, 0.2895, -0.049);
-    robot->SetCameraParameters(94.0/180 * M_PI, 0.2, 10.0);
+    // auto robot = std::make_shared<drone::DroneRobot>(0.196, 0.2895, -0.049);
+    auto robot = std::make_shared<drone::DroneRobot>(0.196, 0.2895, 0.0);
+
+    robot->SetCameraParameters(94.0 / 180 * M_PI, 0.2, 10.0);
     robot->Initialize();
 
     // Environment setup.
@@ -119,8 +126,8 @@ int main(int argc, char** argv) {
     // Planner
     auto planner = std::make_shared<drone::DronePlanner>(robot, env, seed);
     // If we want a fixed start configuration, use a fixed seed point here.
-    planner->SampleStartConfig(1000, 1);
-    //planner->SampleStartConfig(1000, seed);
+    // planner->SampleStartConfig(1000, 1);
+    planner->SampleStartConfig(1000, seed);
     planner->BuildAndSaveInspectionGraph(file_to_write, num_vertex);
 
 #endif // USE_PLANAR
