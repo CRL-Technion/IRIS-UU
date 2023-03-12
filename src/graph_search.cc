@@ -115,7 +115,7 @@ void GraphSearch::ReadLocationErrorParameters(const String Location_Error_file_n
 
     // rund monteCarloParameter
 
-    rng.seed(6);
+    rng.seed(8);
     // Idx MonteCarloNumber = 5;
     auto milli_g2mpss = 9.81 / 1000.0;                 //   Conversion from [mili g ] to [m/s^2]
     auto degPerHr2radPerSec = (3.14 / 180.0) / 3600.0; //  Conversion from [deg/hr] to [rad/s]
@@ -124,9 +124,9 @@ void GraphSearch::ReadLocationErrorParameters(const String Location_Error_file_n
     // auto ba_input = -b_a/ 5.0 ;
     for (size_t i = 0; i < MonteCarloNumber; i++)
     {
-        // RealNormalDist Norm1(0, sqrt(b_a)/3);
-        // RealNormalDist Norm11(0, (b_a) / 2);
-        RealNormalDist Norm1(0, (b_a) / 4.5);
+        RealNormalDist Norm1(0, sqrt(b_a)/3);
+        // RealNormalDist Norm1(0, (b_a) / 2);
+        // RealNormalDist Norm1(0, (b_a) / 4.5);
         ba_x.push_back(Norm1(rng));
         ba_y.push_back(Norm1(rng));
         // ba_z.push_back(Norm1(rng));
@@ -140,9 +140,9 @@ void GraphSearch::ReadLocationErrorParameters(const String Location_Error_file_n
     }
     for (size_t i = 0; i < MonteCarloNumber; i++)
     {
-        // RealNormalDist Norm2(0, sqrt(b_g)/3);
+        RealNormalDist Norm2(0, sqrt(b_g)/3);
         // RealNormalDist Norm2(0, (b_g) / 2);
-        RealNormalDist Norm2(0, (b_g) / 4.5);
+        // RealNormalDist Norm2(0, (b_g) / 4.5);
 
         bg_x.push_back(Norm2(rng));
         bg_y.push_back(Norm2(rng));
@@ -410,12 +410,13 @@ std::vector<Idx> GraphSearch::SearchVirtualGraph(NodePtr &result_node)
         if (!found)
         {
             std::cerr << "[ERROR] Search terminated without finding a valid result!" << std::endl;
-            exit(1);
+            // exit(1);todo
         }
 
         valid_result_found = true;
 
-        if (kLazinessMap.at(laziness_mode_) == "LazySP")
+        // todo david
+        // if (kLazinessMap.at(laziness_mode_) == "LazySP")
         {
             // If using completely lazy, should check result plan.
             NodePtr tag = result_node;
@@ -520,12 +521,13 @@ void GraphSearch::InitDataStructures()
         Idx MonteCarloNum = ba_x.size();
         NodePtr source_node(new Node(graph_->Vertex(source_idx_)->index));
 
-        if (MonteCarloNum > 0.5)
+        Inspection::EPtr edge;
+        if (false) //(MonteCarloNum > 0.5)
         {
             vis.Clear();
             RealNum cost0 = 0.0;
             _isfirstTime = true;
-            ReCalculateIPVCostMC(source_node, graph_->Vertex(source_idx_)->index, source_node, cost0);
+            ReCalculateIPVCostMC(source_node, graph_->Vertex(source_idx_)->index, source_node, cost0, edge);
             source_node->SetVisSet(vis);
             source_node->SetChecked(true);
 #if USE_GHOST_DATA
@@ -692,7 +694,7 @@ void GraphSearch::Extend(NodePtr n)
         // else
         {
             vis.Clear();
-            isNodeValidateForRiskZone = ReCalculateIPVCostMC(n, v, new_node, cost);
+            isNodeValidateForRiskZone = ReCalculateIPVCostMC(n, v, new_node, cost, edge);
             // new_node->Extend(v, cost, graph_->Vertex(v)->vis);
             new_node->Extend(v, cost, vis);
         }
@@ -820,7 +822,7 @@ bool GraphSearch::ReCalculateIPVCost(NodePtr n, Idx v, NodePtr new_node, RealNum
     return true;
 }
 
-bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealNum &cost)
+bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealNum &cost, Inspection::EPtr edge)
 {
     // std::cout << "bug000" << cost << std::endl;
     if (_isfirstTime) // init
@@ -963,12 +965,12 @@ bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealN
         // if (!planner->IsPointInsideBox(childPosition_fix)) //\If{$\hat{q}^t_i \in W^{\text{coverage}}$}{ {$e_{q_i} \gets e_q^{W^{\text{coverage}}}
         // #if ToyProblem
         // if (!planner->IsPointInsideBox(childPosition)) //\If{$\hat{q}^t_i \in W^{\text{coverage}}$}{ {$e_{q_i} \gets e_q^{W^{\text{coverage}}}
-                                                       // #else
-        // if (!planner->IsPointInsideBox(childPosition_fix))
+        // #else
+        if (!planner->IsPointInsideBox(childPosition_fix))
         // if (!planner->IsPointInsideBox(childPosition))
         // #endif
         // if (true)
-        if (!planner->IsPointInsideBox(childPosition))
+        // if (!planner->IsPointInsideBox(childPosition))
         {
             // reset previousTotalLocationError - RandomNoiseGNSS
             RealNormalDist NormR(0, 1);
@@ -995,7 +997,9 @@ bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealN
             if (!planner->CheckEdge(parentVertex->state, vertex->state))
             {
                 p_coll_MC += 1.0;
-                return false;
+                // edge->valid = false;
+                // graph_->SetEdgeValidity(n->Index(), v, false);
+                // return false;
             }
             currentCost += space_info_->distance(parentVertex->state, vertex->state);
             // std::cout << "parentPosition_fix: " << std::endl;
@@ -1015,7 +1019,7 @@ bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealN
 
             // todo find the exit point to compute accurate cost
         }
-        // #if ToyProblem
+#if ToyProblem
         else
         {
             // reset previousTotalLocationError - RandomNoiseGNSS
@@ -1042,7 +1046,10 @@ bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealN
             if (!planner->CheckEdge(parentVertex->state, vertex->state))
             {
                 p_coll_MC += 1.0;
-                return false;
+                // edge->valid = false;
+                // graph_->SetEdgeValidity(n->Index(), v, false);
+
+                // return false;
             }
             currentCost += space_info_->distance(parentVertex->state, vertex->state);
 
@@ -1050,9 +1057,9 @@ bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealN
             planner->ComputeVisibilitySet(vertex);
         }
         if (false)
-        // #else
-        //         else
-        // #endif
+#else
+        else
+#endif
         {
             if (!planner->IsPointInsideBox(parentPosition_fix)) // if q^c_{i-1} \in w_cov , find intersect point
             // if (!planner->IsPointInsideBox(parentPosition)) // if q^c_{i-1} \in w_cov , find intersect point
@@ -1060,7 +1067,7 @@ bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealN
                 auto IsInsertToRiskZone = planner->FindInsertPointRiskZone(parentPosition_fix, childPosition_fix, insertPoint);
                 if (!IsInsertToRiskZone)
                 {
-                    std::cout << "chile is inside and parent is outside and there is not intersection point " << std::endl;
+                    std::cout << "child is inside and parent is outside and there is not intersection point " << std::endl;
                 }
                 else
                 {
@@ -1121,7 +1128,10 @@ bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealN
             if (!planner->CheckEdge(parentVertex->state, vertex->state)) // todo threshold collision >0
             {
                 p_coll_MC += 1.0;
-                return false;
+                // edge->valid = false;
+                // graph_->SetEdgeValidity(n->Index(), v, false);
+
+                // return false;
             }
 
             perviousCostRiskZone[i] += space_info_->distance(parentVertex->state, vertex->state);
@@ -1270,10 +1280,13 @@ bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealN
     new_node->SetCostToComeRiskZone(perviousCostRiskZone);
 
     auto temp_p_coll_MC = 1 - (1 - previousPColl) * (1 - 1.0 * p_coll_MC / MonteCarloNum);
+    // auto temp_p_coll_MC = (p_coll_MC / MonteCarloNum);
     new_node->SetCollisionProbability(temp_p_coll_MC);
 
     if (temp_p_coll_MC > Threshold_p_coll)
     {
+        // edge->valid = false;
+        // graph_->SetEdgeValidity(n->Index(), v, false);
         // std::cout << "collision: " << temp_p_coll_MC << std::endl;
 
         return false;
@@ -2391,7 +2404,7 @@ const VisibilitySet &GraphSearch::VirtualGraphCoverage() const
     return virtual_graph_coverage_;
 }
 
-SizeType GraphSearch::ResultCoverageSize() const
+RealNum GraphSearch::ResultCoverageSize() const
 {
     if (result_ == nullptr)
     {

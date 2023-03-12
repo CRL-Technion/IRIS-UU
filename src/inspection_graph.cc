@@ -89,6 +89,22 @@ Inspection::EPtr Inspection::Graph::FindEdge(const Idx s, const Idx t) const
     return nullptr;
 }
 
+void Inspection::Graph::SetEdgeValidity(const Idx s, const Idx t, bool isValid) const
+{
+    for (auto &&e : edges_)
+    {
+        if (e->source == s && e->target == t)
+        {
+            e->valid = isValid;
+        }
+
+        if (e->source == t && e->target == s)
+        {
+            e->valid = isValid;
+        }
+    }
+}
+
 void Inspection::Graph::UpdateGlobalVisibility(const VisibilitySet &set)
 {
     global_vis_set_.Insert(set);
@@ -207,7 +223,7 @@ void Inspection::Graph::Save(const String file_name, const bool save_configs, co
              << e->time_forward_kinematics << " "
              << e->time_collision_detection << " "
              << e->cost << " "
-             <<e->IsEdgeBelongToRiskZone <<" "
+             << e->IsEdgeBelongToRiskZone << " "
              << std::endl;
     }
 
@@ -287,7 +303,7 @@ void Inspection::Graph::Save(const String file_name, const bool save_configs, co
     for (auto &&v : vertices_)
     {
         const auto s = v->state->as<DroneStateSpace::StateType>();
-		fout << std::setprecision(9);
+        fout << std::setprecision(9);
 
         fout << s->Position().transpose() << " "
              << s->Yaw() << " "
@@ -300,70 +316,73 @@ void Inspection::Graph::Save(const String file_name, const bool save_configs, co
     fout.close();
     std::cout << "Configurations saved!" << std::endl;
 }
-void Inspection::Graph::ReadFromSimulationFile(const String file_name) {
+void Inspection::Graph::ReadFromSimulationFile(const String file_name)
+{
 
-	std::ifstream fin;
+    std::ifstream fin;
 
-	fin.open(file_name);
-	if (!fin.is_open()) {
-		std::cerr << "Configuration file cannot be opened!" << std::endl;
-		exit(1);
-	}
-  
-	String line;
-	Idx i = 0;
+    fin.open(file_name);
+    if (!fin.is_open())
+    {
+        std::cerr << "Configuration file cannot be opened!" << std::endl;
+        exit(1);
+    }
+
+    String line;
+    Idx i = 0;
     auto space = ob::StateSpacePtr(new DroneStateSpace());
 
-	//auto space = ob::StateSpacePtr(new DroneStateSpace());
-	const Idx dof = 5;
-	// std::vector<VPtr> vertices_;
-	// std::vector<EPtr> edges_;
+    // auto space = ob::StateSpacePtr(new DroneStateSpace());
+    const Idx dof = 5;
+    // std::vector<VPtr> vertices_;
+    // std::vector<EPtr> edges_;
 
-	vertices_.resize(0);
-	
-	while (getline(fin, line)) {
-		std::istringstream sin(line);
+    vertices_.resize(0);
+
+    while (getline(fin, line))
+    {
+        std::istringstream sin(line);
         String field;
         Idx index;
 
-		std::vector<RealNum> config(5, 0.0);
-		AddVertex(i);
-		//sin >> index;
-		// if (i != index) {
-		// 	std::cerr << "Incorrect vertex index!" << std::endl;
-		// 	exit(1);
-		// }
+        std::vector<RealNum> config(5, 0.0);
+        AddVertex(i);
+        // sin >> index;
+        //  if (i != index) {
+        //  	std::cerr << "Incorrect vertex index!" << std::endl;
+        //  	exit(1);
+        //  }
 
-		for (Idx j = 0; j < dof; ++j) {
-			sin >> config[j];
-		}
+        for (Idx j = 0; j < dof; ++j)
+        {
+            sin >> config[j];
+        }
 
-		vertices_[i]->state = space->allocState();
+        vertices_[i]->state = space->allocState();
 
-		vertices_[i]->state->as<DroneStateSpace::StateType>()->SetPosition(Vec3(config[0], config[1], config[2]));
-		vertices_[i]->state->as<DroneStateSpace::StateType>()->SetYaw(config[3]);
-		vertices_[i]->state->as<DroneStateSpace::StateType>()->SetCameraAngle(config[4]);
-		
-		i++;
-	}
-	fin.close();
-	std::cout << "Configurations read!" << std::endl;
+        vertices_[i]->state->as<DroneStateSpace::StateType>()->SetPosition(Vec3(config[0], config[1], config[2]));
+        vertices_[i]->state->as<DroneStateSpace::StateType>()->SetYaw(config[3]);
+        vertices_[i]->state->as<DroneStateSpace::StateType>()->SetCameraAngle(config[4]);
 
-	for (size_t i = 0; i < vertices_.size()-1; i++)
-	{
-		Idx source = vertices_[i]->index;
-		Idx target = vertices_[i+1]->index;
-		EPtr edge(new Inspection::Edge(source, target));
+        i++;
+    }
+    fin.close();
+    std::cout << "Configurations read!" << std::endl;
 
-		// sin >> edge->checked
-		// >> edge->valid
-		// >> edge->time_forward_kinematics
-		// >> edge->time_collision_detection
-		// >> edge->cost;
+    for (size_t i = 0; i < vertices_.size() - 1; i++)
+    {
+        Idx source = vertices_[i]->index;
+        Idx target = vertices_[i + 1]->index;
+        EPtr edge(new Inspection::Edge(source, target));
 
-		AddEdge(edge);
-	}
-	
+        // sin >> edge->checked
+        // >> edge->valid
+        // >> edge->time_forward_kinematics
+        // >> edge->time_collision_detection
+        // >> edge->cost;
+
+        AddEdge(edge);
+    }
 }
 
 void Inspection::Graph::ReadFromFiles(const String file_name, const bool read_configs,
@@ -443,7 +462,7 @@ void Inspection::Graph::ReadFromFiles(const String file_name, const bool read_co
         sin >> source >> target;
         EPtr edge(new Inspection::Edge(source, target));
 
-        sin >> edge->checked >> edge->valid >> edge->time_forward_kinematics >> edge->time_collision_detection >> edge->cost>> edge->IsEdgeBelongToRiskZone;
+        sin >> edge->checked >> edge->valid >> edge->time_forward_kinematics >> edge->time_collision_detection >> edge->cost >> edge->IsEdgeBelongToRiskZone;
 
         AddEdge(edge);
     }

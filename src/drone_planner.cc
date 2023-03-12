@@ -206,7 +206,10 @@ namespace drone
 
 #else
         // InsertGraphPointToyProblem(graph);
-
+        for (Idx j = 0; j < MAX_COVERAGE_SIZE; j++)
+        {
+            global_vis_set_.bitset_[j] = 0.0;
+        }
         while (graph->NumVertices() < target_size)
         {
             BuildRRGIncrementally(graph, planner, tree_data, graph_data);
@@ -292,7 +295,7 @@ namespace drone
             {
                 // break;
                 pos[0] = 12.0;
-                pos[1] = -4;
+                pos[1] = -3;
             }
 
             if (pos[0] < -13 && i < 30)
@@ -486,97 +489,112 @@ namespace drone
         return edge2;
     }
 
-    bool DronePlanner::FindInsertPointRiskZone(const Vec3 &s, const Vec3 &t, Vec3 &intersection)
-    {
-        double dir[3];
-        for (int i = 0; i < 3; i++)
-        {
-            dir[i] = t[i] - s[i];
-        }
-
-        double tmin = -INFINITY, tmax = INFINITY;
-        for (int i = 0; i < 3; i++)
-        {
-            double t1 = (LowerBordersXYZ[i] - s[i]) / dir[i];
-            double t2 = (UpperBordersXYZ[i] - s[i]) / dir[i];
-            if (dir[i] > 0)
-            {
-                tmin = std::max(tmin, std::min(t1, t2));
-                tmax = std::min(tmax, std::max(t1, t2));
-            }
-            else if (dir[i] < 0)
-            {
-                tmin = std::max(tmin, std::min(t1, t2));
-                tmax = std::min(tmax, std::max(t1, t2));
-            }
-            else
-            {
-                // the ray is parallel to the plane of the box
-                if (s[i] < LowerBordersXYZ[i] || s[i] > UpperBordersXYZ[i])
-                {
-                    // the ray is outside the box
-                    return false;
-                }
-            }
-        }
-
-        if (tmax < tmin)
-        {
-            // the ray is pointing away from the box
-            return false;
-        }
-
-        // intersection point
-        for (int i = 0; i < 3; i++)
-        {
-            intersection[i] = s[i] + tmin * dir[i];
-        }
-
-        // check if the intersection point lies within the line segment
-        for (int i = 0; i < 3; i++)
-        {
-            double lambda = (intersection[i] - s[i]) / dir[i];
-            if (lambda < 0 || lambda > 1)
-            {
-                // the intersection point is outside the line segment
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // bool DronePlanner::FindInsertPointRiskZone(const Vec3 &source, const Vec3 &target, Vec3 &insertPoint)
+    // bool DronePlanner::FindInsertPointRiskZone(const Vec3 &s, const Vec3 &t, Vec3 &intersection)
     // {
-    //     Vec3 direction = (target - source);
-    //     auto normVec = direction.norm();
-    //     direction.normalize();
-    //     std::vector<double> t;
-    //     Idx i = 0;
-    //     for (i = 0; i < 3; i++)
+    //     double dir[3];
+    //     for (int i = 0; i < 3; i++)
     //     {
-    //         t.push_back((LowerBordersXYZ[i] - source[i]) / direction[i]);
-    //         t.push_back((UpperBordersXYZ[i] - source[i]) / direction[i]);
+    //         dir[i] = t[i] - s[i];
     //     }
-    //     sort(t.begin(), t.end());
-    //     // std::cout << "------------" << std::endl;
 
-    //     for (i = 0; i < t.size(); i++)
+    //     double tmin = -INFINITY, tmax = INFINITY;
+    //     for (int i = 0; i < 3; i++)
     //     {
-    //         // std::cout << "t[i]: " << t[i] << std::endl;
-    //         if (t[i] > 0 && t[i] < normVec)
+    //         double t1 = (LowerBordersXYZ[i] - s[i]) / dir[i];
+    //         double t2 = (UpperBordersXYZ[i] - s[i]) / dir[i];
+    //         if (dir[i] > 0)
     //         {
-    //             insertPoint[0] = source[0] + (t[i] + 1e-2) * direction[0];
-    //             insertPoint[1] = source[1] + (t[i] + 1e-2) * direction[1];
-    //             insertPoint[2] = source[2] + (t[i] + 1e-2) * direction[2];
-
-    //             if (IsPointInsideBox(insertPoint))
+    //             tmin = std::max(tmin, std::min(t1, t2));
+    //             tmax = std::min(tmax, std::max(t1, t2));
+    //         }
+    //         else if (dir[i] < 0)
+    //         {
+    //             tmin = std::max(tmin, std::min(t1, t2));
+    //             tmax = std::min(tmax, std::max(t1, t2));
+    //         }
+    //         else
+    //         {
+    //             // the ray is parallel to the plane of the box
+    //             if (s[i] < LowerBordersXYZ[i] || s[i] > UpperBordersXYZ[i])
     //             {
-    //                 return true;
+    //                 // the ray is outside the box
+    //                 return false;
     //             }
     //         }
     //     }
-    //     return false;
+
+    //     if (tmax < tmin)
+    //     {
+    //         // the ray is pointing away from the box
+    //         return false;
+    //     }
+
+    //     // intersection point
+    //     for (int i = 0; i < 3; i++)
+    //     {
+    //         intersection[i] = s[i] + tmin * dir[i];
+    //     }
+
+    //     // check if the intersection point lies within the line segment
+    //     for (int i = 0; i < 3; i++)
+    //     {
+    //         double lambda = (intersection[i] - s[i]) / dir[i];
+    //         if (lambda < 0 || lambda > 1)
+    //         {
+    //             // the intersection point is outside the line segment
+    //             return false;
+    //         }
+    //     }
+
+    //     return true;
     // }
+
+    bool DronePlanner::FindInsertPointRiskZone(const Vec3 &source, const Vec3 &target, Vec3 &insertPoint)
+    {
+        Vec3 insertPointTemp;
+        Vec3 direction = (target - source);
+        auto normVec = direction.norm();
+        direction.normalize();
+        std::vector<double> t;
+        Idx i = 0;
+        for (i = 0; i < 3; i++)
+        {
+            t.push_back((LowerBordersXYZ[i] - source[i]) / direction[i]);
+            t.push_back((UpperBordersXYZ[i] - source[i]) / direction[i]);
+        }
+        sort(t.begin(), t.end());
+        // std::cout << "------------" << std::endl;
+        RealNum tmin = 1000000;
+        bool found = false;
+        for (i = 0; i < t.size(); i++)
+        {
+
+            // std::cout << "t[i]: " << t[i] << std::endl;
+            if (t[i] > -normVec && t[i] < normVec)
+            {
+                insertPointTemp[0] = source[0] + (t[i] + 1e-2) * direction[0];
+                insertPointTemp[1] = source[1] + (t[i] + 1e-2) * direction[1];
+                insertPointTemp[2] = source[2] + (t[i] + 1e-2) * direction[2];
+
+                if (IsPointInsideBox(insertPointTemp))
+                {
+                    if (tmin > t[i])
+                    {
+                        tmin = t[i];
+                    }
+                    found = true;
+                }
+            }
+        }
+        if (found)
+        {
+            insertPointTemp[0] = source[0] + (tmin + 1e-2) * direction[0];
+            insertPointTemp[1] = source[1] + (tmin + 1e-2) * direction[1];
+            insertPointTemp[2] = source[2] + (tmin + 1e-2) * direction[2];
+            return true;
+        }
+        return false;
+    }
 
     bool DronePlanner::FindExitPointRiskZone(const Vec3 &source, const Vec3 &target, Vec3 &exitPoint)
     {
@@ -960,18 +978,33 @@ namespace drone
             vertex->state = space_info_->allocState();
             space_info_->copyState(vertex->state, tree_data.getVertex(i).getState());
 
-            if (graph->NumTargetsCovered() < 20)
-            {
-                const TimePoint start = Clock::now();
-                ComputeVisibilitySet(vertex);
-                vertex->time_vis = RelativeTime(start);
-                vertex->time_build = avg_time_build;
+            const TimePoint start = Clock::now();
+            ComputeVisibilitySet(vertex);
+            // Check if the number of covered targets in the graph is greater than 20
+            // std::cout << "sss" << std ::endl;
+            // std::cout << "graph->NumTargetsCovered() " << graph->NumTargetsCovered() << std ::endl;
 
-                graph->UpdateGlobalVisibility(vertex->vis);
-#if REJECT_SAMPLING
-                global_vis_set_.Insert(graph->GlobalVisibility());
-#endif
+            if (graph->NumTargetsCovered() > 20)
+            {
+                // Iterate over the bitset of the global visited set
+                for (Idx j = 0; j < MAX_COVERAGE_SIZE; j++)
+                {
+                    // If the j-th bit is not set (i.e., less than 0.5), reset it in the current vertex's visited set
+                    if (global_vis_set_.bitset_[j] < 0.5)
+                    {
+
+                        vertex->vis.bitset_[j] = 0;
+                    }
+                }
             }
+            vertex->time_vis = RelativeTime(start);
+            vertex->time_build = avg_time_build;
+
+            graph->UpdateGlobalVisibility(vertex->vis);
+#if REJECT_SAMPLING
+            global_vis_set_.Insert(graph->GlobalVisibility());
+#endif
+
             // tree edges
             std::vector<unsigned> edges;
             auto num_parent = tree_data.getIncomingEdges(i, edges);
@@ -1081,6 +1114,20 @@ namespace drone
             {
                 VisibilitySet vis_set;
                 this->ComputeRobotVisibilitySet(vis_set);
+                // todo david
+                if (global_vis_set_.Size() > 20)
+                {
+                    // Iterate over the bitset of the global visited set
+                    for (Idx j = 0; j < MAX_COVERAGE_SIZE; j++)
+                    {
+                        // If the j-th bit is not set (i.e., less than 0.5), reset it in the current vertex's visited set
+                        if (global_vis_set_.bitset_[j] < 0.5)
+                        {
+
+                            vis_set.bitset_[j] = 0;
+                        }
+                    }
+                }
                 vis_set.Insert(global_vis_set_);
                 RealNum extend_ratio = (vis_set.Size() - global_vis_set_.Size()) / (RealNum)num_targets_;
                 valid = (extend_ratio > coverage_min_extend_);

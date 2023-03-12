@@ -105,7 +105,7 @@ public:
     bool Valid(NodePtr n);
     SizeType VirtualGraphCoverageSize() const;
     const VisibilitySet &VirtualGraphCoverage() const;
-    SizeType ResultCoverageSize() const;
+    RealNum ResultCoverageSize() const;
     RealNum ResultCost() const;
     void PrintResult(std::ostream &out) const;
     void PrintTitle(std::ostream &out) const;
@@ -135,7 +135,7 @@ public:
     RealNum Threshold_p_coll = 1.0;
 
     bool ReCalculateIPVCost(NodePtr n, Idx v, NodePtr new_node, RealNum &cost);
-    bool ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealNum &cost);
+    bool ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealNum &cost,Inspection::EPtr edge);
 
     VisibilitySet vis;
     // Vec3 LowerBordersXYZ = Vec3{-100 - 2, -22 - 2, -20 - 2};

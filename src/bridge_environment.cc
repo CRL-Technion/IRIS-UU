@@ -42,6 +42,8 @@ namespace drone
 
         InitializeObstaclePointCloud();
         std::cout << "obstacle_idx_" << obstacle_idx_ << std::endl;
+        bvh_root = buildBVH();
+
         // io::WriteJSPtCloud("../data/test.js", obstacles_, 0.5, IdxPoint(255, 255, 255));
     }
 
@@ -116,7 +118,7 @@ namespace drone
             Idx j = 0;
             RealNum offset = 0.2;
             v[0] = -12 - offset * 2;
-            v[1] = 4;
+            v[1] = 6.5;
             v[2] = 0;
             for (i = 0; i < MAX_COVERAGE_SIZE / 3.0; i++)
             {
@@ -356,31 +358,24 @@ namespace drone
             const auto dist = camera_to_point.norm();
             RealNum t, u, v;
             Idx count = 0;
-            for (const auto &f : faces_)
+
+            if (rayTriangleIntersectBVH(pos, p, bvh_root))
             {
-                const auto &v0 = raw_vertices_[f[0]];
-                const auto &v1 = raw_vertices_[f[1]];
-                const auto &v2 = raw_vertices_[f[2]];
-
-                // if (abs((pos - v0).norm() > dist + 1))
-                // {
-                //     continue;
-                // }
-                // if (abs((pos - v1).norm() > dist + 1))
-                // {
-                //     continue;
-                // }
-                // if (abs((pos - v2).norm() > dist + 1))
-                // {
-                //     continue;
-                // }
-
-                if (RayTriangleIntersect(pos, camera_to_point_normalized, v0, v1, v2, &t, &u, &v) && t < dist - EPS)
-                {
-                    visible = false;
-                    break;
-                }
+                visible = false;
             }
+
+            // for (const auto &f : faces_)
+            // {
+            //     const auto &v0 = raw_vertices_[f[0]];
+            //     const auto &v1 = raw_vertices_[f[1]];
+            //     const auto &v2 = raw_vertices_[f[2]];
+
+            //     if (RayTriangleIntersect(pos, camera_to_point_normalized, v0, v1, v2, &t, &u, &v) && t < dist - EPS)
+            //     {
+            //         visible = false;
+            //         break;
+            //     }
+            // }
 
             if (visible && node.first.idx < global_idx_)
             {
@@ -460,4 +455,114 @@ namespace drone
         return points;
     }
 
+    BVHNode *BridgeEnvironment::buildBVH()
+    {
+        std::vector<RealNum> triangle_centers;
+        triangle_centers.reserve(faces_.size());
+        for (size_t i = 0; i < faces_.size(); i++)
+        {
+
+            const Vec3 &v1 = raw_vertices_[faces_[i][0]];
+            const Vec3 &v2 = raw_vertices_[faces_[i][1]];
+            const Vec3 &v3 = raw_vertices_[faces_[i][2]];
+            Vec3 center = (v1 + v2 + v3) / 3.0;
+            // triangle_centers.push_back(center.norm());
+            triangle_centers.push_back(center[1]);
+        }
+
+        // Create a vector of indices corresponding to the sorted order of the triangles
+        std::vector<int> sorted_indices(triangle_centers.size());
+        std::iota(sorted_indices.begin(), sorted_indices.end(), 0);
+        std::sort(sorted_indices.begin(), sorted_indices.end(),
+                  [&](const int &i1, const int &i2)
+                  { return triangle_centers[i1] < triangle_centers[i2]; });
+
+        return recursiveBuildBVH(sorted_indices, 0, sorted_indices.size());
+    }
+
+    BVHNode *BridgeEnvironment::recursiveBuildBVH(const std::vector<int> &sorted_indices, int start_index, int end_index)
+    {
+        BVHNode *node = new BVHNode();
+
+        for (int i = start_index; i < end_index; i++)
+        {
+            int triangle_index = sorted_indices[i];
+            const auto &v0 = raw_vertices_[faces_[triangle_index][0]];
+            const auto &v1 = raw_vertices_[faces_[triangle_index][1]];
+            const auto &v2 = raw_vertices_[faces_[triangle_index][2]];
+
+            node->box.extend(v0);
+            node->box.extend(v1);
+            node->box.extend(v2);
+            node->triangles.push_back(triangle_index);
+        }
+        if (end_index - start_index <= sqrt(sorted_indices.size()))
+        {
+            return node;
+        }
+
+        int best_split_index = (start_index + end_index) / 2;
+
+        node->left_child = recursiveBuildBVH(sorted_indices, start_index, best_split_index);
+
+        node->right_child = recursiveBuildBVH(sorted_indices, best_split_index, end_index);
+
+        return node;
+    }
+
+    // AABB BridgeEnvironment::computeBoundingBox(const std::vector<int> &sorted_indices, int start_index, int end_index)
+    // {
+    //     AABB box;
+    //     for (const auto &triangle_index : sorted_indices)
+    //     {
+    //         // int triangle_index = sorted_indices[i];
+    //         const auto &v0 = raw_vertices_[faces_[triangle_index][0]];
+    //         const auto &v1 = raw_vertices_[faces_[triangle_index][1]];
+    //         const auto &v2 = raw_vertices_[faces_[triangle_index][2]];
+    //         // const auto &v0 = raw_vertices_[vertex_idx_[triangle_index * 3]];
+    //         // const auto &v1 = raw_vertices_[vertex_idx_[triangle_index * 3 + 1]];
+    //         // const auto &v2 = raw_vertices_[vertex_idx_[triangle_index * 3 + 2]];
+    //         box.extend(v0);
+    //         box.extend(v1);
+    //         box.extend(v2);
+    //     }
+    //     return box;
+    // }
+
+    bool BridgeEnvironment::rayTriangleIntersectBVH(const Vec3 &pos, const Vec3 &tar, const BVHNode *node)
+    {
+        if (!node->box.is_inside(pos, tar))
+        {
+            return false;
+        }
+
+        // If this node is a leaf, test for intersection with each triangle
+        if (node->is_leaf())//node->left_child == nullptr && node->right_child == nullptr)
+        {
+            const auto dist = (tar - pos).norm();
+
+            for (const auto &triangle_index : node->triangles)
+            {
+                const auto &v0 = raw_vertices_[faces_[triangle_index][0]];
+                const auto &v1 = raw_vertices_[faces_[triangle_index][1]];
+                const auto &v2 = raw_vertices_[faces_[triangle_index][2]];
+
+                RealNum t, u, v;
+                if (RayTriangleIntersect(pos, (tar - pos).normalized(), v0, v1, v2, &t, &u, &v) && t < (dist - EPS))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Otherwise, recursively test for intersection with child nodes
+        if (rayTriangleIntersectBVH(pos, tar, node->left_child))
+        {
+            return true;
+        }
+
+        return rayTriangleIntersectBVH(pos, tar, node->right_child);
+    }
 }
