@@ -527,6 +527,14 @@ nigh/lp_space.hpp
 ../include/nigh/lp_space.hpp
 nigh/kdtree_batch.hpp
 ../include/nigh/kdtree_batch.hpp
+unordered_map
+-
+cstddef
+-
+memory
+-
+limits
+-
 
 ../include/crisp_robot.h
 cmath
@@ -691,12 +699,6 @@ global_common.h
 /home/davidalpert/Projects/IRIS/src/drone_planner.cc
 drone_planner.h
 /home/davidalpert/Projects/IRIS/src/drone_planner.h
-
-/home/davidalpert/Projects/IRIS/src/drone_robot.cc
-iostream
--
-drone_robot.h
-/home/davidalpert/Projects/IRIS/src/drone_robot.h
 
 /usr/include/eigen3/Eigen/Cholesky
 Core

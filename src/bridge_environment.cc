@@ -39,6 +39,7 @@ namespace drone
         }
 
         InitializeTargets();
+        // std::cout << "test"  << std::endl;
 
         InitializeObstaclePointCloud();
         std::cout << "obstacle_idx_" << obstacle_idx_ << std::endl;
@@ -118,7 +119,7 @@ namespace drone
             Idx j = 0;
             RealNum offset = 0.2;
             v[0] = -12 - offset * 2;
-            v[1] = 6.5;
+            v[1] = 4.0;
             v[2] = 0;
             for (i = 0; i < MAX_COVERAGE_SIZE / 3.0; i++)
             {
@@ -186,7 +187,8 @@ namespace drone
                 continue;
             }
 
-            Idx num_points = std::floor(area / unit_area) * std::floor(area / unit_area) / 2.0;
+            // Idx num_points = std::floor(area / unit_area) * std::floor(area / unit_area) / 2.0;
+            Idx num_points = 2*std::floor(area / unit_area) ;
             // std::cout << "std::floor(area / unit_area): " << std::floor(area / unit_area)<< std::endl;
 
             for (auto j = 0; j < num_points; ++j)
@@ -197,7 +199,7 @@ namespace drone
                 // std::cout << "gamma" << alpha << " " << beta << " " << gamma << std::endl;
 
                 auto new_point = alpha * p0 + beta * p1 + gamma * p2;
-                // std::cout << i << " " << j << std::endl;
+                // std::cout << vertex_idx_.size()<< " " << num_points<< " "<< i << " " << j << std::endl;
 
                 AddObstacleOnlyPoint(new_point);
             }

@@ -527,6 +527,14 @@ nigh/lp_space.hpp
 ../include/nigh/lp_space.hpp
 nigh/kdtree_batch.hpp
 ../include/nigh/kdtree_batch.hpp
+unordered_map
+-
+cstddef
+-
+memory
+-
+limits
+-
 
 ../include/crisp_robot.h
 cmath
@@ -733,16 +741,6 @@ global_common.h
 /home/davidalpert/Projects/IRIS/src/graph_search.cc
 graph_search.h
 /home/davidalpert/Projects/IRIS/src/graph_search.h
-
-/home/davidalpert/Projects/IRIS/src/node.cc
-node.h
-/home/davidalpert/Projects/IRIS/src/node.h
-
-/home/davidalpert/Projects/IRIS/src/traceback_map.cc
-traceback_map.h
-/home/davidalpert/Projects/IRIS/src/traceback_map.h
-assert.h
--
 
 /usr/include/eigen3/Eigen/Cholesky
 Core

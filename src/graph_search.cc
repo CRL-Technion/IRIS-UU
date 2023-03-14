@@ -115,7 +115,7 @@ void GraphSearch::ReadLocationErrorParameters(const String Location_Error_file_n
 
     // rund monteCarloParameter
 
-    rng.seed(8);
+    rng.seed(3);
     // Idx MonteCarloNumber = 5;
     auto milli_g2mpss = 9.81 / 1000.0;                 //   Conversion from [mili g ] to [m/s^2]
     auto degPerHr2radPerSec = (3.14 / 180.0) / 3600.0; //  Conversion from [deg/hr] to [rad/s]
@@ -124,7 +124,7 @@ void GraphSearch::ReadLocationErrorParameters(const String Location_Error_file_n
     // auto ba_input = -b_a/ 5.0 ;
     for (size_t i = 0; i < MonteCarloNumber; i++)
     {
-        RealNormalDist Norm1(0, sqrt(b_a)/3);
+        RealNormalDist Norm1(0, sqrt(b_a) / 3);
         // RealNormalDist Norm1(0, (b_a) / 2);
         // RealNormalDist Norm1(0, (b_a) / 4.5);
         ba_x.push_back(Norm1(rng));
@@ -140,7 +140,7 @@ void GraphSearch::ReadLocationErrorParameters(const String Location_Error_file_n
     }
     for (size_t i = 0; i < MonteCarloNumber; i++)
     {
-        RealNormalDist Norm2(0, sqrt(b_g)/3);
+        RealNormalDist Norm2(0, sqrt(b_g) / 3);
         // RealNormalDist Norm2(0, (b_g) / 2);
         // RealNormalDist Norm2(0, (b_g) / 4.5);
 
@@ -685,13 +685,14 @@ void GraphSearch::Extend(NodePtr n)
             map_->RemoveDirectEdge(edge->source, edge->target);
             continue;
         }
-        // if (MonteCarloNum < 0.5) // ref iris, irisLimit, irisMinimize
-        // {
-        //     isNodeValidateForRiskZone = true;
-        //     // isNodeValidateForRiskZone = ReCalculateIPVCost(n, v, new_node, cost);
-        //     new_node->Extend(v, cost, graph_->Vertex(v)->vis);
-        // }
-        // else
+
+        if (MonteCarloNum < 0.5) // ref iris, irisLimit, irisMinimize
+        {
+            isNodeValidateForRiskZone = true;
+            // isNodeValidateForRiskZone = ReCalculateIPVCost(n, v, new_node, cost);
+            new_node->Extend(v, cost, graph_->Vertex(v)->vis);
+        }
+        else
         {
             vis.Clear();
             isNodeValidateForRiskZone = ReCalculateIPVCostMC(n, v, new_node, cost, edge);
@@ -824,8 +825,10 @@ bool GraphSearch::ReCalculateIPVCost(NodePtr n, Idx v, NodePtr new_node, RealNum
 
 bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealNum &cost, Inspection::EPtr edge)
 {
+
     // std::cout << "bug000" << cost << std::endl;
-    if (_isfirstTime) // init
+    _isfirstTime = false;
+    if (false) // n->Parent() == nullptr && ba_x.size() > 0.5) // init
     {
         _isfirstTime = false;
         std::cout << std::endl;
@@ -890,7 +893,80 @@ bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealN
         // std::cout << "check 1" << std::endl;
         return true;
     }
+    // edge->checkedMC = false;
+    if (edge->checkedMC && ba_x.size() > 0) // todo
+    {
+        const Idx index = v;
+        VertexVisCache::const_iterator it = vertex_vis_cache_.find(v);
+        if (it != vertex_vis_cache_.end())
+        {
+            // The visibility set for this vertex has already been computed and cached.
 
+            cost += edge->cost;
+            auto previousPColl = new_node->GetCollisionProbability();
+            auto temp_p_coll_MC = 1 - (1 - previousPColl) * (1 - 1.0 * edge->collision_prob);
+            new_node->SetCollisionProbability(temp_p_coll_MC);
+
+            if (temp_p_coll_MC > Threshold_p_coll)
+            {
+                return false;
+            }
+
+            vis = it->second;
+            Idx MonteCarloNum = ba_x.size();
+            for (size_t j = 0; j < MAX_COVERAGE_SIZE; j++)
+            {
+                if (virtual_graph_coverage_.bitset_[j] > 0.5)
+                {
+                    RealNum p = 0.0;
+                    if (MonteCarloNum > 0.5)
+                    {
+                        p = 1.0 * vis.bitset_[j];
+                    }
+                    else
+                    {
+                        p = 1;
+                    }
+
+                    vis.bitset_[j] = 1 - (1 - p) * (1 - new_node->VisSet().bitset_[j]);
+
+                    if (vis.bitset_[j] > 0.99)
+                    {
+                        vis.bitset_[j] = 1;
+                    }
+                    if (vis.bitset_[j] < 0)
+                    {
+                        vis.bitset_[j] = 0;
+                    }
+                }
+            }
+
+            // auto previousTotalLocationError = new_node->GetTotalLocationError();
+            // auto childPosition = graph_->Vertex(v)->state->as<DroneStateSpace::StateType>()->Position();
+            // RealNum sigmaNoise = 3.0;
+            // if (!planner->IsPointInsideBox(childPosition))
+            // {
+            //     sigmaNoise = 1.0;
+            // }
+            // for (size_t i = 0; i < ba_x.size(); i++)
+            // {
+            //     // reset previousTotalLocationError - RandomNoiseGNSS
+            //     RealNormalDist NormR(0, 1);
+            //     RealNormalDist NormAngle(0, 2 * M_PI);
+            //     auto r = abs(NormR(rng)) * sigmaNoise;
+            //     auto azimuth = NormAngle(rng);
+            //     auto elevation = NormAngle(rng);
+
+            //     previousTotalLocationError[i][0] = r * cos(elevation) * cos(azimuth);
+            //     previousTotalLocationError[i][1] = r * cos(elevation) * sin(azimuth);
+            //     previousTotalLocationError[i][2] = -r * sin(elevation);
+            // }
+            // new_node->SetTotalLocationError(previousTotalLocationError);
+
+            return true;
+        }
+    }
+    // std::cout << "edge->checkedMC " << edge->checkedMC << std::endl;
     RealNum totalCost = 0.0, currentTimeRiskZone = 0.0, perviousTimeRiskZone = 0.0, currentCost = 0.0, p_coll_MC = 0.0;
     Idx MonteCarloNum = ba_x.size();
     Vec3 parentPosition_fix;
@@ -949,6 +1025,29 @@ bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealN
     for (size_t i = 0; i < ba_x.size(); i++)
     {
         /// for cost calculation
+
+        // todo
+        if (n->Parent() != nullptr)
+        {
+            RealNum sigmaNoise = 3.0;
+            if (!planner->IsPointInsideBox(parentPosition))
+            {
+                sigmaNoise = 1.0;
+            }
+            for (size_t i = 0; i < ba_x.size(); i++)
+            {
+                // reset previousTotalLocationError - RandomNoiseGNSS
+                RealNormalDist NormR(0, 1);
+                RealNormalDist NormAngle(0, 2 * M_PI);
+                auto r = abs(NormR(rng)) * sigmaNoise;
+                auto azimuth = NormAngle(rng);
+                auto elevation = NormAngle(rng);
+
+                previousTotalLocationError[i][0] = r * cos(elevation) * cos(azimuth);
+                previousTotalLocationError[i][1] = r * cos(elevation) * sin(azimuth);
+                previousTotalLocationError[i][2] = -r * sin(elevation);
+            }
+        }
         parentPosition_fix[0] = parentPosition[0] + previousTotalLocationError[i][0];
         parentPosition_fix[1] = parentPosition[1] + previousTotalLocationError[i][1];
         parentPosition_fix[2] = parentPosition[2] + previousTotalLocationError[i][2];
@@ -966,8 +1065,8 @@ bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealN
         // #if ToyProblem
         // if (!planner->IsPointInsideBox(childPosition)) //\If{$\hat{q}^t_i \in W^{\text{coverage}}$}{ {$e_{q_i} \gets e_q^{W^{\text{coverage}}}
         // #else
-        if (!planner->IsPointInsideBox(childPosition_fix))
-        // if (!planner->IsPointInsideBox(childPosition))
+        // if (!planner->IsPointInsideBox(childPosition_fix))
+        if (!planner->IsPointInsideBox(childPosition))
         // #endif
         // if (true)
         // if (!planner->IsPointInsideBox(childPosition))
@@ -992,34 +1091,26 @@ bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealN
             perviousCostRiskZone[i] = 0.0;
 
             // compute cost
-            parentVertex->state->as<DroneStateSpace::StateType>()->SetPosition(parentPosition_fix);
             vertex->state->as<DroneStateSpace::StateType>()->SetPosition(childPosition_fix);
-            if (!planner->CheckEdge(parentVertex->state, vertex->state))
+            if (!edge->checkedMC)
             {
-                p_coll_MC += 1.0;
-                // edge->valid = false;
-                // graph_->SetEdgeValidity(n->Index(), v, false);
-                // return false;
+                if (!planner->CheckEdge(parentVertex->state, vertex->state))
+                {
+                    p_coll_MC += 1.0;
+                    // edge->valid = false;
+                    // graph_->SetEdgeValidity(n->Index(), v, false);
+
+                    // return false;
+                }
+                parentVertex->state->as<DroneStateSpace::StateType>()->SetPosition(parentPosition_fix);
+                currentCost += space_info_->distance(parentVertex->state, vertex->state);
             }
-            currentCost += space_info_->distance(parentVertex->state, vertex->state);
-            // std::cout << "parentPosition_fix: " << std::endl;
-            // std::cout << parentPosition_fix << std::endl;
-            // std::cout <<  parentVertex->state->as<DroneStateSpace::StateType>()->Yaw() << std::endl;
-            // std::cout <<  parentVertex->state->as<DroneStateSpace::StateType>()->CameraAngle() << std::endl;
-
-            // std::cout << "childPosition_fix: " << std::endl;
-            // std::cout << childPosition_fix << std::endl;
-            //  std::cout <<  vertex->state->as<DroneStateSpace::StateType>()->Yaw() << std::endl;
-            // std::cout <<  vertex->state->as<DroneStateSpace::StateType>()->CameraAngle() << std::endl;
-
-            // std::cout << "space_info_->distance" << space_info_->distance(parentVertex->state, vertex->state) << std::endl;
-
             // recalculate POI
             planner->ComputeVisibilitySet(vertex);
 
             // todo find the exit point to compute accurate cost
         }
-#if ToyProblem
+        // #if ToyProblem
         else
         {
             // reset previousTotalLocationError - RandomNoiseGNSS
@@ -1040,26 +1131,27 @@ bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealN
 
             // reset perviousCostRiskZone
             // compute cost
-            parentVertex->state->as<DroneStateSpace::StateType>()->SetPosition(parentPosition_fix);
             vertex->state->as<DroneStateSpace::StateType>()->SetPosition(childPosition_fix);
-
-            if (!planner->CheckEdge(parentVertex->state, vertex->state))
+            if (!edge->checkedMC)
             {
-                p_coll_MC += 1.0;
-                // edge->valid = false;
-                // graph_->SetEdgeValidity(n->Index(), v, false);
+                if (!planner->CheckEdge(parentVertex->state, vertex->state))
+                {
+                    p_coll_MC += 1.0;
+                    // edge->valid = false;
+                    // graph_->SetEdgeValidity(n->Index(), v, false);
 
-                // return false;
+                    // return false;
+                }
+                parentVertex->state->as<DroneStateSpace::StateType>()->SetPosition(parentPosition_fix);
+                currentCost += space_info_->distance(parentVertex->state, vertex->state);
             }
-            currentCost += space_info_->distance(parentVertex->state, vertex->state);
-
             // recalculate POI
             planner->ComputeVisibilitySet(vertex);
         }
         if (false)
-#else
-        else
-#endif
+        // #else
+        //         else
+        // #endif
         {
             if (!planner->IsPointInsideBox(parentPosition_fix)) // if q^c_{i-1} \in w_cov , find intersect point
             // if (!planner->IsPointInsideBox(parentPosition)) // if q^c_{i-1} \in w_cov , find intersect point
@@ -1124,7 +1216,8 @@ bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealN
 
             parentVertex->state->as<DroneStateSpace::StateType>()->SetPosition(parentPosition_fix);
             vertex->state->as<DroneStateSpace::StateType>()->SetPosition(childPosition_fix);
-
+            // if (!edge->checkedMC)
+            // {
             if (!planner->CheckEdge(parentVertex->state, vertex->state)) // todo threshold collision >0
             {
                 p_coll_MC += 1.0;
@@ -1133,7 +1226,7 @@ bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealN
 
                 // return false;
             }
-
+            // }
             perviousCostRiskZone[i] += space_info_->distance(parentVertex->state, vertex->state);
             currentCost += space_info_->distance(parentVertex->state, vertex->state);
             currentTimeRiskZone = perviousCostRiskZone[i];
@@ -1145,102 +1238,6 @@ bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealN
                 return false;
             }
 
-            // todo if the error of risk zone made the true position to be outside
-            // // maybe this is not needed because we will check it in the next child...
-            // if (!planner->IsPointInsideBox(childPosition_fix)) // there is fixing in the path
-            // {
-            //     // todo auto IsInsertToRiskZone = planner->FindInsertPointRiskZone(parentPosition_fix, childPosition_fix, insertPoint);
-
-            //     parentPosition_fix[0] = childPosition_fix[0];
-            //     parentPosition_fix[1] = childPosition_fix[1];
-            //     parentPosition_fix[2] = childPosition_fix[2];
-
-            //     // reset previousTotalLocationError - RandomNoiseGNSS
-            //     RealNormalDist NormR(0, 1);
-            //     RealNormalDist NormAngle(0, 2 * M_PI);
-            //     auto r = NormR(rng);
-            //     auto azimuth = NormAngle(rng);
-            //     auto elevation = NormAngle(rng);
-
-            //     previousTotalLocationError[i][0] = r * cos(elevation) * cos(azimuth);
-            //     previousTotalLocationError[i][1] = r * cos(elevation) * sin(azimuth);
-            //     previousTotalLocationError[i][2] = -r * sin(elevation);
-
-            //     // update childPosition_fix with RandomNoiseGPS
-            //     childPosition_fix[0] = childPosition[0] + previousTotalLocationError[i][0];
-            //     childPosition_fix[1] = childPosition[1] + previousTotalLocationError[i][1];
-            //     childPosition_fix[2] = childPosition[2] + previousTotalLocationError[i][2];
-
-            //     // reset perviousCostRiskZone
-            //     perviousCostRiskZone[i] = 0.0;
-            //     if (planner->IsPointInsideBox(childPosition_fix))
-            //     {
-            //         auto IsInsertToRiskZone = planner->FindInsertPointRiskZone(parentPosition_fix, childPosition_fix, insertPoint);
-            //         if (!IsInsertToRiskZone)
-            //         {
-            //             auto bug = 1;
-            //             std::cout << "bug:2 " << std::endl;
-            //         }
-            //         else
-            //         {
-            //             // compute cost
-            //             parentVertex->state->as<DroneStateSpace::StateType>()->SetPosition(parentPosition_fix);
-            //             vertex->state->as<DroneStateSpace::StateType>()->SetPosition(insertPoint);
-            //             totalCost -= space_info_->distance(parentVertex->state, vertex->state); // because I didn't calculate the exit point
-
-            //             // update parentPosition_fix to be the insert point
-            //             parentPosition_fix[0] = insertPoint[0];
-            //             parentPosition_fix[1] = insertPoint[1];
-            //             parentPosition_fix[2] = insertPoint[2];
-            //             ///////////////////////
-
-            //             parentVertex->state->as<DroneStateSpace::StateType>()->SetPosition(parentPosition_fix);
-            //             vertex->state->as<DroneStateSpace::StateType>()->SetPosition(childPosition_fix);
-            //             currentTimeRiskZone = space_info_->distance(parentVertex->state, vertex->state);
-            //             perviousTimeRiskZone = perviousCostRiskZone[i];
-
-            //             auto x = childPosition_fix[0] - parentPosition_fix[0];
-            //             auto y = childPosition_fix[1] - parentPosition_fix[1];
-            //             auto z = childPosition_fix[2] - parentPosition_fix[2];
-            //             // todo psi and theta
-            //             RealNum psi = atan2(y, x);
-            //             RealNum theta = atan2(z, sqrt(x * x + y * y));
-            //             auto temp_x_error = ba_x[i] * (1.0 / 2.0) * (currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone);
-            //             temp_x_error += (1.0 / 6.0) * (currentTimeRiskZone * currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone * perviousTimeRiskZone) * (-bg_z[i] + bg_y[i]);
-
-            //             auto temp_y_error = ba_y[i] * (1.0 / 2.0) * (currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone);
-            //             temp_y_error += (1.0 / 6.0) * (currentTimeRiskZone * currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone * perviousTimeRiskZone) * (bg_z[i] - bg_x[i]);
-
-            //             auto temp_z_error = ba_z[i] * (1.0 / 2.0) * (currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone);
-            //             temp_z_error += (1.0 / 6.0) * (currentTimeRiskZone * currentTimeRiskZone * currentTimeRiskZone - perviousTimeRiskZone * perviousTimeRiskZone * perviousTimeRiskZone) * (-bg_y[i] + bg_x[i]) * (-g);
-
-            //             previousTotalLocationError[i][0] += cos(theta) * cos(psi) * temp_x_error - sin(psi) * temp_y_error + sin(theta) * cos(psi) * temp_z_error;
-            //             previousTotalLocationError[i][1] += cos(theta) * sin(psi) * temp_x_error + cos(psi) * temp_y_error + sin(theta) * sin(psi) * temp_z_error;
-            //             previousTotalLocationError[i][2] += -sin(theta) * temp_x_error + cos(theta) * temp_z_error;
-
-            //             // update childPosition_fix with IMUNoise
-            //             childPosition_fix[0] = childPosition[0] + previousTotalLocationError[i][0];
-            //             childPosition_fix[1] = childPosition[1] + previousTotalLocationError[i][1];
-            //             childPosition_fix[2] = childPosition[2] + previousTotalLocationError[i][2];
-
-            //             parentVertex->state->as<DroneStateSpace::StateType>()->SetPosition(parentPosition_fix);
-            //             vertex->state->as<DroneStateSpace::StateType>()->SetPosition(childPosition_fix);
-            //             currentCost += space_info_->distance(parentVertex->state, vertex->state);
-            //         }
-            //     }
-            // }
-
-            // calculate collision
-            // parentPosition_fix[0] = parentPosition[0] + previousTotalLocationError[i][0];
-            // parentPosition_fix[1] = parentPosition[1] + previousTotalLocationError[i][1];
-            // parentPosition_fix[2] = parentPosition[2] + previousTotalLocationError[i][2];
-            // parentVertex->state->as<DroneStateSpace::StateType>()->SetPosition(parentPosition_fix);
-            // if (!planner->CheckEdge(parentVertex->state, vertex->state)) // todo threshold collision >0
-            // {
-            //     p_coll_MC += 1.0;
-            //     // return false;
-            // }
-            // recalculate POI
             planner->ComputeVisibilitySet(vertex);
 
             // cost
@@ -1251,7 +1248,7 @@ bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealN
             // todo make bitset_ private
             if (virtual_graph_coverage_.bitset_[j] > 0.5 && vertex->vis.bitset_[j] > 0.5)
             {
-                vis.bitset_[j] += 1;
+                vis.bitset_[j] += 1.0 / MonteCarloNum;
             }
         }
 
@@ -1279,32 +1276,44 @@ bool GraphSearch::ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealN
     new_node->SetCostToComeMc(perviousCostToComeMc);
     new_node->SetCostToComeRiskZone(perviousCostRiskZone);
 
-    auto temp_p_coll_MC = 1 - (1 - previousPColl) * (1 - 1.0 * p_coll_MC / MonteCarloNum);
+    vertex_vis_cache_[v] = vis;
+
+    if (!edge->checkedMC)
+    {
+        p_coll_MC = p_coll_MC / MonteCarloNum;
+        edge->checkedMC = 1;
+        edge->collision_prob = p_coll_MC;
+        edge->cost = 1.0 * totalCost / MonteCarloNum;
+    }
+    cost += edge->cost;
+    auto temp_p_coll_MC = 1 - (1 - previousPColl) * (1 - 1.0 * edge->collision_prob);
     // auto temp_p_coll_MC = (p_coll_MC / MonteCarloNum);
     new_node->SetCollisionProbability(temp_p_coll_MC);
 
     if (temp_p_coll_MC > Threshold_p_coll)
     {
         // edge->valid = false;
+        // map_->RemoveDirectEdge(edge->source, edge->target);
+
         // graph_->SetEdgeValidity(n->Index(), v, false);
         // std::cout << "collision: " << temp_p_coll_MC << std::endl;
 
         return false;
     }
-    new_node->SetCollisionProbability(temp_p_coll_MC);
+    // new_node->SetCollisionProbability(temp_p_coll_MC);
     // Mean MC cost
     //  std::cout << "cost: " << cost;
-    cost = 1.0 * totalCost / MonteCarloNum;
+
     // std::cout << "costUpdate: " << cost << std::endl;
     // Mean MC POI
     for (size_t j = 0; j < MAX_COVERAGE_SIZE; j++)
     {
-        if (vis.bitset_[j] > 0.5)
+        if (virtual_graph_coverage_.bitset_[j] > 0.5)
         {
             RealNum p = 0.0;
             if (MonteCarloNum > 0.5)
             {
-                p = 1.0 * vis.bitset_[j] / MonteCarloNum;
+                p = 1.0 * vis.bitset_[j];
             }
             else
             {

@@ -20,6 +20,7 @@
 /home/davidalpert/Projects/IRIS/debug/app/CMakeFiles/rebuild_cache.dir
 /home/davidalpert/Projects/IRIS/debug/app/CMakeFiles/checkPOIandCollision.dir
 /home/davidalpert/Projects/IRIS/debug/app/CMakeFiles/edit_cache.dir
+/home/davidalpert/Projects/IRIS/debug/app/CMakeFiles/checkProbModel.dir
 /home/davidalpert/Projects/IRIS/debug/app/CMakeFiles/search_graph.dir
 /home/davidalpert/Projects/IRIS/debug/app/CMakeFiles/build_graph.dir
 /home/davidalpert/Projects/IRIS/debug/external/CMakeFiles/rebuild_cache.dir

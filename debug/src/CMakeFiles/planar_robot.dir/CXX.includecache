@@ -240,14 +240,6 @@ ompl/rrg.h
 planar_planner.h
 /home/davidalpert/Projects/IRIS/src/planar_planner.h
 
-/home/davidalpert/Projects/IRIS/src/planar_robot.cc
-iostream
--
-cmath
--
-planar_robot.h
-/home/davidalpert/Projects/IRIS/src/planar_robot.h
-
 /usr/include/eigen3/Eigen/Cholesky
 Core
 /usr/include/eigen3/Eigen/Core

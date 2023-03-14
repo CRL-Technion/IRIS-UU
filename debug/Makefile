@@ -293,6 +293,19 @@ checkPOIandCollision/fast:
 .PHONY : checkPOIandCollision/fast
 
 #=============================================================================
+# Target rules for targets named checkProbModel
+
+# Build rule for target.
+checkProbModel: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 checkProbModel
+.PHONY : checkProbModel
+
+# fast build rule for target.
+checkProbModel/fast:
+	$(MAKE) -f app/CMakeFiles/checkProbModel.dir/build.make app/CMakeFiles/checkProbModel.dir/build
+.PHONY : checkProbModel/fast
+
+#=============================================================================
 # Target rules for targets named search_graph
 
 # Build rule for target.
@@ -353,6 +366,7 @@ help:
 	@echo "... rrg"
 	@echo "... ompl"
 	@echo "... checkPOIandCollision"
+	@echo "... checkProbModel"
 	@echo "... search_graph"
 	@echo "... build_graph"
 	@echo "... crisp_kinematics"

@@ -135,7 +135,7 @@ public:
     RealNum Threshold_p_coll = 1.0;
 
     bool ReCalculateIPVCost(NodePtr n, Idx v, NodePtr new_node, RealNum &cost);
-    bool ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealNum &cost,Inspection::EPtr edge);
+    bool ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealNum &cost, Inspection::EPtr edge);
 
     VisibilitySet vis;
     // Vec3 LowerBordersXYZ = Vec3{-100 - 2, -22 - 2, -20 - 2};
@@ -218,6 +218,9 @@ private:
     ////////////////////////////
     // Inspection::VPtr vertex;
     std::shared_ptr<drone::DronePlanner> planner;
+    using VertexVisCache = std::unordered_map<Idx, VisibilitySet>;
+        VertexVisCache vertex_vis_cache_;
+
 };
 
 #endif // GRAPH_SEARCH_H_

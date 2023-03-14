@@ -126,6 +126,21 @@ checkPOIandCollision/fast:
 .PHONY : checkPOIandCollision/fast
 
 # Convenience name for target.
+app/CMakeFiles/checkProbModel.dir/rule:
+	cd /home/davidalpert/Projects/IRIS/debug && $(MAKE) -f CMakeFiles/Makefile2 app/CMakeFiles/checkProbModel.dir/rule
+.PHONY : app/CMakeFiles/checkProbModel.dir/rule
+
+# Convenience name for target.
+checkProbModel: app/CMakeFiles/checkProbModel.dir/rule
+
+.PHONY : checkProbModel
+
+# fast build rule for target.
+checkProbModel/fast:
+	cd /home/davidalpert/Projects/IRIS/debug && $(MAKE) -f app/CMakeFiles/checkProbModel.dir/build.make app/CMakeFiles/checkProbModel.dir/build
+.PHONY : checkProbModel/fast
+
+# Convenience name for target.
 app/CMakeFiles/search_graph.dir/rule:
 	cd /home/davidalpert/Projects/IRIS/debug && $(MAKE) -f CMakeFiles/Makefile2 app/CMakeFiles/search_graph.dir/rule
 .PHONY : app/CMakeFiles/search_graph.dir/rule
@@ -209,6 +224,33 @@ checkPOIandCollision.cc.s:
 	cd /home/davidalpert/Projects/IRIS/debug && $(MAKE) -f app/CMakeFiles/checkPOIandCollision.dir/build.make app/CMakeFiles/checkPOIandCollision.dir/checkPOIandCollision.cc.s
 .PHONY : checkPOIandCollision.cc.s
 
+checkProbModel.o: checkProbModel.cc.o
+
+.PHONY : checkProbModel.o
+
+# target to build an object file
+checkProbModel.cc.o:
+	cd /home/davidalpert/Projects/IRIS/debug && $(MAKE) -f app/CMakeFiles/checkProbModel.dir/build.make app/CMakeFiles/checkProbModel.dir/checkProbModel.cc.o
+.PHONY : checkProbModel.cc.o
+
+checkProbModel.i: checkProbModel.cc.i
+
+.PHONY : checkProbModel.i
+
+# target to preprocess a source file
+checkProbModel.cc.i:
+	cd /home/davidalpert/Projects/IRIS/debug && $(MAKE) -f app/CMakeFiles/checkProbModel.dir/build.make app/CMakeFiles/checkProbModel.dir/checkProbModel.cc.i
+.PHONY : checkProbModel.cc.i
+
+checkProbModel.s: checkProbModel.cc.s
+
+.PHONY : checkProbModel.s
+
+# target to generate assembly for a file
+checkProbModel.cc.s:
+	cd /home/davidalpert/Projects/IRIS/debug && $(MAKE) -f app/CMakeFiles/checkProbModel.dir/build.make app/CMakeFiles/checkProbModel.dir/checkProbModel.cc.s
+.PHONY : checkProbModel.cc.s
+
 search_graph.o: search_graph.cc.o
 
 .PHONY : search_graph.o
@@ -245,6 +287,7 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... checkPOIandCollision"
 	@echo "... edit_cache"
+	@echo "... checkProbModel"
 	@echo "... search_graph"
 	@echo "... build_graph"
 	@echo "... build_graph.o"
@@ -253,6 +296,9 @@ help:
 	@echo "... checkPOIandCollision.o"
 	@echo "... checkPOIandCollision.i"
 	@echo "... checkPOIandCollision.s"
+	@echo "... checkProbModel.o"
+	@echo "... checkProbModel.i"
+	@echo "... checkProbModel.s"
 	@echo "... search_graph.o"
 	@echo "... search_graph.i"
 	@echo "... search_graph.s"

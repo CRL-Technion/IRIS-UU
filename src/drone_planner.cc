@@ -286,28 +286,40 @@ namespace drone
                 pos[2] = 0;
             }
 
-            if (pos[0] < -13 && i < 12)
+            if (pos[0] < -13 && i < 9)
             {
                 pos[0] = 12.0;
                 pos[1] = -2;
             }
-            if (pos[0] < -13 && i < 24)
+            if (pos[0] < -13 && i < 18)
             {
                 // break;
                 pos[0] = 12.0;
                 pos[1] = -3;
             }
 
-            if (pos[0] < -13 && i < 30)
+            if (pos[0] < -13 && i < 27)
             {
                 break;
                 pos[0] = 12.0;
                 pos[1] = -4;
             }
-            // if (pos[0] < -13 && i > 13)
-            // {
-            //     break;
-            // }
+            if (pos[0] < -13 && i < 36)
+            {
+                // break;
+                pos[0] = 12.0;
+                pos[1] = -5;
+            }
+            if (pos[0] < -13 && i < 45)
+            {
+                // break;
+                pos[0] = 12.0;
+                pos[1] = -6.5;
+            }
+            if (pos[0] < -13 && i < 100)
+            {
+                break;
+            }
             auto numVertices = graph->NumVertices();
             graph->AddVertex(numVertices);
             auto vertex = graph->Vertex(numVertices);
@@ -315,7 +327,7 @@ namespace drone
 
             // space_info_->copyState(vertex->state, graph->Vertex(targetIndex)->state);
             vertex->state->as<DroneStateSpace::StateType>()->SetPosition(pos);
-            // std::cout << "pos: " << pos[0] << "pos: " << pos[1]<< "pos: " << pos[2] << std::endl;
+            std::cout << "pos: "<< i << " " << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
 
             vertex->state->as<DroneStateSpace::StateType>()->SetCameraAngle(cameraAngle);
             vertex->state->as<DroneStateSpace::StateType>()->SetYaw(yaw);
@@ -984,7 +996,7 @@ namespace drone
             // std::cout << "sss" << std ::endl;
             // std::cout << "graph->NumTargetsCovered() " << graph->NumTargetsCovered() << std ::endl;
 
-            if (graph->NumTargetsCovered() > 20)
+            if (graph->NumTargetsCovered() >= 15)
             {
                 // Iterate over the bitset of the global visited set
                 for (Idx j = 0; j < MAX_COVERAGE_SIZE; j++)
@@ -1072,10 +1084,19 @@ namespace drone
 
     void DronePlanner::ComputeVisibilitySet(Inspection::VPtr vertex) const
     {
+        // const Idx index = vertex->index;
+        // VertexVisCache::const_iterator it = vertex_vis_cache_.find(index);
+        // if (it != vertex_vis_cache_.end())
+        // {
+        //     // The visibility set for this vertex has already been computed and cached.
+        //     vertex->vis = it->second;
+        //     return;
+        // }
         const auto &s = vertex->state->as<DroneStateSpace::StateType>();
         robot_->SetConfig(s->Position(), s->Yaw(), s->CameraAngle());
         robot_->ComputeShape();
         this->ComputeRobotVisibilitySet(vertex->vis);
+        // vertex_vis_cache_[index] = vertex->vis;
     }
 
     bool DronePlanner::StateValid(const ob::State *state)
@@ -1115,7 +1136,7 @@ namespace drone
                 VisibilitySet vis_set;
                 this->ComputeRobotVisibilitySet(vis_set);
                 // todo david
-                if (global_vis_set_.Size() > 20)
+                if (global_vis_set_.Size() >= 15)
                 {
                     // Iterate over the bitset of the global visited set
                     for (Idx j = 0; j < MAX_COVERAGE_SIZE; j++)
@@ -1131,10 +1152,13 @@ namespace drone
                 vis_set.Insert(global_vis_set_);
                 RealNum extend_ratio = (vis_set.Size() - global_vis_set_.Size()) / (RealNum)num_targets_;
                 valid = (extend_ratio > coverage_min_extend_);
+                // std::cout << "extend_ratio  " << extend_ratio << std::endl;
+                // std::cout << "coverage_min_extend_  " << coverage_min_extend_ << std::endl;
 
                 if (!valid)
                 {
                     invalid_states_counter_++;
+                    // std::cout << "invalid_states_counter_  " << invalid_states_counter_ << std::endl;
                 }
                 else
                 {

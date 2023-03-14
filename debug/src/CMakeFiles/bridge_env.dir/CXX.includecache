@@ -497,6 +497,14 @@ nigh/lp_space.hpp
 ../include/nigh/lp_space.hpp
 nigh/kdtree_batch.hpp
 ../include/nigh/kdtree_batch.hpp
+unordered_map
+-
+cstddef
+-
+memory
+-
+limits
+-
 
 ../include/global_common.h
 chrono

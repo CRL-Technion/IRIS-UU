@@ -40,6 +40,8 @@ namespace Inspection
     bool IsEdgeBelongToRiskZone{false};
     bool in_virtual_graph{false};
     bool virtual_checked{false};
+    bool checkedMC{false};
+    RealNum collision_prob;
   };
 
   using VPtr = std::shared_ptr<Vertex>;

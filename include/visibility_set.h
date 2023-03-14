@@ -5,7 +5,6 @@
 #include <numeric>
 #include "global_common.h"
 
-#define useBitSet 0
 
 class VisibilitySet
 {

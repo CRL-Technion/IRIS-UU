@@ -527,6 +527,14 @@ nigh/lp_space.hpp
 ../include/nigh/lp_space.hpp
 nigh/kdtree_batch.hpp
 ../include/nigh/kdtree_batch.hpp
+unordered_map
+-
+cstddef
+-
+memory
+-
+limits
+-
 
 ../include/crisp_planner.h
 chrono
@@ -907,6 +915,12 @@ drone_planner.h
 /home/davidalpert/Projects/IRIS/app/drone_planner.h
 inspection_graph.h
 /home/davidalpert/Projects/IRIS/app/inspection_graph.h
+iostream
+-
+string
+-
+fstream
+-
 
 /usr/include/eigen3/Eigen/Cholesky
 Core

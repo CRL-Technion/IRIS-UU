@@ -12,8 +12,11 @@
 #include <Eigen/Dense>
 
 #define DEBUG_MODE 0
-#define ToyProblem 0
+#define ToyProblem 1
 #define UAV_NAVIGATION_ERROR 1
+#define useBitSet 0
+#define useIPV 1
+
 #define REJECT_SAMPLING 1
 
 #define USE_NODE_REUSE 1
