@@ -28,7 +28,11 @@ int main(int argc, char **argv)
     std::cout << "ratio:" << ratio << std::endl;
     std::cout << "tightening_rate:" << tightening_rate << std::endl;
     String file_to_write = argv[8];
-
+    Idx seed =4;
+    if (argc > 8)
+    {
+        seed = std::stoi(argv[10]);
+    }
     Inspection::GPtr graph(new Inspection::Graph);
     // graph->ReadFromFiles(file_to_read, true, false);
     // graph->ReadFromFiles(file_to_read);
@@ -38,7 +42,7 @@ int main(int argc, char **argv)
 #if UAV_NAVIGATION_ERROR
     {
         String Location_Error_file_name = argv[9];
-        search.ReadLocationErrorParameters(Location_Error_file_name);
+        search.ReadLocationErrorParameters(Location_Error_file_name,seed);
     }
 #endif
     RealNum p = initial_p;
@@ -142,7 +146,7 @@ int main(int argc, char **argv)
         }
         fout_resultMC << std::endl;
 
-        fout_resultMC << graph_size<< std::endl;
+        fout_resultMC << graph_size << std::endl;
         // search.SaveResultsMC(fout_resultMC, result_node); // auto perviousCostToComeMc = new_node->GetCostToComeMc(););
 
         NodePtr tag = result_node;

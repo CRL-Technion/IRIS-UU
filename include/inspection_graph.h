@@ -42,6 +42,8 @@ namespace Inspection
     bool virtual_checked{false};
     bool checkedMC{false};
     RealNum collision_prob;
+    std::vector<RealNum> costMc;
+
   };
 
   using VPtr = std::shared_ptr<Vertex>;
@@ -60,6 +62,8 @@ namespace Inspection
     EPtr FindEdge(const Idx s, const Idx t) const;
     void SetEdgeValidity(const Idx s, const Idx t,bool isValid) const;
     void UpdateGlobalVisibility(const VisibilitySet &set);
+    void ResetGlobalVisibility();
+
     const VisibilitySet &GlobalVisibility() const;
 
     Idx NumVertices() const;
@@ -74,7 +78,6 @@ namespace Inspection
     void Save(const String file_name, const bool save_configs = true, const Idx dof = 0) const;
     void ReadFromFiles(const String file_name, const bool read_configs = true, const Idx dof = 0);
     void ReadFromSimulationFile(const String file_name);
-
   private:
     void Reset();
     VPtr null_vertex_{nullptr};

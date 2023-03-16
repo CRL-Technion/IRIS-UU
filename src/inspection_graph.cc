@@ -110,6 +110,11 @@ void Inspection::Graph::UpdateGlobalVisibility(const VisibilitySet &set)
     global_vis_set_.Insert(set);
 }
 
+void Inspection::Graph::ResetGlobalVisibility()
+{
+    global_vis_set_.Clear();
+}
+
 const VisibilitySet &Inspection::Graph::GlobalVisibility() const
 {
     return global_vis_set_;
@@ -192,7 +197,7 @@ void Inspection::Graph::Save(const String file_name, const bool save_configs, co
              << v->time_vis << " "
              << v->time_build << " ";
 
- for (Idx t = 0; t < MAX_COVERAGE_SIZE; ++t)
+        for (Idx t = 0; t < MAX_COVERAGE_SIZE; ++t)
         {
             if (v->vis[t])
             {
@@ -200,20 +205,20 @@ void Inspection::Graph::Save(const String file_name, const bool save_configs, co
             }
         }
 
-// #if useBitSet == 0 && useIPV
-//         for (Idx t = 0; t < MAX_COVERAGE_SIZE; ++t)
-//         {
-//             fout << v->vis[t] << " ";
-//         }
-// #else
-//         for (Idx t = 0; t < MAX_COVERAGE_SIZE; ++t)
-//         {
-//             if (v->vis[t])
-//             {
-//                 fout << t << " ";
-//             }
-//         }
-// #endif
+        // #if useBitSet == 0 && useIPV
+        //         for (Idx t = 0; t < MAX_COVERAGE_SIZE; ++t)
+        //         {
+        //             fout << v->vis[t] << " ";
+        //         }
+        // #else
+        //         for (Idx t = 0; t < MAX_COVERAGE_SIZE; ++t)
+        //         {
+        //             if (v->vis[t])
+        //             {
+        //                 fout << t << " ";
+        //             }
+        //         }
+        // #endif
 
         fout << std::endl;
     }
@@ -449,14 +454,14 @@ void Inspection::Graph::ReadFromFiles(const String file_name, const bool read_co
             else
             {
                 vertices_[i]->vis.Insert(std::stoi(field));
-// #if useBitSet == 0 && useIPV
-//                 if ((j - 3) < (MAX_COVERAGE_SIZE))
-//                 {
-//                     vertices_[i]->vis.bitset_[j - 3] = std::stod(field);
-//                 }
-// #else
-//                 vertices_[i]->vis.Insert(std::stoi(field));
-// #endif
+                // #if useBitSet == 0 && useIPV
+                //                 if ((j - 3) < (MAX_COVERAGE_SIZE))
+                //                 {
+                //                     vertices_[i]->vis.bitset_[j - 3] = std::stod(field);
+                //                 }
+                // #else
+                //                 vertices_[i]->vis.Insert(std::stoi(field));
+                // #endif
             }
 
             j++;

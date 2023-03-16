@@ -12,7 +12,7 @@
 #include <Eigen/Dense>
 
 #define DEBUG_MODE 0
-#define ToyProblem 1
+#define ToyProblem 0
 #define UAV_NAVIGATION_ERROR 1
 #define useBitSet 0
 #define useIPV 1

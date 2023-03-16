@@ -21,8 +21,8 @@
 #include <fstream>
 using VPtr = std::shared_ptr<Inspection::Vertex>;
 using EPtr = std::shared_ptr<Inspection::Edge>;
-VisibilitySet virtual_graph_coverage_;
-
+VisibilitySet virtual_graphcoverage_;
+Rand rng;
 int main(int argc, char **argv)
 {
 
@@ -37,12 +37,41 @@ int main(int argc, char **argv)
 
 	String file_to_read = argv[1];
 	Idx seed = std::stoi(argv[2]);
+	Idx MonteCarloNum = std::stoi(argv[3]);
 
 	Inspection::GPtr graph(new Inspection::Graph);
-	graph->ReadFromSimulationFile(file_to_read);
+	graph->ReadFromFiles(file_to_read, true, 5);
 
+	// read result path
+	String file_to_read_result = file_to_read + "_result";
+
+	std::ifstream infile(file_to_read_result);
+	std::string line;
+	std::getline(infile, line); // read the first line of the file
+
+	int id;
+	std::vector<int> numbers;
+	std::istringstream iss(line);
+	iss >> id;
+	int num;
+	while (iss >> num)
+	{
+		numbers.push_back(num);
+	}
+
+	// std::cout << "ID: " << id << std::endl;
+	// std::cout << "Numbers: ";
+	// for (auto n : numbers)
+	// {
+	// 	std::cout << n << " ";
+	// }
+	// std::cout << std::endl;
+
+	infile.close(); // close the file
+	std::cout << "result read!" << std::endl;
+	rng.seed(seed+13);
 	// Robot
-	auto robot = std::make_shared<drone::DroneRobot>(0.196, 0.2895, -0.049);
+	auto robot = std::make_shared<drone::DroneRobot>(0.196, 0.2895, 0);
 	robot->SetCameraParameters(94.0 / 180 * M_PI, 0.2, 10.0);
 	robot->Initialize();
 
@@ -51,6 +80,14 @@ int main(int argc, char **argv)
 
 	// Planner
 	auto planner = std::make_shared<drone::DronePlanner>(robot, env, seed);
+#if ToyProblem==0
+	for (SizeType i = 0; i < 3; ++i)
+	{
+		planner->LowerBordersXYZ[i] += 2;
+		planner->UpperBordersXYZ[i] -= 2;
+	}
+#endif
+
 	ob::SpaceInformationPtr space_info_;
 	space_info_ = planner->Define_space_info_();
 	Inspection::VPtr vertex(new Inspection::Vertex(0));
@@ -58,86 +95,13 @@ int main(int argc, char **argv)
 	vertex->state = space_info_->allocState();
 	parentVertex->state = space_info_->allocState();
 
-	Idx countCollision = 0;
-	auto total_length = 0.0;
-
 	Inspection::GPtr graph1(new Inspection::Graph);
 
-	// Replace "SimulationPath_" with "test"
-	String original_file_to_read = file_to_read;
-	std::size_t index = original_file_to_read.find("SimulationPath_");
-	original_file_to_read.replace(index, 15, "");
-
-	
-	graph1->ReadFromFiles(original_file_to_read, true, 5);
-
-	for (SizeType i = 0; i < graph1->NumVertices(); ++i)
+	for (SizeType i = 0; i < graph->NumVertices(); ++i)
 	{
-		Inspection::VPtr v = graph1->Vertex(i);
-		virtual_graph_coverage_.Insert(v->vis);
+		Inspection::VPtr v = graph->Vertex(i);
+		virtual_graphcoverage_.Insert(v->vis);
 	}
-
-	for (size_t i = 0; i < graph->NumVertices(); i++)
-	{
-		planner->ComputeVisibilitySet(graph->Vertex(i));
-		if (i < graph->NumVertices() - 1)
-		{
-			graph->Edge(i)->valid = planner->CheckEdge(graph->Vertex(i)->state, graph->Vertex(i + 1)->state);
-			if (!graph->Edge(i)->valid)
-			{
-				countCollision++;
-			}
-
-			auto parentPosition = graph->Vertex(i)->state->as<DroneStateSpace::StateType>()->Position();
-			auto childPosition = graph->Vertex(i + 1)->state->as<DroneStateSpace::StateType>()->Position();
-
-			parentVertex->state->as<DroneStateSpace::StateType>()->SetPosition(parentPosition);
-			vertex->state->as<DroneStateSpace::StateType>()->SetPosition(childPosition);
-
-			// vertex->state->as<DroneStateSpace::StateType>()->SetYaw(graph->Vertex(i)->state->as<DroneStateSpace::StateType>()->Yaw());
-			// vertex->state->as<DroneStateSpace::StateType>()->SetCameraAngle(graph->Vertex(i)->state->as<DroneStateSpace::StateType>()->CameraAngle());
-			// parentVertex->state->as<DroneStateSpace::StateType>()->SetYaw(graph->Vertex(i + 1)->state->as<DroneStateSpace::StateType>()->Yaw());
-			// parentVertex->state->as<DroneStateSpace::StateType>()->SetCameraAngle(graph->Vertex(i + 1)->state->as<DroneStateSpace::StateType>()->CameraAngle());
-
-			space_info_->copyState(vertex->state, graph->Vertex(i + 1)->state);
-			space_info_->copyState(parentVertex->state, graph->Vertex(i)->state);
-
-			// std::cout << "parent:" << std::endl;
-			std::cout << parentPosition << std::endl;
-			// std::cout << "childPosition:" << std::endl;
-			std::cout << childPosition << std::endl;
-			// std::cout << "distance" << space_info_->distance(parentVertex->state, vertex->state) << std::endl;
-
-			total_length += space_info_->distance(parentVertex->state, vertex->state);
-			// std::cout << "total_length : " << total_length << std::endl;
-		}
-
-		for (size_t j = 0; j < MAX_COVERAGE_SIZE; j++)
-		{
-
-			// todo make bitset_ private
-			if (virtual_graph_coverage_.bitset_[j] < 0.5)
-			{
-				graph->Vertex(i)->vis.bitset_[j] = 0;
-			}
-		}
-		graph->UpdateGlobalVisibility(graph->Vertex(i)->vis);
-	}
-
-	graph->Save(file_to_read, false);
-
-	std::cout << "CoveragePOIs is : " << graph->NumTargetsCovered() << "\n"
-			  << "Number of collision is: " << countCollision << "\n"
-			  << "length: " << total_length << std::endl;
-
-	// std::ofstream foutMC(file_to_read + "_MC");
-
-	// if (!foutMC.is_open())
-	// {
-	// 	std::cout << "Vertex file cannot be opened!" << std::endl;
-	// 	exit(1);
-	// }
-
 	String mc_file = file_to_read + "_MC";
 	std::ofstream fout;
 	// std::ifstream fin;
@@ -149,14 +113,125 @@ int main(int argc, char **argv)
 		std::cerr << mc_file << std::endl;
 		exit(1);
 	}
-	fout << graph->NumTargetsCovered() << " " << total_length << " " << countCollision;
-	for (size_t i = 0; i < graph->NumEdges(); i++)
+	for (size_t j = 0; j < MonteCarloNum; j++)
 	{
- 		fout<< " " << !graph->Edge(i)->valid; 
-	}
-	fout << " " << std::endl;
-	fout.close();
-	return 0;
+		Idx countCollision = 0;
+		auto total_length = 0.0;
+		graph->ResetGlobalVisibility();
 
+		std::vector<bool> edgeValid;
+		Vec3 previousTotalLocationError;
+		for (size_t k = 0; k < 3; k++)
+		{
+			previousTotalLocationError[k] = 0;
+		}
+
+		for (size_t i = 0; i < numbers.size(); i++)
+		{
+
+			auto parentPosition = graph->Vertex(numbers[i])->state->as<DroneStateSpace::StateType>()->Position();
+			// std::cout << "previousTotalLocationError " << previousTotalLocationError[0] << " " << previousTotalLocationError[1] << " " << previousTotalLocationError[2] << std::endl;
+			Vec3 parentPositionFix;
+			for (size_t k = 0; k < 3; k++)
+			{
+				parentPositionFix[k] = parentPosition[k] + previousTotalLocationError[k];
+			}
+
+			parentVertex->state->as<DroneStateSpace::StateType>()->SetYaw(graph->Vertex(numbers[i])->state->as<DroneStateSpace::StateType>()->Yaw());
+			parentVertex->state->as<DroneStateSpace::StateType>()->SetCameraAngle(graph->Vertex(numbers[i])->state->as<DroneStateSpace::StateType>()->CameraAngle());
+			parentVertex->state->as<DroneStateSpace::StateType>()->SetPosition(parentPositionFix);
+
+			planner->ComputeVisibilitySet(parentVertex);
+
+			if (i < numbers.size() - 1)
+			{
+
+				auto childPosition = graph->Vertex(numbers[i + 1])->state->as<DroneStateSpace::StateType>()->Position();
+				RealNum sigmaNoise = 3.0;
+				if (!planner->IsPointInsideBox(childPosition))
+				{
+					sigmaNoise = 1.0;
+				}
+
+				// reset previousTotalLocationError - RandomNoiseGNSS
+				RealNormalDist NormR(0, 1);
+				RealNormalDist NormAngle(0, 2 * M_PI);
+				auto r = abs(NormR(rng)) * sigmaNoise;
+				auto azimuth = NormAngle(rng);
+				auto elevation = NormAngle(rng);
+
+				previousTotalLocationError[0] = r * cos(elevation) * cos(azimuth);
+				previousTotalLocationError[1] = r * cos(elevation) * sin(azimuth);
+				previousTotalLocationError[2] = -r * sin(elevation);
+
+				Vec3 childPositionFix;
+				for (size_t k = 0; k < 3; k++)
+				{
+					childPositionFix[k] = childPosition[k] + previousTotalLocationError[k];
+				}
+
+				vertex->state->as<DroneStateSpace::StateType>()->SetPosition(childPositionFix);
+				vertex->state->as<DroneStateSpace::StateType>()->SetYaw(graph->Vertex(numbers[i + 1])->state->as<DroneStateSpace::StateType>()->Yaw());
+				vertex->state->as<DroneStateSpace::StateType>()->SetCameraAngle(graph->Vertex(numbers[i + 1])->state->as<DroneStateSpace::StateType>()->CameraAngle());
+
+				auto tempValid = planner->CheckEdge(parentVertex->state, vertex->state);
+				edgeValid.push_back(tempValid);
+				if (!tempValid)
+				{
+					countCollision++;
+				}
+
+				// vertex->state->as<DroneStateSpace::StateType>()->SetYaw(graph->Vertex(i)->state->as<DroneStateSpace::StateType>()->Yaw());
+				// vertex->state->as<DroneStateSpace::StateType>()->SetCameraAngle(graph->Vertex(i)->state->as<DroneStateSpace::StateType>()->CameraAngle());
+				// parentVertex->state->as<DroneStateSpace::StateType>()->SetYaw(graph->Vertex(i + 1)->state->as<DroneStateSpace::StateType>()->Yaw());
+				// parentVertex->state->as<DroneStateSpace::StateType>()->SetCameraAngle(graph->Vertex(i + 1)->state->as<DroneStateSpace::StateType>()->CameraAngle());
+
+				// space_info_->copyState(vertex->state, graph->Vertex(i + 1)->state);
+				// space_info_->copyState(parentVertex->state, graph->Vertex(i)->state);
+
+				// // std::cout << "parent:" << std::endl;
+				// std::cout << parentPosition << std::endl;
+				// // std::cout << "childPosition:" << std::endl;
+				// std::cout << childPosition << std::endl;
+				// // std::cout << "distance" << space_info_->distance(parentVertex->state, vertex->state) << std::endl;
+
+				total_length += space_info_->distance(parentVertex->state, vertex->state);
+				// std::cout << "total_length : " << total_length << std::endl;
+			}
+
+			for (size_t j = 0; j < MAX_COVERAGE_SIZE; j++)
+			{
+
+				// todo make bitset_ private
+				if (virtual_graphcoverage_.bitset_[j] < 0.5)
+				{
+					parentVertex->vis.bitset_[j] = 0;
+				}
+			}
+			graph->UpdateGlobalVisibility(parentVertex->vis);
+		}
+
+		// graph->Save(file_to_read, false);
+
+		// std::cout << "CoveragePOIs is : " << graph->NumTargetsCovered() << "\n"
+		// 		  << "Number of collision is: " << countCollision << "\n"
+		// 		  << "length: " << total_length << std::endl;
+
+		// std::ofstream foutMC(file_to_read + "_MC");
+
+		// if (!foutMC.is_open())
+		// {
+		// 	std::cout << "Vertex file cannot be opened!" << std::endl;
+		// 	exit(1);
+		// }
+
+		fout << graph->NumTargetsCovered() << " " << total_length << " " << countCollision;
+		for (size_t i = 0; i < edgeValid.size(); i++)
+		{
+			fout << " " << !edgeValid[i];
+		}
+		fout << " " << std::endl;
+	}
+	fout.close();
 	return 0;
 }

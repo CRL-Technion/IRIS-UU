@@ -116,7 +116,7 @@ public:
     SizeType VirtualGraphNumEdges() const;
 
     //////
-    void ReadLocationErrorParameters(const String Location_Error_file_name);
+    void ReadLocationErrorParameters(const String Location_Error_file_name, const Idx seed);
     RealNum b_a_milli_g = 0.0;
     RealNum b_g_degPerHr = 0.0;
     RealNum avarageVelocity = 0.0;

@@ -40,7 +40,7 @@ int main(int argc, char **argv)
 #if UAV_NAVIGATION_ERROR
     {
         String Location_Error_file_name = argv[9];
-        search.ReadLocationErrorParameters(Location_Error_file_name);
+        search.ReadLocationErrorParameters(Location_Error_file_name,4);
     }
 #endif
     RealNum p = initial_p;
