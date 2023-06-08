@@ -281,25 +281,29 @@ namespace drone
             // }
             if (i == 0)
             {
+                // std::cout << "i == 0" << std::endl;
                 pos[0] = 12; // robot_->Config()->Position()[0];
                 pos[1] = 0;
                 pos[2] = 0;
             }
 
-            if (pos[0] < -13 && i < 9)
+            if (pos[0] < -13 && i < 10)
             {
+                // std::cout << "i == 1" << std::endl;
                 pos[0] = 12.0;
                 pos[1] = -2;
             }
-            if (pos[0] < -13 && i < 18)
+            if (pos[0] < -13 && i < 19)
             {
+                // std::cout << "i == 2" << std::endl;
                 // break;
                 pos[0] = 12.0;
-                pos[1] = -3;
+                pos[1] = -4;
             }
 
-            if (pos[0] < -13 && i < 27)
+            if (pos[0] < -13 && i < 28)
             {
+                // std::cout << "i == 3" << std::endl;
                 break;
                 pos[0] = 12.0;
                 pos[1] = -4;
@@ -308,7 +312,7 @@ namespace drone
             {
                 // break;
                 pos[0] = 12.0;
-                pos[1] = -5;
+                pos[1] = -6;
             }
             if (pos[0] < -13 && i < 45)
             {
@@ -327,7 +331,7 @@ namespace drone
 
             // space_info_->copyState(vertex->state, graph->Vertex(targetIndex)->state);
             vertex->state->as<DroneStateSpace::StateType>()->SetPosition(pos);
-            std::cout << "pos: "<< i << " " << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
+            std::cout << "pos: " << i << " " << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
 
             vertex->state->as<DroneStateSpace::StateType>()->SetCameraAngle(cameraAngle);
             vertex->state->as<DroneStateSpace::StateType>()->SetYaw(yaw);
@@ -341,6 +345,9 @@ namespace drone
             pos[0] -= 3;
         }
         std::cout << "graph->NumVertices(): " << graph->NumVertices() << std::endl;
+        const int groupSize = 9; // group size
+        const int numGroups = graph->NumVertices() / groupSize;
+
         for (i = 0; i < graph->NumVertices(); i++)
         {
             for (j = 0; j < graph->NumVertices(); j++)
@@ -349,14 +356,34 @@ namespace drone
                 {
                     continue;
                 }
+                bool tempGroups = (i / groupSize == j / groupSize);
+                // std::cout << "i j: " << i << " " << j << " " << tempGroups << std::endl;
                 const ob::State *source = graph->Vertex(i)->state;
                 const ob::State *target = graph->Vertex(j)->state;
                 Inspection::EPtr edge1(new Inspection::Edge(i, j));
                 edge1->cost = space_info_->distance(source, target);
-                if (edge1->cost > 3.9)
+                // std::cout << "edge1->cost : " << edge1->cost << tempGroups << std::endl;
+
+                if (tempGroups && abs(i - j) > 1.5)
                 {
                     continue;
                 }
+                else
+                {
+
+                    if (edge1->cost > 3.7)
+                    {
+                        continue;
+                    }
+                }
+
+                if (abs(i / groupSize - j / groupSize) > 1)
+                {
+                    continue;
+                }
+
+                // std::cout << "i j: " << i << " " << j << std::endl;
+
                 // if (validate_all_edges_)
                 // {
                 const TimePoint start = Clock::now();
@@ -561,50 +588,124 @@ namespace drone
     //     return true;
     // }
 
-    bool DronePlanner::FindInsertPointRiskZone(const Vec3 &source, const Vec3 &target, Vec3 &insertPoint)
+    // bool DronePlanner::FindInsertPointRiskZone(const Vec3 &source, const Vec3 &target, Vec3 &insertPoint)
+    // {
+    //     Vec3 insertPointTemp;
+    //     Vec3 direction = (target - source);
+    //     auto normVec = direction.norm();
+    //     direction.normalize();
+    //     std::vector<double> t;
+    //     Idx i = 0;
+    //     Idx counterDirection = 0;
+    //     for (i = 0; i < 3; i++)
+    //     {
+    //         if (abs(direction[i] < 1e-4))
+    //         {
+    //             counterDirection++;
+
+    //             if (counterDirection > 2)
+    //             {
+    //                 insertPoint = source;
+    //                 return false;
+    //             }
+    //             continue;
+    //         }
+
+    //         t.push_back((LowerBordersXYZ[i] - source[i]) / direction[i]);
+    //         t.push_back((UpperBordersXYZ[i] - source[i]) / direction[i]);
+    //     }
+    //     sort(t.begin(), t.end());
+    //     // std::cout << "------------" << std::endl;
+    //     RealNum tmin = 1000000;
+    //     bool found = false;
+    //     for (i = 0; i < t.size(); i++)
+    //     {
+
+    //         // std::cout << "t[i]: " << t[i] << std::endl;
+    //         if (t[i] > -normVec && t[i] < normVec)
+    //         {
+    //             insertPointTemp[0] = source[0] + (t[i] + 1e-2) * direction[0];
+    //             insertPointTemp[1] = source[1] + (t[i] + 1e-2) * direction[1];
+    //             insertPointTemp[2] = source[2] + (t[i] + 1e-2) * direction[2];
+
+    //             if (IsPointInsideBox(insertPointTemp))
+    //             {
+    //                 if (tmin > t[i])
+    //                 {
+    //                     tmin = t[i];
+    //                 }
+    //                 found = true;
+    //             }
+    //         }
+    //     }
+    //     if (found)
+    //     {
+    //         insertPointTemp[0] = source[0] + (tmin + 1e-2) * direction[0];
+    //         insertPointTemp[1] = source[1] + (tmin + 1e-2) * direction[1];
+    //         insertPointTemp[2] = source[2] + (tmin + 1e-2) * direction[2];
+    //         return true;
+    //     }
+    //     return false;
+    // }
+
+    bool DronePlanner::FindInsertPointRiskZone(const Vec3 &source, const Vec3 &target, Vec3 &insert_point)
     {
-        Vec3 insertPointTemp;
-        Vec3 direction = (target - source);
-        auto normVec = direction.norm();
+        const double epsilon = 1e-4;
+        const double box_epsilon = 1e-2;
+
+        Vec3 direction = target - source;
+        double norm = direction.norm();
         direction.normalize();
-        std::vector<double> t;
-        Idx i = 0;
-        for (i = 0; i < 3; i++)
-        {
-            t.push_back((LowerBordersXYZ[i] - source[i]) / direction[i]);
-            t.push_back((UpperBordersXYZ[i] - source[i]) / direction[i]);
-        }
-        sort(t.begin(), t.end());
-        // std::cout << "------------" << std::endl;
-        RealNum tmin = 1000000;
-        bool found = false;
-        for (i = 0; i < t.size(); i++)
-        {
 
-            // std::cout << "t[i]: " << t[i] << std::endl;
-            if (t[i] > -normVec && t[i] < normVec)
+        std::vector<double> intersections;
+        Idx counter_direction = 0;
+
+        for (Idx i = 0; i < 3; ++i)
+        {
+            if (std::abs(direction[i]) < epsilon)
             {
-                insertPointTemp[0] = source[0] + (t[i] + 1e-2) * direction[0];
-                insertPointTemp[1] = source[1] + (t[i] + 1e-2) * direction[1];
-                insertPointTemp[2] = source[2] + (t[i] + 1e-2) * direction[2];
-
-                if (IsPointInsideBox(insertPointTemp))
+                ++counter_direction;
+                if (counter_direction > 2)
                 {
-                    if (tmin > t[i])
+                    insert_point = source;
+                    return false;
+                }
+            }
+            else
+            {
+                intersections.push_back((LowerBordersXYZ[i] - source[i]) / direction[i]);
+                intersections.push_back((UpperBordersXYZ[i] - source[i]) / direction[i]);
+            }
+        }
+
+        std::sort(intersections.begin(), intersections.end());
+
+        double tmin = std::numeric_limits<double>::max();
+        bool found = false;
+
+        for (const auto &t : intersections)
+        {
+            if (t > -norm && t < norm)
+            {
+                Vec3 temp_point = source + (t + box_epsilon) * direction;
+
+                if (IsPointInsideBox(temp_point))
+                {
+                    if (t < tmin)
                     {
-                        tmin = t[i];
+                        tmin = t;
+                        found = true;
                     }
-                    found = true;
                 }
             }
         }
+
         if (found)
         {
-            insertPointTemp[0] = source[0] + (tmin + 1e-2) * direction[0];
-            insertPointTemp[1] = source[1] + (tmin + 1e-2) * direction[1];
-            insertPointTemp[2] = source[2] + (tmin + 1e-2) * direction[2];
+            insert_point = source + (tmin + box_epsilon) * direction;
             return true;
         }
+
         return false;
     }
 
@@ -996,18 +1097,18 @@ namespace drone
             // std::cout << "sss" << std ::endl;
             // std::cout << "graph->NumTargetsCovered() " << graph->NumTargetsCovered() << std ::endl;
 
-            if (graph->NumTargetsCovered() >= 15)
             {
-                // Iterate over the bitset of the global visited set
-                for (Idx j = 0; j < MAX_COVERAGE_SIZE; j++)
-                {
-                    // If the j-th bit is not set (i.e., less than 0.5), reset it in the current vertex's visited set
-                    if (global_vis_set_.bitset_[j] < 0.5)
+                if (graph->NumTargetsCovered() >= 15)
+                    // Iterate over the bitset of the global visited set
+                    for (Idx j = 0; j < MAX_COVERAGE_SIZE; j++)
                     {
+                        // If the j-th bit is not set (i.e., less than 0.5), reset it in the current vertex's visited set
+                        if (global_vis_set_.bitset_[j] < 0.5)
+                        {
 
-                        vertex->vis.bitset_[j] = 0;
+                            vertex->vis.bitset_[j] = 0;
+                        }
                     }
-                }
             }
             vertex->time_vis = RelativeTime(start);
             vertex->time_build = avg_time_build;

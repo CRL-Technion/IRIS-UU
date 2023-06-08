@@ -119,7 +119,7 @@ namespace drone
             Idx j = 0;
             RealNum offset = 0.2;
             v[0] = -12 - offset * 2;
-            v[1] = 4.0;
+            v[1] = 4;
             v[2] = 0;
             for (i = 0; i < MAX_COVERAGE_SIZE / 3.0; i++)
             {

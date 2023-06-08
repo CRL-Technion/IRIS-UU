@@ -394,6 +394,10 @@ ompl/geometric/PathGeometric.h
 ompl/crisp_directed_control_sampler.h
 /home/davidalpert/Projects/IRIS/src/ompl/ompl/crisp_directed_control_sampler.h
 
+/home/davidalpert/Projects/IRIS/src/ompl/crisp_state_space.cc
+ompl/crisp_state_space.h
+/home/davidalpert/Projects/IRIS/src/ompl/ompl/crisp_state_space.h
+
 /usr/include/eigen3/Eigen/Cholesky
 Core
 /usr/include/eigen3/Eigen/Core
