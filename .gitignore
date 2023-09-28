@@ -1,6 +1,5 @@
 # Don't track content of these folders
 build/
-data/
 build*/
 
 # Compiled source #
