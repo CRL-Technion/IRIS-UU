@@ -1,2 +1,0 @@
-/usr/bin/ar qc libcrisp_robot.a  CMakeFiles/crisp_robot.dir/crisp_robot.cc.o CMakeFiles/crisp_robot.dir/crisp_planner.cc.o
-/usr/bin/ranlib libcrisp_robot.a

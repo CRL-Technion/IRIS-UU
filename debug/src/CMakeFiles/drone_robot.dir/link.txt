@@ -1,2 +1,0 @@
-/usr/bin/ar qc libdrone_robot.a  CMakeFiles/drone_robot.dir/drone_robot.cc.o CMakeFiles/drone_robot.dir/drone_planner.cc.o
-/usr/bin/ranlib libdrone_robot.a

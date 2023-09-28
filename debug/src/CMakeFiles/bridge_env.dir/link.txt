@@ -1,2 +1,0 @@
-/usr/bin/ar qc libbridge_env.a  CMakeFiles/bridge_env.dir/bridge_environment.cc.o
-/usr/bin/ranlib libbridge_env.a

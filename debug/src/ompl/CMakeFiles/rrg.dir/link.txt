@@ -1,2 +1,0 @@
-/usr/bin/ar qc librrg.a  CMakeFiles/rrg.dir/rrg.cc.o
-/usr/bin/ranlib librrg.a

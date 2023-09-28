@@ -1,2 +1,0 @@
-/usr/bin/ar qc libplanar_env.a  CMakeFiles/planar_env.dir/planar_environment.cc.o
-/usr/bin/ranlib libplanar_env.a
