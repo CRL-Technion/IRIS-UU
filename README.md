@@ -87,7 +87,6 @@ The efficacy of IRIS-U^2 is demonstrated through a case study focusing on struct
 	When constructing the roadmap, we now allow rejection sampling to favor samples that increase inspection coverage. Set ```REJECT_SAMPLING``` (in ```include/global_common.h```) to 1 to enable this feature.
 
 2. Search a graph:
-
 	```
 	cd {path to your local repository}/build
 	./app/search_graph file_to_read initial_p initial_eps tightening_rate laziness_mode successor_mode batching_ratio file_to_write LocationErrorParameterFile
@@ -111,10 +110,14 @@ The efficacy of IRIS-U^2 is demonstrated through a case study focusing on struct
 
     In ```include/global_common.h```, there are also additional macros to enable different features, namely ```USE_NODE_REUSE```, ```KEEP_SUBSUMING_HISTORY```, and ```SAVE_PREDECESSOR```. ```USE_NODE_REUSE``` enables reusing search efforts from previous search iteration. ```KEEP_SUBSUMING_HISTORY``` enables saving detailed information about subsumed node, which is essential for lazy edge validation (laziness mode 3) and search effort reusing. ```SAVE_PREDECESSOR``` is an additional optimization for subusming history keeping, that saves memory footprint by saving the predecessor of the subsumed node instead of saving the subsumed node directly.
 
+3. check execution performance:
+   Using checkPOIandCollision we can test the performance of the execution stage done by a simulator such as the simulator detailed in [[simulator](https://github.com/CRL-Technion/Simulator-IRIS-UU)].
+   TODO: ADD A DETAIL HERE
+
 ## Robot Background
 
 This repository implements an inspection planning algorithm and demonstrates its functionality on three different robots:
-the CRISP robot, the planar-link-camera robot and the quadrotor (more detail can be found in the original code in [[code](https://github.com/UNC-Robotics/IRIS)]
+the CRISP robot, the planar-link-camera robot, and the quadrotor (more detail can be found in the original code in [[code](https://github.com/UNC-Robotics/IRIS)]
 
 The quadrotor tries to inspect a bridge structure provided as a mesh.
 <img src="images/bridge.png" width="600" height="400">
