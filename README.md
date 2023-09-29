@@ -93,7 +93,9 @@ The efficacy of IRIS-U^2 is demonstrated through a case study focusing on struct
 	./app/search_graph file_to_read initial_p initial_eps tightening_rate laziness_mode successor_mode batching_ratio file_to_write LocationErrorParameterFile
 	```
 	*Important for the case of considering the execution uncertainty:*
-	The file LocationErrorParameterFile
+	The file LocationErrorParameterFile is necessary to define the parameter for considering the execution uncertainty and it contains:
+	b_a_milli_g b_g_degPerHr avarageVelocity minTimeAllowInRistZone maxTimeAllowInRistZone multipleCostFunction MonteCarloNumber Threshold_p_coll
+	
 	Here, four different laziness modes are provided:
 
 	* 0 -- No lazy computation
