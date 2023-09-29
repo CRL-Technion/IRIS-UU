@@ -37,30 +37,14 @@ The efficacy of IRIS-U^2 is demonstrated through a case study focusing on struct
 * [OMPL](https://ompl.kavrakilab.org/) - the Open Motion Planning Library v1.5.0
 
 ## Installation
-1. Download 
 
-1. First clone code to your local repository:
 
+1. To install all the dependencies, download InstallIRISUUAndRequirements.sh and type:
 	```
-	git clone https://github.com/CRL-Technion/IRIS-UU.git 
-	git submodule update --init --recursive
+	chmod u+x InstallIRISRequirements 
+	./InstallIRISUUAndRequirements.sh
 	```
-
-2. Additional bridge model can be found by downloading data from [google drive](https://drive.google.com/file/d/19DGtog4D4hAgwFu1bV_ct0h_n-G4BR1Z/view?usp=sharing) to your local respository, uncompress.
-
-3. Install all dependencies. If you install dependencies to your specified directories, you will need to provide the information when compiling.
-
-4. Compile:
-
-	```
-	cd {path to your local repository}
-	mkdir build
-	cd build
-	cmake ..
-	make
-	```
-
-5. Tested environment:
+2. Tested environment:
 
   * Ubuntu 18.04 (gcc 7.4.0)
   * Ubuntu 16.04 (gcc 7.4.0)
@@ -84,6 +68,9 @@ The efficacy of IRIS-U^2 is demonstrated through a case study focusing on struct
 
 	If both ```USE_CRISP``` and ```USE_PLANAR``` are set to 0, then the drone robot is used.
 
+	This code extension is focused on the drone robot case of considering the execution uncertainty:
+	The configuration for such a scenario is done by setting ```UAV_NAVIGATION_ERROR``` to 1 ```useBitSet``` to 0 and ```useIPV``` 1.
+
 	*Important for macbook users:*
 
 	OMPL uses C++17 deprecated functions, and clang reports errors when you set C++ standard to 17.
@@ -103,20 +90,29 @@ The efficacy of IRIS-U^2 is demonstrated through a case study focusing on struct
 
 	```
 	cd {path to your local repository}/build
-	./app/search_graph file_to_read initial_p initial_eps tightening_rate laziness_mode successor_mode batching_ratio file_to_write
+	./app/search_graph file_to_read initial_p initial_eps tightening_rate laziness_mode successor_mode batching_ratio file_to_write LocationErrorParameterFile
 	```
-
+	*Important for the case of considering the execution uncertainty:*
+	The file LocationErrorParameterFile
 	Here, four different laziness modes are provided:
 
 	* 0 -- No lazy computation
 	* 1 -- Lazy SP (complete lazy)
-    * 2 -- Lazy A* modified (validate when subsuming for the first time, final method in the paper)
-    * 3 -- Lazy A* (validate only when popped from OPEN list, performance worse than 2, keep for reference)
+	* 2 -- Lazy A* modified (validate when subsuming for the first time, final method in the paper)
+	* 3 -- Lazy A* (validate only when popped from OPEN list, performance worse than 2, keep for reference)
 
     There are also three successor modes provided:
 
-    * 0 -- direct neighboring successors on the roadmap (default, preferred)
-    * 1 -- First neighbor that increases inspection coverage (keep for reference)
-    * 2 -- first neighbor that increases inspection coverage and there's no other node increasing the coverage along the shortest path from its parent (keep for reference)
+        * 0 -- direct neighboring successors on the roadmap (default, preferred)
+	* 1 -- First neighbor that increases inspection coverage (keep for reference)
+	* 2 -- first neighbor that increases inspection coverage and there's no other node increasing the coverage along the shortest path from its parent (keep for reference)
 
     In ```include/global_common.h```, there are also additional macros to enable different features, namely ```USE_NODE_REUSE```, ```KEEP_SUBSUMING_HISTORY```, and ```SAVE_PREDECESSOR```. ```USE_NODE_REUSE``` enables reusing search efforts from previous search iteration. ```KEEP_SUBSUMING_HISTORY``` enables saving detailed information about subsumed node, which is essential for lazy edge validation (laziness mode 3) and search effort reusing. ```SAVE_PREDECESSOR``` is an additional optimization for subusming history keeping, that saves memory footprint by saving the predecessor of the subsumed node instead of saving the subsumed node directly.
+
+## Robot Background
+
+This repository implements an inspection planning algorithm and demonstrates its functionality on three different robots:
+the CRISP robot, the planar-link-camera robot and the quadrotor (more detail can be found in the original code in [[code](https://github.com/UNC-Robotics/IRIS)]
+
+The quadrotor tries to inspect a bridge structure provided as a mesh.
+<img src="images/bridge.png" width="600" height="400">
