@@ -1097,8 +1097,8 @@ namespace drone
             // std::cout << "sss" << std ::endl;
             // std::cout << "graph->NumTargetsCovered() " << graph->NumTargetsCovered() << std ::endl;
 
-            {
-                if (graph->NumTargetsCovered() >= 15)
+            // {
+                if (graph->NumTargetsCovered() >= 500)
                     // Iterate over the bitset of the global visited set
                     for (Idx j = 0; j < MAX_COVERAGE_SIZE; j++)
                     {
@@ -1109,7 +1109,7 @@ namespace drone
                             vertex->vis.bitset_[j] = 0;
                         }
                     }
-            }
+            // }
             vertex->time_vis = RelativeTime(start);
             vertex->time_build = avg_time_build;
 
@@ -1183,7 +1183,7 @@ namespace drone
         }
     }
 
-    void DronePlanner::ComputeVisibilitySet(Inspection::VPtr vertex) const
+    void DronePlanner::ComputeVisibilitySet(Inspection::VPtr vertex) 
     {
         // const Idx index = vertex->index;
         // VertexVisCache::const_iterator it = vertex_vis_cache_.find(index);
@@ -1193,13 +1193,25 @@ namespace drone
         //     vertex->vis = it->second;
         //     return;
         // }
+        const TimePoint startTime = Clock::now();
         const auto &s = vertex->state->as<DroneStateSpace::StateType>();
         robot_->SetConfig(s->Position(), s->Yaw(), s->CameraAngle());
         robot_->ComputeShape();
         this->ComputeRobotVisibilitySet(vertex->vis);
         // vertex_vis_cache_[index] = vertex->vis;
+        //elapsedTimeRayTracing += RelativeTime(startTime);
+        auto temp = static_cast<SizeType>(std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - startTime).count());
+        elapsedTimeRayTracing += RealNum(temp)*0.001*0.001;
+        // std::cout << "elapsedTimeRayTracing" << RelativeTime(startTime)*0.001 << std::endl;
+
     }
 
+    RealNum DronePlanner::GetElapsedTimeRayTracing() 
+    {
+        // Accessing the elapsed time if needed.
+        // For example, you can convert it to seconds:
+        return elapsedTimeRayTracing;
+    }
     bool DronePlanner::StateValid(const ob::State *state)
     {
         const auto &s = state->as<DroneStateSpace::StateType>();
@@ -1237,7 +1249,7 @@ namespace drone
                 VisibilitySet vis_set;
                 this->ComputeRobotVisibilitySet(vis_set);
                 // todo david
-                if (global_vis_set_.Size() >= 15)
+                if (global_vis_set_.Size() >= 500)
                 {
                     // Iterate over the bitset of the global visited set
                     for (Idx j = 0; j < MAX_COVERAGE_SIZE; j++)

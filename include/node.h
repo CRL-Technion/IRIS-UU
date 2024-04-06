@@ -35,6 +35,8 @@ public:
     std::vector<RealNum> GetCostToComeMc();
     void SetCollisionProbability(const RealNum _p_coll);
     RealNum GetCollisionProbability() const;
+    void SetCountVertexInRiskZone(const Idx other_countVertexInRiskZone);
+    Idx GetCountVertexInRiskZone() const;
 
     ///////////
     void SetParent(NodePtr parent);
@@ -120,6 +122,8 @@ private:
     RealNum cost_to_come_{0};
     std::vector<RealNum> cost_to_come_risk_zone{0};
     RealNum p_coll;
+    Idx countVertexInRiskZone;
+
     RealNum local_path_cost_{0};
     VisibilitySet vis_set_;
     std::vector<Vec3> totalLocationError;

@@ -4,7 +4,9 @@
 
 #include "bridge_environment.h"
 #include "io_utils.h"
+     #include <omp.h>
 
+      
 namespace drone
 {
 
@@ -27,6 +29,7 @@ namespace drone
 
         for (const auto &p : pos)
         {
+            // raw_vertices_.emplace_back(p[0], p[1], p[2]);
             raw_vertices_.emplace_back(p[0], p[1], p[2]);
             // std::cout << "vertices" << p[0] << " " << p[1] << " " << p[2] << std::endl;
         }
@@ -150,7 +153,7 @@ namespace drone
             // Avoid duplicating target points.
             const auto neartest = nn_.nearest(v)->first.point;
 
-            if ((neartest - v).norm() < 5.5)
+            if ((neartest - v).norm() < 0.2)
             {
                 continue;
             }
@@ -343,9 +346,16 @@ namespace drone
             large_set.erase(p);
         }
 
+
+    // Convert std::set to std::vector for parallelization
+    std::vector<std::pair<drone::InspectPoint, float>> large_vector(large_set.begin(), large_set.end());
+
         // Ray shooting to every point
-        for (const auto &node : large_set)
-        {
+    #pragma omp parallel for
+    for (size_t i = 0; i < large_vector.size(); ++i)
+    {
+        const auto& node = large_vector[i];
+        //   for (const auto &node : large_set){
             const auto p = node.first.point;
             const auto camera_to_point = (p - pos);
             const auto camera_to_point_normalized = camera_to_point.normalized();
@@ -378,10 +388,15 @@ namespace drone
             //         break;
             //     }
             // }
-
+            #pragma omp critical  // Use a critical section to avoid race conditions
             if (visible && node.first.idx < global_idx_)
             {
                 visible_points.push_back(node.first.idx);
+                countVisible++;
+        
+            }
+            else{
+                countNotVisible++;
             }
         }
 
@@ -542,7 +557,7 @@ namespace drone
         if (node->is_leaf())//node->left_child == nullptr && node->right_child == nullptr)
         {
             const auto dist = (tar - pos).norm();
-
+    
             for (const auto &triangle_index : node->triangles)
             {
                 const auto &v0 = raw_vertices_[faces_[triangle_index][0]];

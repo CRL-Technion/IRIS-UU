@@ -43,6 +43,7 @@ void Node::DeepCopy(const NodePtr other)
 #if USE_HEURISTIC
     h_ = other->Heuristic();
 #endif
+    SetCountVertexInRiskZone(other->GetCountVertexInRiskZone());
     SetCostToComeRiskZone(other->GetCostToComeRiskZone());
     SetTotalLocationError(other->GetTotalLocationError());
     SetCostToComeMc(other->GetCostToComeMc());
@@ -64,6 +65,7 @@ void Node::CopyAsChild(const NodePtr other)
 #if USE_HEURISTIC
     h_ = other->Heuristic();
 #endif
+    SetCountVertexInRiskZone(other->GetCountVertexInRiskZone());
     SetCostToComeRiskZone(other->GetCostToComeRiskZone());
     SetTotalLocationError(other->GetTotalLocationError());
     SetCostToComeMc(other->GetCostToComeMc());
@@ -118,6 +120,7 @@ void Node::SetCostToComeMc(const std::vector<RealNum> otherCostToComeMc)
         }
     }
 }
+
 std::vector<RealNum> Node::GetCostToComeMc()
 {
     return costToComeMc;
@@ -159,6 +162,17 @@ void Node::SetCostToComeRiskZone(const std::vector<RealNum> otherCostRiskZone)
         }
     }
 }
+
+void Node::SetCountVertexInRiskZone(const Idx other_countVertexInRiskZone) 
+{
+    countVertexInRiskZone = other_countVertexInRiskZone;
+}
+
+Idx Node::GetCountVertexInRiskZone() const
+{
+    return countVertexInRiskZone;
+}
+
 
 void Node::Print(std::ostream &out, const SizeType time) const
 {

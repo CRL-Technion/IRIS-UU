@@ -117,8 +117,8 @@ int main(int argc, char **argv)
     // auto robot = std::make_shared<drone::DroneRobot>(0.196, 0.2895, -0.049);
     // auto robot = std::make_shared<drone::DroneRobot>(0.196, 0.2895, 0.0);
     // auto robot = std::make_shared<drone::DroneRobot>(1, 1, 0.0);
-    auto robot = std::make_shared<drone::DroneRobot>(1.8, 1.8, 0.0);
-    // auto robot = std::make_shared<drone::DroneRobot>(1.5, 1.5, 0.0);
+    auto robot = std::make_shared<drone::DroneRobot>(1.9, 1.9, 0.0);
+    // auto robot = std::make_shared<drone::DroneRobot>(1, 1, 0.0);
 
     robot->SetCameraParameters(94.0 / 180 * M_PI, 0.2, 10.0);
     robot->Initialize();
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
     auto env = std::make_shared<drone::BridgeEnvironment>();
 
     // Planner
-    seed = 125;
+    seed = 3;
     auto planner = std::make_shared<drone::DronePlanner>(robot, env, seed);
     // If we want a fixed start configuration, use a fixed seed point here.
     // planner->SampleStartConfig(1000, 1);

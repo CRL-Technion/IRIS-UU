@@ -32,25 +32,25 @@ cd IRIS-UU
 git submodule update --init --recursive
 
 #download data of IRIS
-export fileid=19DGtog4D4hAgwFu1bV_ct0h_n-G4BR1Z
-export filename=data.tar.gz
-wget --save-cookies cookies.txt 'https://docs.google.com/uc?export=download&id='$fileid -O- \
-     | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1/p' > confirm.txt
+#export fileid=19DGtog4D4hAgwFu1bV_ct0h_n-G4BR1Z
+#export filename=data.tar.gz
+#wget --save-cookies cookies.txt 'https://docs.google.com/uc?export=download&id='$fileid -O- \
+ #    | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1/p' > confirm.txt
 
-wget --load-cookies cookies.txt -O $filename \
-     'https://docs.google.com/uc?export=download&id='$fileid'&confirm='$(<confirm.txt)
+#wget --load-cookies cookies.txt -O $filename \
+ #    'https://docs.google.com/uc?export=download&id='$fileid'&confirm='$(<confirm.txt)
 
-rm -rf confirm.txt
-rm -rf cookies.txt
+#rm -rf confirm.txt
+#rm -rf cookies.txt
 
-tar -xvf data.tar.gz
-rm -rf data.tar.gz
+#tar -xvf data.tar.gz
+#rm -rf data.tar.gz
 
 #Install IRIS
 mkdir build
 cd build
 
 #The ompl version may change
-cmake -DOMPL_INCLUDE_DIRS=/usr/local/include/ompl-1.5/ -DOMPL_LIBRARIES=/usr/local/lib/libompl.so -DCMAKE_BUILD_TYPE=Debug ..
+cmake -DOMPL_INCLUDE_DIRS=/usr/local/include/ompl-1.6.0/ -DOMPL_LIBRARIES=/usr/local/lib/libompl.so ..
 make
 

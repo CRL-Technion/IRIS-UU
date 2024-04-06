@@ -28,10 +28,21 @@ int main(int argc, char **argv)
     std::cout << "ratio:" << ratio << std::endl;
     std::cout << "tightening_rate:" << tightening_rate << std::endl;
     String file_to_write = argv[8];
-    Idx seed =4;
-    if (argc > 8)
+    Idx seed = 4;
+    bool use_smart_cache = false;
+    Idx MonteCarloNumber = 0;
+
+    if (argc > 10)
     {
         seed = std::stoi(argv[10]);
+    }
+    // if (argc > 11)
+    // {
+    //     use_smart_cache = std::stoi(argv[11]);
+    // }
+    if (argc > 11)
+    {
+        MonteCarloNumber = std::stoi(argv[12]);
     }
     Inspection::GPtr graph(new Inspection::Graph);
     // graph->ReadFromFiles(file_to_read, true, false);
@@ -42,7 +53,7 @@ int main(int argc, char **argv)
 #if UAV_NAVIGATION_ERROR
     {
         String Location_Error_file_name = argv[9];
-        search.ReadLocationErrorParameters(Location_Error_file_name,seed);
+        search.ReadLocationErrorParameters(Location_Error_file_name, seed, MonteCarloNumber, use_smart_cache);
     }
 #endif
     RealNum p = initial_p;
@@ -138,6 +149,19 @@ int main(int argc, char **argv)
 
         search.PrintResult(std::cout);
         search.PrintResult(fout);
+
+        // todo david
+        std::ofstream fout_envelope;
+        
+        fout_envelope.open(file_to_write + "env", std::ofstream::app); // Open in append mode
+        if (!fout_envelope.is_open())
+        {
+            std::cerr << file_to_write + "env" << " cannot be opened!" << std::endl;
+            exit(1);
+        }
+
+        search.PrintResult(fout_envelope);
+        fout_envelope.close(); // Close the file after writing
 
         fout_resultMC << graph_size; // << ": ";
         for (size_t i = 0; i < MAX_COVERAGE_SIZE; i++)

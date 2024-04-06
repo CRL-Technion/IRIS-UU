@@ -9,7 +9,7 @@
 #if USE_PLANAR
 #include "planar_robot.h"
 #include "planar_planner.h"
-#else
+#else 
 #include <cmath>
 #include "drone_robot.h"
 #include "drone_planner.h"

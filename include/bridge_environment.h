@@ -24,7 +24,9 @@ namespace drone
 #if ToyProblem
     const String kBridgeStructureFilename = "../data/bridge/simpleExample.obj";
 #else
-    const String kBridgeStructureFilename = "../data/bridge/bridge_small.obj";
+    // const String kBridgeStructureFilename = "../data/bridge/bridge_small.obj";
+    const String kBridgeStructureFilename = "../data/bridge/bridge.obj";
+    // const String kBridgeStructureFilename = "../data/bridge/High_Bridge.obj";
 #endif
 
     struct InspectPoint
@@ -320,6 +322,8 @@ namespace drone
         bool IfCorrectDirection(const Vec3 &pos, const Vec3 &tang, const RealNum fov_in_rad,
                                 const RealNum dist) const;
         std::vector<Vec3> IndicesToPoints(const std::vector<Idx> &indices) const;
+        Idx countVisible;
+        Idx countNotVisible;
 
     private:
         // std::unordered_map<std::pair<Vec3, Vec3>, std::vector<SizeType>, PairHash> cache;

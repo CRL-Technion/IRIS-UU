@@ -10,6 +10,8 @@
 #include "node.h"
 #include "traceback_map.h"
 #include "drone_planner.h"
+#include <utility>  // for std::pair
+
 class GraphSearch
 {
     static RealNum KeyBase(const NodePtr n)
@@ -116,7 +118,7 @@ public:
     SizeType VirtualGraphNumEdges() const;
 
     //////
-    void ReadLocationErrorParameters(const String Location_Error_file_name, const Idx seed);
+    void ReadLocationErrorParameters(const String Location_Error_file_name, const Idx seed,const Idx MC,const Idx _use_smart_cache);
     RealNum b_a_milli_g = 0.0;
     RealNum b_g_degPerHr = 0.0;
     RealNum avarageVelocity = 0.0;
@@ -134,7 +136,6 @@ public:
     std::vector<RealNum> costToComeRiskZoneDefault;
     RealNum Threshold_p_coll = 1.0;
 
-    bool ReCalculateIPVCost(NodePtr n, Idx v, NodePtr new_node, RealNum &cost);
     bool ReCalculateIPVCostMC(NodePtr n, Idx v, NodePtr new_node, RealNum &cost, Inspection::EPtr edge,Idx SuccessorSize);
 
     VisibilitySet vis;
@@ -218,9 +219,17 @@ private:
     ////////////////////////////
     // Inspection::VPtr vertex;
     std::shared_ptr<drone::DronePlanner> planner;
-    using VertexVisCache = std::unordered_map<Idx, VisibilitySet>;
-        VertexVisCache vertex_vis_cache_;
+    //using VertexVisCache = std::unordered_map<Idx, VisibilitySet>;
+    //using VertexVisCache = std::unordered_map<std::vector<Idx>, VisibilitySet>;
+       // VertexVisCache vertex_vis_cache_;
     bool samplingForIpv;
+    // Idx hashPOI(const std::vector<Idx>& listIndexes) const;
+    // std::vector<Idx> listIndexes_history;
+    using VertexVisCache = std::unordered_map<Idx, std::tuple<VisibilitySet, RealNum, RealNum,std::vector<Vec3>,std::vector<RealNum>,std::vector<RealNum>>>;
+        VertexVisCache vertex_vis_cache_;
+
+  
+
 };
 
 #endif // GRAPH_SEARCH_H_

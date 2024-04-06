@@ -39,7 +39,7 @@ namespace drone
     void SampleStartConfig(const Idx max_iter = 1000, const Idx seed = 1);
     void SetParams(const RealNum step_size, const bool if_k_nearest);
     void BuildAndSaveInspectionGraph(const String file_name, const Idx target_size);
-    void ComputeVisibilitySet(Inspection::VPtr vertex) const;
+    void ComputeVisibilitySet(Inspection::VPtr vertex) ;
     ///////////////////////
     void InsertIntermediatePointsToGraph(Inspection::Graph *graph);
     Inspection::EPtr InsertIntermediatePointToGraph(Inspection::Graph *graph, Inspection::EPtr edge, Vec3 InsertIntermediatePosition);
@@ -57,17 +57,23 @@ namespace drone
     Vec3 LowerBordersXYZ = Vec3{-25, -1, -20};
     Vec3 UpperBordersXYZ = Vec3{25, 1, 20};
 #else
-    Vec3 LowerBordersXYZ = Vec3{50 - 2, -11 - 2, -20 - 2};
+   Vec3 LowerBordersXYZ = Vec3{-100 - 2, -11 - 2, -20 - 2};
     Vec3 UpperBordersXYZ = Vec3{100 + 2, 1 + 2, 0 + 2};
+    // Vec3 LowerBordersXYZ = Vec3{50 - 2, -11 - 2, -20 - 2};
+    // Vec3 UpperBordersXYZ = Vec3{100 + 2, 1 + 2, 0 + 2};
+    // Vec3 LowerBordersXYZ = Vec3{-692 - 2, -44 - 2, -12 - 2};
+    // Vec3 UpperBordersXYZ = Vec3{1331 + 2, 47 + 2 , 241 + 2};
 #endif
     // void RandomNoiseGPS(Vec3 &TotalLocationError);
     // double ComputeCost(const Vec3 TotalLocationError, const Vec3 TotalLocationError) const
     //////////////////////
     bool CheckEdge(const ob::State *source, const ob::State *target) const;
+    RealNum GetElapsedTimeRayTracing() ;
 
-  private:
-    RobotPtr robot_;
     EnvPtr env_;
+  private:
+    RealNum elapsedTimeRayTracing;
+    RobotPtr robot_;
     Idx seed_;
     Rand rng_;
     RealUniformDist uni_;

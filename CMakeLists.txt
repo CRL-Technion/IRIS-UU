@@ -23,7 +23,7 @@ message(STATUS "Building ${CMAKE_BUILD_TYPE}")
 set(USE_C++17 0)
 
 if(USE_C++17 OR (UNIX AND NOT APPLE))
-    # Use C++ 17 for nign.
+    # Use C++ 17 for iris.
     set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_CXX_STANDARD_REQUIRED 17)
     set(USE_C++17 1)
@@ -32,6 +32,16 @@ else()
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
+
+# Add OpenMP support
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    message(STATUS "OpenMP found. Enabling parallelization.")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+else()
+    message(WARNING "OpenMP not found. Code will be compiled without parallelization.")
+endif()
 
 message(STATUS "Using c++17: " ${USE_C++17})
 
@@ -48,7 +58,6 @@ else(EIGEN3_INCLUDE_DIR)
     message("Eigen3 not found! Please set it manually!")
 endif()
 
-
 # Check for Boost
 find_package(Boost 1.56.0 COMPONENTS system program_options timer chrono thread serialization date_time filesystem regex)
 include_directories(${Boost_INCLUDE_DIRS})
@@ -56,7 +65,7 @@ message("Boost headers: ${Boost_INCLUDE_DIRS}")
 message("Boost libraries: ${Boost_LIBRARIES}")
 
 # Check for OMPL
-find_package(OMPL QUIET)
+find_package(OMPL 1.6.0 QUIET)
 if (NOT OMPL_FOUND AND NOT OMPL_INCLUDE_DIRS)
     set(OMPL_INCLUDE_DIRS "OMPL-NOTFOUND" CACHE PATH "Location of OMPL headers")
     set(OMPL_LIBRARIES "OMPL-NOTFOUND" CACHE FILEPATH "Location of OMPL library")
@@ -64,14 +73,13 @@ endif()
 
 if(OMPL_INCLUDE_DIRS AND OMPL_LIBRARIES)
     include_directories(${OMPL_INCLUDE_DIRS})
-    include_directories("${OMPL_INCLUDE_DIRS}/ompl-1.5")
-  	message("OMPL found.")
+    include_directories("${OMPL_INCLUDE_DIRS}/ompl-1.6.0")
+    message("OMPL found.")
     message("OMPL include dirs: ${OMPL_INCLUDE_DIRS}")
     message("OMPL libraries: ${OMPL_LIBRARIES}")
 else(OMPL_INCLUDE_DIRS AND OMPL_LIBRARIES)
     message("Headers/Libraries not specified for OMPL; not configuring OMPL projects.")
 endif(OMPL_INCLUDE_DIRS AND OMPL_LIBRARIES)
-
 
 include_directories(BEFORE "include")
 include_directories(BEFORE "${CMAKE_CURRENT_BINARY_DIR}/include")
@@ -83,7 +91,5 @@ include_directories(BEFORE "external/nigh/src")
 include_directories(BEFORE "${CMAKE_CURRENT_BINARY_DIR}/external/nigh/src")
 
 add_subdirectory(src)
-
 add_subdirectory(app)
-
 add_subdirectory(external)
