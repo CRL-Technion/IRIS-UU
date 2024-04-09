@@ -63,13 +63,8 @@ int main(int argc, char **argv)
 
 	Inspection::GPtr graph1(new Inspection::Graph);
 
-	// Replace "SimulationPath_" with "test"
-	String original_file_to_read = file_to_read;
-	std::size_t index = original_file_to_read.find("SimulationPath_");
-	original_file_to_read.replace(index, 15, "");
-
 	// std::cout << "ddd" << std::endl;
-	graph1->ReadFromFiles(original_file_to_read, true, 5);
+	graph1->ReadFromFiles(file_to_read, true, 5);
 
 	for (SizeType i = 0; i < graph1->NumVertices(); ++i)
 	{
